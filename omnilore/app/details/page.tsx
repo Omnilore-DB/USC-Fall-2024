@@ -148,11 +148,11 @@ function ShowDetailsComponent() {
             </Button>
           </div>
           <form className="w-full max-w-md space-y-4">
-            <div className="flex flex-row space-x-2 w-full justify-center">
+            <div className="flex flex-row space-x-2 w-[600px] justify-center">
               {current_row && current_row.photo_link ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 w-full">
                   <h3 className="text-lg font-semibold">Photo</h3>
-                  <img
+                  <img 
                     src={current_row.photo_link || defaultPictureUrl}
                     alt="User"
                     className="w-full h-auto"
