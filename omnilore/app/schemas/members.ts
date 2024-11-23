@@ -23,14 +23,29 @@ export const memberViews: View[] = [
             },
         },
         query_function: async (): Promise<any> => {
-            const {data, error} = await supabase
+            const { data, error } = await supabase
                 .from("members")
                 .select(
-                    "pid, first_name, last_name, street_address, city, state, zip, phone, email, photo_link"
+                    "pid, first_name, last_name, street_address, city, state, zip, phone, email, photo_link, public"
                 )
-                .order("pid", {ascending: true});
+                .order("pid", { ascending: true });
+
             if (error) throw error;
-            return data;
+
+            return data.map((member) => {
+                if (!member.public) {
+                    return {
+                        ...member,
+                        street_address: "",
+                        city: "",
+                        state: "",
+                        zip: "",
+                        phone: "",
+                        email: "",
+                    };
+                }
+                return member;
+            }).map(({public: _, ...rest}) => rest);
         },
         upsert_function: null,
         delete_function: null,
