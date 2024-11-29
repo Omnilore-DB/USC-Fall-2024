@@ -40,7 +40,9 @@ export default function EditDetails() {
   const [membersOptions, setMembersOptions] = useState<
     { pid: number; displayName: string }[]
   >([]);
-  const [OrderSKUDescriptionOptions, setOrderSKUDescriptionOptions] = useState<Map<string, string>>(new Map());
+  const [OrderSKUDescriptionOptions, setOrderSKUDescriptionOptions] = useState<
+    Map<string, string>
+  >(new Map());
 
   const orderPaymentOptions = {
     STRIPE: "STRIPE",
@@ -167,22 +169,24 @@ export default function EditDetails() {
 
       setMembersOptions(formattedData);
     };
-                    
+
     const fetchOrderSKUDescription = async () => {
       const { data, error } = await supabase
-          .from("products")
-          .select("sku, description");
+        .from("products")
+        .select("sku, description");
 
       if (error) {
-          console.error("Error fetching order SKUs:", error);
-          return;
+        console.error("Error fetching order SKUs:", error);
+        return;
       }
 
       // Transform data into a Map
-      const descriptionToSKU = new Map(data.map((item) => [item.description, item.sku]));
+      const descriptionToSKU = new Map(
+        data.map((item) => [item.description, item.sku])
+      );
 
       setOrderSKUDescriptionOptions(new Map(descriptionToSKU));
-      };
+    };
 
     fetchOrderSKUDescription();
     fetchLeadershipPositions();
@@ -414,7 +418,8 @@ export default function EditDetails() {
                               </SelectContent>
                             </Select>
                           ) : colName === "member_id" ||
-                            colName == "referred_by_member_id" ? (
+                            colName == "referred_by_member_id" ||
+                            colName == "coordinator" ? (
                             <Select
                               onValueChange={
                                 (newValue) =>
@@ -454,51 +459,55 @@ export default function EditDetails() {
                                 ))}
                               </SelectContent>
                             </Select>
-                          ) : colName === "payment_platform" && selectedView.name == "Orders"? (
-                              <Select
-                                onValueChange={(newValue) =>
-                                  handleInputChange(colName, newValue)
-                                }
-                                value={value}
-                              >
-                                <SelectTrigger className="w-full mt-1">
-                                  <SelectValue placeholder="Select payment platform" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(orderPaymentOptions).map(
-                                    ([optionKey, description]) => (
-                                      <SelectItem
-                                        key={optionKey}
-                                        value={optionKey}
-                                      >
-                                        {description}
-                                      </SelectItem>
-                                    )
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            ) : (colName === "SKUDescription"  && selectedView.name == "Orders") || (colName === "forum_name" && selectedView.name == "Forums")? (
-                              // Dropdown for SKUDescription
-                              <Select
-                                  onValueChange={(newValue) =>
-                                      handleInputChange(colName, newValue)
-                                  }
-                                  value={value}
-                                  >
-                                  <SelectTrigger className="w-full mt-1">
-                                      <SelectValue placeholder="Select SKUDescription" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                      {Array.from(OrderSKUDescriptionOptions.entries()).map(
-                                      ([description, sku]) => (
-                                          <SelectItem key={description} value={sku}>
-                                          {description}
-                                          </SelectItem>
-                                      )
-                                      )}
-                                  </SelectContent>
-                              </Select>
-                            ) : (
+                          ) : colName === "payment_platform" &&
+                            selectedView.name == "Orders" ? (
+                            <Select
+                              onValueChange={(newValue) =>
+                                handleInputChange(colName, newValue)
+                              }
+                              value={value}
+                            >
+                              <SelectTrigger className="w-full mt-1">
+                                <SelectValue placeholder="Select payment platform" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(orderPaymentOptions).map(
+                                  ([optionKey, description]) => (
+                                    <SelectItem
+                                      key={optionKey}
+                                      value={optionKey}
+                                    >
+                                      {description}
+                                    </SelectItem>
+                                  )
+                                )}
+                              </SelectContent>
+                            </Select>
+                          ) : (colName === "SKUDescription" &&
+                              selectedView.name == "Orders") ||
+                            (colName === "forum_name" &&
+                              selectedView.name == "Forums") ? (
+                            // Dropdown for SKUDescription
+                            <Select
+                              onValueChange={(newValue) =>
+                                handleInputChange(colName, newValue)
+                              }
+                              value={value}
+                            >
+                              <SelectTrigger className="w-full mt-1">
+                                <SelectValue placeholder="Select SKUDescription" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Array.from(
+                                  OrderSKUDescriptionOptions.entries()
+                                ).map(([description, sku]) => (
+                                  <SelectItem key={description} value={sku}>
+                                    {description}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
                             <Input
                               id={colName}
                               value={value}
@@ -506,9 +515,15 @@ export default function EditDetails() {
                                 handleInputChange(colName, e.target.value)
                               }
                               className={`mt-1 text-gray-700 ${
-                                (colName === "sku" && selectedView.name === "Forums") ? "bg-gray-100" : ""
+                                colName === "sku" &&
+                                selectedView.name === "Forums"
+                                  ? "bg-gray-100"
+                                  : ""
                               }`}
-                              readOnly={colName === "sku" && selectedView.name === "Forums"}
+                              readOnly={
+                                colName === "sku" &&
+                                selectedView.name === "Forums"
+                              }
                             />
                           )}
                         </div>

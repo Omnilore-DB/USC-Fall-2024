@@ -317,7 +317,8 @@ export default function MemberSearchComponent() {
                         ([name, _]) => (
                           <TableCell key={name}>
                             {(name === "member_id" ||
-                              name === "referred_by_member_id") &&
+                              name === "referred_by_member_id" ||
+                              name == "coordinator") &&
                             membersMapping[entry[name]]
                               ? `${entry[name]} ${membersMapping[entry[name]]}`
                               : name === "committee_id" &&
