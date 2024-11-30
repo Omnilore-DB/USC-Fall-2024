@@ -15,10 +15,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { allViewsByNames } from "@/app/schemas";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 export default function EditAdmin() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
+      <ToastContainer position="bottom-right" />
       <EditAdminComponent />
     </Suspense>
   );
@@ -31,15 +35,15 @@ function EditAdminComponent() {
   const [current_row, setCurrentRow] = useState<Record<string, any> | null>(
     row ? JSON.parse(row) : null
   );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
 
   const [leadershipPositionOptions, setLeadershipPositionOptions] = useState<
     { pid: number; leadershipPosition: string }[]
   >([]);
-
-  const [OrderSKUDescriptionOptions, setOrderSKUDescriptionOptions] = useState<
-    Map<string, string>
-  >(new Map());
-
+  
+  const [OrderSKUDescriptionOptions, setOrderSKUDescriptionOptions] = useState<Map<string, string>>(new Map());
+  
   const [sdgOptions, setSdgOptions] = useState<
     { pid: number; sdgName: string }[]
   >([]);
@@ -52,7 +56,7 @@ function EditAdminComponent() {
     { pid: number; displayName: string }[]
   >([]);
   const [productOptions, setProductOptions] = useState<
-    { description: string }[]
+    { description: string; }[]
   >([]);
 
   const memberStatusOptions = {
@@ -76,7 +80,7 @@ function EditAdminComponent() {
     PAYPAL: "PAYPAL",
     MAIL: "MAIL",
   };
-
+      
   const columnDisplayNames: Record<string, string> = {
     member_id: "member_name",
     referred_by_member_id: "referred_by_member_name",
@@ -181,7 +185,7 @@ function EditAdminComponent() {
 
       setMembersOptions(formattedData);
     };
-
+    
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from("products")
@@ -202,17 +206,15 @@ function EditAdminComponent() {
       const { data, error } = await supabase
         .from("products")
         .select("sku, description");
-
+    
       if (error) {
         console.error("Error fetching order SKUs:", error);
         return;
       }
 
       // Transform data into a Map
-      const descriptionToSKU = new Map(
-        data.map((item) => [item.description, item.sku])
-      );
-
+      const descriptionToSKU = new Map(data.map((item) => [item.description, item.sku]));
+    
       setOrderSKUDescriptionOptions(new Map(descriptionToSKU));
     };
 
@@ -238,6 +240,7 @@ function EditAdminComponent() {
 
     if (!tableName) {
       console.error("No table name found");
+      toast.error("No table name found.");
       return;
     }
     console.log("Table Name to upsert:", tableName);
@@ -246,12 +249,18 @@ function EditAdminComponent() {
     console.log("Row to upsert:", current_row);
     const upsert_function = allViewsByNames[tableName].upsert_function;
     if (!upsert_function) {
-      throw new Error(`No upsert function found for table ${tableName}`);
+      const error = `No upsert function found for table ${tableName}`;
+      console.error(error);
+      toast.error(error);
+      return;
     }
-    await upsert_function(current_row);
-
-    // redirect to the view page
-    router.push(`/view`);
+    try {
+      await upsert_function(current_row);
+      router.push(`/view`);
+    } catch (error: any) {
+      console.error("Upsert error:", error);
+      toast.error(error.message || "An unexpected error occurred.");
+    }
     return current_row;
   };
 
@@ -355,9 +364,9 @@ function EditAdminComponent() {
                         )}
                       </SelectContent>
                     </Select>
-                  ) : key === "SKUDescription" ? (
-                    // Dropdown for orders.SKUDescription (restricted to "Products.description" values)
-                    <Select
+                    ) : key === "SKUDescription" ? (
+                      // Dropdown for orders.SKUDescription (restricted to "Products.description" values)
+                      <Select
                       onValueChange={(newValue) =>
                         setCurrentRow((prevRow) => ({
                           ...prevRow,
@@ -377,7 +386,7 @@ function EditAdminComponent() {
                             </SelectItem>
                           )
                         )}
-                      </SelectContent>
+                    </SelectContent>
                     </Select>
                   ) : key === "committee_id" ? (
                     // Dropdown for commitee_members.committee_names values
@@ -470,9 +479,7 @@ function EditAdminComponent() {
                         ))}
                       </SelectContent>
                     </Select>
-                  ) : key === "member_id" ||
-                    key === "referred_by_member_id" ||
-                    key === "coordinator" ? (
+                  ) : key === "member_id" || key === "referred_by_member_id" ? (
                     // Assuming you have access to `Members` data with PID, FirstName, and LastName
                     <Select
                       onValueChange={(newValue) => {
@@ -524,7 +531,7 @@ function EditAdminComponent() {
                       id={key}
                       defaultValue={value}
                       className={`mt-1 text-black ${
-                        key === "pid" || key === "sku" ? "bg-gray-100" : ""
+                        (key === "pid" || key === "sku") ? "bg-gray-100" : ""
                       }`}
                       readOnly={key === "pid" || key === "sku"}
                       onChange={handleChange}
