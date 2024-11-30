@@ -152,7 +152,7 @@ function ShowDetailsComponent() {
               {current_row && current_row.photo_link ? (
                 <div className="flex flex-col gap-2 w-full">
                   <h3 className="text-lg font-semibold">Photo</h3>
-                  <img 
+                  <img
                     src={current_row.photo_link || defaultPictureUrl}
                     alt="User"
                     className="w-full h-auto"
@@ -163,7 +163,9 @@ function ShowDetailsComponent() {
               <div className="flex flex-col gap-2">
                 {Object.entries(current_row || {}).map(([key, value]) => {
                   const displayValue =
-                    (key === "member_id" || key === "referred_by_member_id") &&
+                    (key === "member_id" ||
+                      key === "referred_by_member_id" ||
+                      key == "coordinator") &&
                     membersMapping[value]
                       ? `${value} ${membersMapping[value]}`
                       : key === "committee_id" && committeesMapping[value]
