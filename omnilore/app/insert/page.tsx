@@ -256,6 +256,8 @@ function InsertComponent() {
       await selectedView.upsert_function!(formData);
       
       const data = await selectedView.query_function();
+      // show a message to the user
+      toast.success("Data inserted successfully");
       setEntries(data);
     } catch (error: any) {
       console.error("Error:", error);
