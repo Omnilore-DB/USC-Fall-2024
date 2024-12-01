@@ -10,14 +10,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { getAccessibleViews, View } from "@/app/schemas/schema";
 import { allViews } from "@/app/schemas";
 import AlertBox from "@/components/alertbox";
 import Company from "@/components/ui/company";
 import { supabase } from "@/app/supabase";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function EditDetails() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ToastContainer position="bottom-right" />
+      <InsertComponent />
+    </Suspense>
+  );
+}
+function InsertComponent() {
   const [views, setViews] = useState<Record<string, View>>({});
   const [selectedView, setSelectedView] = useState<View | null>(null);
   const [entries, setEntries] = useState<Record<string, any>[]>([]);
@@ -195,6 +205,7 @@ export default function EditDetails() {
     fetchSDG();
   }, []);
 
+
   useEffect(() => {
     const setup = async () => {
       const views: Record<string, View> = {};
@@ -237,24 +248,20 @@ export default function EditDetails() {
 
   const handleSubmit = async () => {
     if (!selectedView) {
-      setAlertMessage("No view selected");
-      setAlertType("error");
-      setShowAlert(true);
+      toast.error("No view selected");
       return;
     }
     try {
+      console.log("Inserting data:", formData);
       await selectedView.upsert_function!(formData);
-      setAlertMessage("Data updated successfully");
-      setAlertType("success");
-      setShowAlert(true);
-
+      
       const data = await selectedView.query_function();
+      // show a message to the user
+      toast.success("Data inserted successfully");
       setEntries(data);
-    } catch (err) {
-      console.error("Error during upsert", err);
-      setAlertMessage("An error occurred");
-      setAlertType("error");
-      setShowAlert(true);
+    } catch (error: any) {
+      console.error("Error:", error);
+      toast.error(error.message || "An unexpected error occurred.");
     }
   };
 
@@ -263,9 +270,9 @@ export default function EditDetails() {
       <header className="p-4 flex justify-between items-center">
         <Company />
       </header>
-      {showAlert && (
+      {/* {showAlert && (
         <AlertBox message={alertMessage} onClose={() => setShowAlert(false)} />
-      )}
+      )} */}
       <main className="flex flex-row p-4 pt-10">
         <Sidebar />
         <div className="flex-1 p-8 flex flex-col justify-start items-center">
@@ -484,9 +491,8 @@ export default function EditDetails() {
                               </SelectContent>
                             </Select>
                           ) : (colName === "SKUDescription" &&
-                              selectedView.name == "Orders") ||
-                            (colName === "forum_name" &&
-                              selectedView.name == "Forums") ? (
+                              selectedView.name == "Orders")
+                             ? (
                             // Dropdown for SKUDescription
                             <Select
                               onValueChange={(newValue) =>
@@ -502,6 +508,28 @@ export default function EditDetails() {
                                   OrderSKUDescriptionOptions.entries()
                                 ).map(([description, sku]) => (
                                   <SelectItem key={description} value={sku}>
+                                    {description}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ): (colName === "forum_name" &&
+                            selectedView.name == "Forums") ? (
+                            // Assuming you have access to `Members` data with PID, FirstName, and LastName
+                            <Select
+                              onValueChange={(newValue) =>
+                                handleInputChange(colName, newValue)
+                              }
+                              value={value}
+                            >
+                              <SelectTrigger className="w-full mt-1">
+                                <SelectValue placeholder="Select SKUDescription" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Array.from(
+                                  OrderSKUDescriptionOptions.entries()
+                                ).map(([description, _]) => (
+                                  <SelectItem key={description} value={description}>
                                     {description}
                                   </SelectItem>
                                 ))}

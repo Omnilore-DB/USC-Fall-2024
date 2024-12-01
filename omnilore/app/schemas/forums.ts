@@ -45,29 +45,32 @@ export const forumsViews: View[] = [
       },
       upsert_function: async (value: any): Promise<any> => {
         // Fetch the product_id from the products table using the provided sku
+        
         const { data: productData, error: productError } = await supabase
           .from("products")
           .select("pid")
-          .eq("sku", value.sku)
+          .eq("description", value.forum_name)
           .single();
       
         if (productError) throw productError;
-      
         const product_id = productData.pid;
-      
         // Upsert the forum entry with the fetched product_id
+        const upsertData = {
+          pid: value.pid,
+          product_id: product_id,
+          available_spots: value.available_spots,
+          description: value.description,
+          date: value.date,
+        };
+
         const { data, error } = await supabase
           .from("forums")
-          .upsert({
-            pid: value.pid,
-            product_id: product_id,
-            available_spots: value.available_spots,
-            description: value.description,
-            date: value.date,
-          });
+          .upsert(
+            upsertData
+          ).single();
       
         if (error) throw error;
-      
+        
         // Fetch and log entries from the forums table with join on products
         const { data: updatedData, error: fetchError } = await supabase
           .from("forums")
