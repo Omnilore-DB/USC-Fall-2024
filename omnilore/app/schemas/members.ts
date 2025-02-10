@@ -13,6 +13,7 @@ export const memberViews: View[] = [
                 pid: {type: "basic", name: "int", nullable: false},
                 first_name: {type: "basic", name: "text", nullable: true},
                 last_name: {type: "basic", name: "text", nullable: true},
+                alias: {type: "basic", name: "text", nullable: true},
                 street_address: {type: "basic", name: "text", nullable: true},
                 city: {type: "basic", name: "text", nullable: true},
                 state: {type: "basic", name: "text", nullable: true},
@@ -26,7 +27,7 @@ export const memberViews: View[] = [
             const { data, error } = await supabase
                 .from("members")
                 .select(
-                    "pid, first_name, last_name, street_address, city, state, zip, phone, email, photo_link, public"
+                    "pid, first_name, last_name, alias, street_address, city, state, zip, phone, email, photo_link, public"
                 )
                 .order("pid", { ascending: true });
 
@@ -60,6 +61,7 @@ export const memberViews: View[] = [
                 pid: {type: "basic", name: "int", nullable: false},
                 first_name: {type: "basic", name: "text", nullable: true},
                 last_name: {type: "basic", name: "text", nullable: true},
+                alias: {type: "basic", name: "text", nullable: true},
                 street_address: {type: "basic", name: "text", nullable: true},
                 city: {type: "basic", name: "text", nullable: true},
                 state: {type: "basic", name: "text", nullable: true},
@@ -73,7 +75,7 @@ export const memberViews: View[] = [
             const {data, error} = await supabase
                 .from("members")
                 .select(
-                    "pid, first_name, last_name, street_address, city, state, zip, phone, email, photo_link"
+                    "pid, first_name, last_name, alias, street_address, city, state, zip, phone, email, photo_link"
                 )
                 .order("pid", {ascending: true});
             if (error) throw error;
@@ -93,6 +95,7 @@ export const memberViews: View[] = [
                 first_name: {type: "basic", name: "text", nullable: true},
                 last_name: {type: "basic", name: "text", nullable: true},
                 street_address: {type: "basic", name: "text", nullable: true},
+                alias: {type: "basic", name: "text", nullable: true},
                 city: {type: "basic", name: "text", nullable: true},
                 state: {type: "basic", name: "text", nullable: true},
                 zip: {type: "basic", name: "text", nullable: true},
@@ -115,7 +118,7 @@ export const memberViews: View[] = [
             const {data, error} = await supabase
                 .from("members")
                 .select(
-                    "pid, first_name, last_name, street_address, city, state, zip, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date, date_of_birth, deceased_date, public, orientation_date, date_joined, notes, photo_link"
+                    "pid, first_name, last_name, alias, street_address, city, state, zip, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date, date_of_birth, deceased_date, public, orientation_date, date_joined, notes, photo_link"
                 )
                 .order("pid", {ascending: true});
             if (error) throw error;
@@ -148,6 +151,7 @@ export const memberViews: View[] = [
                 first_name: {type: "basic", name: "text", nullable: true},
                 last_name: {type: "basic", name: "text", nullable: true},
                 street_address: {type: "basic", name: "text", nullable: true},
+                alias: {type: "basic", name: "text", nullable: true},
                 city: {type: "basic", name: "text", nullable: true},
                 state: {type: "basic", name: "text", nullable: true},
                 zip: {type: "basic", name: "text", nullable: true},
@@ -170,7 +174,7 @@ export const memberViews: View[] = [
             const {data, error} = await supabase
                 .from("members")
                 .select(
-                    "pid, first_name, last_name, street_address, city, state, zip, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date, date_of_birth, deceased_date, public, orientation_date, date_joined, notes, photo_link"
+                    "pid, first_name, last_name, alias, street_address, city, state, zip, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date, date_of_birth, deceased_date, public, orientation_date, date_joined, notes, photo_link"
                 )
                 .order("pid", {ascending: true});
             if (error) throw error;

@@ -11,11 +11,9 @@ import { forumsAttendeesViews } from "@/app/schemas/forumAttendees";
 import { roleViews } from "@/app/schemas/roles";
 import { ordersViews } from "@/app/schemas/orders";
 import { View } from "@/app/schemas/schema";
-import { aliasViews } from "@/app/schemas/alias";
 
 export const allViews = {
   Members: memberViews,
-  Alias: aliasViews,
   Orders: ordersViews,
   Referral: referralViews,
   Committee: committeeViews,

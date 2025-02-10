@@ -14,8 +14,10 @@
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.0",
     "@supabase/supabase-js": "^2.45.4",
+    "@svgr/webpack": "^8.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.447.0",
     "next": "14.2.14",
     "react": "^18",
@@ -28,6 +30,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.8",
     "@types/node": "20.16.10",
     "@types/react": "18.3.11",
     "@types/react-dom": "^18",
