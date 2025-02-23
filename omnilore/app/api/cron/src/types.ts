@@ -250,9 +250,38 @@ export type SquarespaceProfileAPIResponse = {
   profiles: SquarespaceProfile[];
 };
 
-// SUPABASE ORDER SCHEMA
+// --- INVENTORY API TYPES ---
 
-export type PaymentPlatform = "STRIPE" | "PAYPAL" | "MAIL";
+export type SquarespaceInventoryItem = {
+  /** The product variant id, which also serves as a unique id for the InventoryItem. */
+  variantId: string;
+  /** Stock keeping unit (SKU) code assigned by the Squarespace merchant for the variant. */
+  sku: string;
+  /** Generated description using the product's title and available variant attributes. */
+  descriptor: string;
+  /** Indicates whether stock is tracked (when true, stock is unlimited). */
+  isUnlimited: boolean;
+  /** Current amount in stock, or the last known value prior to becoming unlimited. */
+  quantity: number;
+};
+
+export type SquarespaceInventoryAPIResponse = {
+  /** Array of InventoryItem resources. If no physical or service product variants exist, this array is empty. */
+  inventory: SquarespaceInventoryItem[];
+  /** Pagination details for iterating on the available InventoryItems. */
+  pagination: Pagination;
+};
+
+// --- INVENTORY API TYPES (Retrieve Specific Inventory) ---
+
+export type SquarespaceSpecificInventoryAPIResponse = {
+  /** Array of InventoryItem resources. If the merchant site doesn't have any physical or service products, this array is empty. */
+  inventory: SquarespaceInventoryItem[];
+};
+
+// --- SUPABASE ORDER SCHEMA ---
+
+type SupabasePaymentPlatform = "STRIPE" | "PAYPAL" | "MAIL";
 
 export type SupabaseOrder = {
   created_at: string; // timestampz
@@ -263,7 +292,7 @@ export type SupabaseOrder = {
   fee: number; // float8
   date: string; // timestampz
   skus: string[]; // varchar[]
-  payment_platform: PaymentPlatform; // paymentplatform
+  payment_platform: SupabasePaymentPlatform; // paymentplatform
   external_transaction_id: string; // varchar
   user_names: string[]; // varchar[]
   user_amounts: number[]; // float8[]
@@ -272,8 +301,16 @@ export type SupabaseOrder = {
   issues: string[]; // varchar[]
 };
 
+export type SupabaseProduct = {
+  created_at: string; // timestampz
+  updated_at: string; // timestampz
+  id: string; // varchar
+  sku: string; // varchar
+  descriptor: string; // varchar
+};
+
 // --- APPLICATION TYPES ---
-// (Your internal types that you map API data into.)
+// (Internal types to map API data into.)
 
 export type TransactionData = {
   sku: string;
@@ -301,4 +338,10 @@ export type Transaction = {
   skus: string[];
   data: TransactionData[];
   issues: { message: string; info: Record<string, unknown> }[];
+};
+
+export type Product = {
+  id: string;
+  sku: string;
+  descriptor: string;
 };
