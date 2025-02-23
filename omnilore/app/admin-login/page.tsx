@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation";
-import Logo from "@/components/assets/logo.png"
+import Image from "next/image";
+// import Logo from "@/components/assets/logo.png"
 import { useState } from "react";
 import AlertBox from "@/components/alertbox";
 import {supabase} from "@/app/supabase";
@@ -101,7 +102,7 @@ export default function LoginPage() {
           </Button>
         </div>
         <div className="flex justify-center mt-4 ml-10"> {/* New div for logo */}
-          <img src={Logo.src} className="w-64 h-fit" />
+          <Image src="/components/assets/logo.png" width={256} height={256} alt="Logo" />
         </div>
       </main>
     </div>
