@@ -17,10 +17,6 @@ node -v
 
 <!-- should be v22 or higher -->
 
-npm i -g pm2
-cd omnilore/omnilore
-npm i
-
 sudo nano /etc/nginx/conf.d/db.omnilore.com.conf
 
 <!-- paste the following into the file -->
@@ -50,6 +46,10 @@ sudo systemctl enable nginx
 nano .env
 
 <!-- paste the env variables into the file -->
+
+npm i -g pm2
+cd omnilore
+npm i
 
 npm run build
 pm2 start npm --name "omnilore-nextjs-app" -- start
