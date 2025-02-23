@@ -1,36 +1,57 @@
-# Omnilore Project
+<!-- already have the elastic IP configured on the EC2 instance with the OS at least Amazon Linux 2023 -->
+<!-- for security and keys I selected the preexisting options that are already on our AWS accounts -->
+<!-- security group = launch-wizard-1, key name = Cron Job Public/Private Key Pair (RSA) -->
 
-This project uses Next.js, React, and React DOM.
+sudo yum install git
+sudo yum install nginx
+sudo yum install certbot
+sudo yum install python3-certbot-nginx
 
-## Getting Started
+git clone https://github.com/Omnilore-DB/USC-Fall-2024.git omnilore
+curl -fsSL https://fnm.vercel.app/install | bash
 
-1. Navigate to the project directory:
-   ```
-   cd omnilore
-   ```
+<!-- read last line of install. should say something like "In order to apply the changes, open a new terminal or run the following command..." -->
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
+fnm install --lts
+node -v
 
-3. Run the development server:
-   ```
-   npm run dev
-   ```
+<!-- should be v22 or higher -->
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+npm i -g pm2
+cd omnilore/omnilore
+npm i
 
-5. Available Pages:
-   - Login Page (General Member) : [http://localhost:3000/login-user](http://localhost:3000/login-user)
-   - Login Page (Admin) : [http://localhost:3000/login-admin](http://localhost:3000/login-admin)
+sudo nano /etc/nginx/conf.d/db.omnilore.com.conf
 
-## Scripts
+<!-- paste the following into the file -->
 
-- `npm run dev`: Starts the development server
-- `npm run build`: Builds the application for production
-- `npm start`: Runs the built application in production mode
+```
+server {
+    listen 80;
+    server_name db.omnilore.org;
 
-## Requirements
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
 
-- Node.js version 18 or higher
+<!-- save and exit nano -->
+
+sudo certbot --nginx -d db.omnilore.org
+
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+nano .env
+
+<!-- paste the env variables into the file -->
+
+npm run build
+pm2 start npm --name "omnilore-nextjs-app" -- start
+
+<!-- you may have to run ```pm2 startup``` to make pm2 auto-boot at server restart and follow any further instructions it gives you like "To setup the Startup Script, copy/paste the following command..." -->
