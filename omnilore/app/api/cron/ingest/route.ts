@@ -73,7 +73,10 @@ async function getLastUpdateTime() {
     .select()
     .eq("table_name", "orders");
 
-  if (error) throw new Error(error.hint);
+  if (error)
+    throw new Error(
+      `Failed to get last updated time for orders. ${error.hint}`
+    );
   return new Date(data[0].last_sync).toISOString();
 }
 
@@ -91,12 +94,11 @@ async function fetchTransactions(
 
     if (!res.ok) {
       throw new Error(
-        `Failed to fetch transactions with body: ${await res.text()}`
+        `Failed to fetch transactions with url ${nextPageUrl}. ${await res.text()}`
       );
     }
 
     const json = (await res.json()) as SquarespaceTransactionsAPIResponse;
-    console.log(`Fetched page with ${json.documents.length} transactions`);
 
     const pageTransactions = json.documents
       .filter(t => t.payments.length > 0)
@@ -109,81 +111,133 @@ async function fetchTransactions(
         payment_platform: t.payments[0].provider,
         external_transaction_id: t.payments[0].externalTransactionId,
         transaction_email: t.customerEmail,
-        skus: [] as string[],
-        data: [] as TransactionData[],
+        skus: [],
+        data: [],
+        issues: [],
       }));
 
     allTransactions.push(...pageTransactions);
     nextPageUrl = json.pagination?.nextPageUrl || "";
   }
 
-  console.log(`Total transactions fetched: ${allTransactions.length}`);
   return allTransactions;
 }
 
-async function processDonation(transaction: Transaction): Promise<Transaction> {
-  transaction.skus.push("SQDONATION");
+async function processDonation(t: Transaction): Promise<Transaction> {
+  t.skus.push("SQDONATION");
 
   const res = await fetchWithRetry(
-    `https://api.squarespace.com/1.0/profiles?${new URLSearchParams({
-      filter: "email," + transaction.transaction_email,
-    })}`,
+    `https://api.squarespace.com/1.0/profiles?filter=email,${encodeURIComponent(
+      t.transaction_email
+    )}`,
     {
       headers: { Authorization: `Bearer ${process.env.SQUARESPACE_API_KEY}` },
     }
   );
 
   if (!res.ok) {
-    throw new Error(`Failed to fetch profiles with body: ${await res.text()}`);
+    t.issues.push({
+      message: "Failed to fetch profile",
+      info: {
+        email: t.transaction_email,
+        status: res.status,
+        body: await res.text(),
+      },
+    });
+    return t;
   }
 
   const json = (await res.json()) as SquarespaceProfileAPIResponse;
 
-  if (json.profiles.length > 0) {
-    transaction.data.push({
-      sku: "SQDONATION",
-      name: json.profiles[0].firstName + " " + json.profiles[0].lastName,
-      email: transaction.transaction_email,
-      amount: transaction.total,
+  if (json.profiles.length < 1) {
+    t.issues.push({
+      message: "No profile found",
+      info: {
+        email: t.transaction_email,
+        status: res.status,
+      },
     });
+    return t;
   }
 
-  return transaction;
+  t.data.push({
+    sku: "SQDONATION",
+    name: json.profiles[0].firstName + " " + json.profiles[0].lastName,
+    email: t.transaction_email,
+    amount: t.total,
+  });
+
+  return t;
 }
 
-async function processOrder(transaction: Transaction): Promise<Transaction> {
+async function processOrder(t: Transaction): Promise<Transaction> {
   const res = await fetchWithRetry(
-    `https://api.squarespace.com/1.0/commerce/orders/${transaction.order_id}`,
+    `https://api.squarespace.com/1.0/commerce/orders/${t.order_id}`,
     {
       headers: { Authorization: `Bearer ${process.env.SQUARESPACE_API_KEY}` },
     }
   );
 
   if (res.status === 404) {
-    transaction.skus.push("ORDER_NOT_FOUND");
-    return transaction;
+    t.issues.push({
+      message: "Order not found",
+      info: {
+        order_id: t.order_id,
+        transaction_id: t.transaction_id,
+      },
+    });
+    return t;
   }
 
   if (!res.ok) {
-    throw new Error(`Failed to fetch order with body: ${await res.text()}`);
+    t.issues.push({
+      message: "Failed to fetch order",
+      info: {
+        order_id: t.order_id,
+        transaction_id: t.transaction_id,
+        status: res.status,
+        body: await res.text(),
+      },
+    });
+    return t;
   }
 
   const json = (await res.json()) as SquarespaceOrderAPIResponse;
 
-  json.lineItems.forEach(p => {
+  json.lineItems.forEach((p, idx) => {
     const cust = new Map(
       (p.customizations ?? []).map(obj => [obj.label, obj.value] as const)
     );
 
-    transaction.skus.push(p.sku ?? "NO_SKU_ASSIGNED");
+    if (p.sku === null) {
+      t.issues.push({
+        message: "No SKU assigned",
+        info: {
+          line_item_idx: idx,
+          order_id: t.order_id,
+          transaction_id: t.transaction_id,
+        },
+      });
+    }
+
+    t.skus.push(p.sku ?? "NO_SKU_ASSIGNED");
 
     const isValid =
       cust.has("Email") &&
       (cust.has("Name") || (cust.has("First Name") && cust.has("Last Name")));
 
-    if (!isValid) return;
+    if (!isValid) {
+      t.issues.push({
+        message: "Important fields missing",
+        info: {
+          line_item_idx: idx,
+          order_id: t.order_id,
+          transaction_id: t.transaction_id,
+        },
+      });
+    }
 
-    transaction.data.push({
+    t.data.push({
       sku: p.sku ?? "NO_SKU_ASSIGNED",
       email: cust.get("Email")!,
       name:
@@ -200,7 +254,7 @@ async function processOrder(transaction: Transaction): Promise<Transaction> {
     });
   });
 
-  return transaction;
+  return t;
 }
 
 async function processTransactions(
@@ -211,6 +265,7 @@ async function processTransactions(
 
   for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
     const batch = transactions.slice(i, i + BATCH_SIZE);
+    const done = wait(1000);
     const processedBatch = await Promise.all(
       batch.map(t => (t.order_id ? processOrder(t) : processDonation(t)))
     );
@@ -218,7 +273,7 @@ async function processTransactions(
 
     // Add a small delay between batches
     if (i + BATCH_SIZE < transactions.length) {
-      await wait(1000); // Wait 1 second between batches
+      await done;
     }
   }
 
@@ -241,6 +296,7 @@ function prepareOrdersForUpsert(orders: Transaction[]) {
       user_names: hasData ? t.data.map(d => d.name) : [],
       user_amounts: hasData ? t.data.map(d => d.amount) : [],
       member_pid: [],
+      issues: t.issues.map(i => i.message),
     } as Omit<SupabaseOrder, "created_at" | "updated_at">;
   });
 }
@@ -253,7 +309,10 @@ async function upsertOrders(
     .upsert(ordersToUpsert, { onConflict: "sqsp_transaction_id" })
     .select();
 
-  if (ordersError) throw new Error(ordersError.message);
+  if (ordersError)
+    throw new Error(
+      `Failed to upsert orders. ${ordersError.hint}. ${ordersError.message}`
+    );
 }
 
 async function updateLastSyncTime(currentTime: string) {
@@ -262,7 +321,10 @@ async function updateLastSyncTime(currentTime: string) {
     .update({ last_sync: currentTime })
     .eq("table_name", "orders");
 
-  if (updateError) throw new Error(updateError.message);
+  if (updateError)
+    throw new Error(
+      `Failed to update last sync time. ${updateError.hint}. ${updateError.message}`
+    );
 }
 
 export async function POST() {
@@ -271,19 +333,26 @@ export async function POST() {
     const now = new Date().toISOString();
 
     const transactions = await fetchTransactions(lastUpdated, now);
-    console.log("Fetched transactions:", transactions.length);
     const processedOrders = await processTransactions(transactions);
-    console.log("Processed transactions:", processedOrders.length);
     const ordersToUpsert = prepareOrdersForUpsert(processedOrders);
-    console.log("Prepared orders for upsert:", ordersToUpsert.length);
 
     await upsertOrders(ordersToUpsert);
-    console.log("Upserted orders:", ordersToUpsert.length);
     await updateLastSyncTime(now);
-    console.log("Last updated updated successfully.");
 
     return Response.json({
-      message: "Orders upserted and last_updated updated successfully.",
+      message: `Found ${transactions.length} transactions, processed ${
+        processedOrders.length
+      }, upserted ${ordersToUpsert.length}, issues with ${
+        processedOrders.filter(r => r.issues.length > 0).length
+      }.`,
+      warnings: processedOrders
+        .filter(r => r.issues.length > 0)
+        .map(r => ({
+          transaction_id: r.transaction_id,
+          order_id: r.order_id,
+          issues: r.issues,
+          date: r.date,
+        })),
     });
   } catch (error) {
     return Response.json(

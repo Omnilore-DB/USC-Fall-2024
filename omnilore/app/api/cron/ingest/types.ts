@@ -58,7 +58,7 @@ type Payment = {
   giftCardId: string | null;
   paidOn: string;
   externalTransactionId: string;
-  externalTransactionProperties: any[]; // Array of key/value pairs
+  externalTransactionProperties: unknown[]; // Array of key/value pairs
   externalCustomerId: string | null;
 };
 
@@ -269,6 +269,7 @@ export type SupabaseOrder = {
   user_amounts: number[]; // float8[]
   user_emails: string[]; // varchar[]
   member_pid: number[]; // int8[]
+  issues: string[]; // varchar[]
 };
 
 // --- APPLICATION TYPES ---
@@ -299,4 +300,5 @@ export type Transaction = {
   transaction_email: string;
   skus: string[];
   data: TransactionData[];
+  issues: { message: string; info: Record<string, unknown> }[];
 };
