@@ -4,7 +4,6 @@ import type {
   SquarespaceProfileAPIResponse,
   SquarespaceTransactionsAPIResponse,
   Transaction,
-  TransactionData,
   SupabaseOrder,
 } from "./types";
 
