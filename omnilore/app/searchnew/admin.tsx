@@ -2,12 +2,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { memberViews } from "@/app/schemas/members";
-import { getRoles } from "@/app/supabase";
+import { getRoles, getPermissions, Permission } from "@/app/supabase";
 import { getAccessibleViews, View } from "@/app/schemas/schema";
 import { allViews } from "@/app/schemas";
 import { ActionButton} from "@/components/ui/actionButton";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDown, Check } from "lucide-react";
+import InsertComponent from "./add";
 
 export default function AdminSearch() {
     const router = useRouter();
@@ -18,6 +19,12 @@ export default function AdminSearch() {
     const [roles, setRoles] = useState<string[]>([]);
     const [views, setViews] = useState<Record<string, View>>({});
     const [selectedView, setSelectedView] = useState<View | null>(null);
+    const [selectedRow, setSelectedRow] = useState<number | null>(null);
+    const [isInsertOpen, setIsInsertOpen] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [formData, setFormData] = useState<Record<string, any>>({});
+    const [permissions, setPermissions ] = useState<Record<string, Permission[]>>({});
+
 
     useEffect(() => {
         const setup = async () => {
@@ -29,6 +36,14 @@ export default function AdminSearch() {
             setRoles(userRoles);
             console.log("Roles:", userRoles);
 
+            const allPermissions: Record<string, Permission[]> = {};
+            for (const role of userRoles) {
+                const rolePermissions = await getPermissions(role);
+                allPermissions[role] = rolePermissions;
+            }
+            setPermissions(allPermissions);
+            console.log("Permissions:", allPermissions);
+
             const accessibleViews: Record<string, View> = {};
             for (const [_, viewList] of Object.entries(allViews)) {
                 const filteredViews = await getAccessibleViews(viewList);
@@ -38,23 +53,61 @@ export default function AdminSearch() {
             }
             setViews(accessibleViews);
 
-            console.log("Accessible Views:", accessibleViews);
-
-            // Set default selected view
             const firstView = Object.values(accessibleViews)[0] || null;
             setSelectedView(firstView);
-
-            // Determine member view based on roles
-            let newView = memberViews[0];
-            if (userRoles.includes("treasurer")) newView = memberViews[1];
-            if (userRoles.includes("admin")) newView = memberViews[2];
-            if (userRoles.includes("registrar")) newView = memberViews[3];
-
-            setSelectedMemberView(newView);
         };
 
         setup().catch(console.error);
     }, []);
+
+    const hasPermission = (action: keyof Permission) => {
+        if (!selectedView) return false;
+
+        console.log("selected view ", selectedView)
+        console.log()
+
+        return roles.some((role) =>
+            permissions[role]?.some((p) => p.table_name === selectedView.name && p[action])
+        );
+    };
+
+
+    // useEffect(() => {
+    //     const setup = async () => {
+    //         const userRoles = await getRoles();
+    //         if (!userRoles) {
+    //             console.error("Failed to fetch roles");
+    //             return;
+    //         }
+    //         setRoles(userRoles);
+    //         console.log("Roles:", userRoles);
+
+    //         const accessibleViews: Record<string, View> = {};
+    //         for (const [_, viewList] of Object.entries(allViews)) {
+    //             const filteredViews = await getAccessibleViews(viewList);
+    //             for (const view of filteredViews) {
+    //                 accessibleViews[view.name] = view;
+    //             }
+    //         }
+    //         setViews(accessibleViews);
+
+    //         console.log("Accessible Views:", accessibleViews);
+
+    //         // Set default selected view
+    //         const firstView = Object.values(accessibleViews)[0] || null;
+    //         setSelectedView(firstView);
+
+    //         // Determine member view based on roles
+    //         let newView = memberViews[0];
+    //         if (userRoles.includes("treasurer")) newView = memberViews[1];
+    //         if (userRoles.includes("admin")) newView = memberViews[2];
+    //         if (userRoles.includes("registrar")) newView = memberViews[3];
+
+    //         setSelectedMemberView(newView);
+    //     };
+
+    //     setup().catch(console.error);
+    // }, []);
 
     useEffect(() => {
         if (!selectedView) {
@@ -78,6 +131,54 @@ export default function AdminSearch() {
         ));
     }, [query, entries]);
 
+    const handleRowSelection = (pid: number) => {
+        if (selectedRow !== pid) {
+            setSelectedRow(pid);
+        }
+    };
+
+    const handleEditClick = () => {
+        if (selectedRow !== null) {
+            const rowData = entries.find(entry => entry.pid === selectedRow);
+            if (rowData) {
+                setFormData(rowData);
+                setEditMode(true);
+                setIsInsertOpen(true);
+            }
+        }
+    };
+
+
+    const handleAddClick = () => {
+        if (hasPermission("can_create")) {
+            setIsInsertOpen(true);
+        } else {
+            alert("You do not have permission to create entries for this table.");
+        }
+    };
+
+    const handleDeleteClick = () => {
+        if (!selectedRow) {
+            alert("Please select a row to delete.");
+            return;
+        }
+    
+        if (hasPermission("can_delete")) {
+            console.log("Delete action initiated for row:", selectedRow);
+            // Add your delete logic here, e.g., call an API to delete the entry
+        } else {
+            alert("You do not have permission to delete entries for this table.");
+        }
+    };
+    
+
+
+    
+    const handleCloseModal = () => {
+        setIsInsertOpen(false);
+        setFormData({}); // Clear form data when the modal closes
+    };
+
     return (
         <div className="w-full flex justify-center items-center flex-col">
             <div className="w-5/6">
@@ -85,7 +186,6 @@ export default function AdminSearch() {
                     
     <div className="relative w-1/6">
       <Select.Root value={selectedView?.name || ""} onValueChange={(value) => setSelectedView(views[value])}>
-        
         <Select.Trigger
             className="flex items-center justify-between border-1 border-gray-200 bg-gray-100 px-3 py-2 rounded-lg w-full shadow-sm text-gray-800 font-semibold 
                 group 
@@ -127,9 +227,9 @@ export default function AdminSearch() {
       </Select.Root>
     </div>
                     <div className="flex flex-row gap-1">
-                        <ActionButton actionType="add" />
-                        <ActionButton actionType="edit" />
-                        <ActionButton actionType="delete" />
+                        <ActionButton actionType="add" onClick={() => setIsInsertOpen(true)} />
+                        <ActionButton actionType="edit" onClick={handleEditClick} disabled={selectedRow === null} />
+                        <ActionButton actionType="delete" onClick={handleDeleteClick}/>
                     </div>
                 </div>
 
@@ -149,6 +249,17 @@ export default function AdminSearch() {
                     />
                 </div>
 
+                {selectedView && (
+                    <InsertComponent
+                        selectedView={selectedView}
+                        isOpen={isInsertOpen}
+                        setIsOpen={handleCloseModal} // Use the modified function
+                        formData={formData}
+                        setFormData={setFormData}
+                        editMode={editMode}
+                    />
+                )}
+
                 {/* Table Display */}
                 <div className="mt-6 overflow-x-auto">
                     <table className="w-full border-collapse border border-gray-200">
@@ -156,7 +267,8 @@ export default function AdminSearch() {
                             <tr>
                                 {roles.includes("admin") || roles.includes("treasurer") || roles.includes("registrar") ? (
                                     <>
-                                        <th className="outline outline-gray-200 outline-1 bg-gray-100 px-4 py-2 sticky left-0 z-5">PID</th>
+                                        <th className="outline outline-gray-200 outline-1 bg-gray-100 px-4 py-2 sticky left-0 z-5">Select</th>
+                                        <th className="outline outline-gray-200 outline-1 bg-gray-100 px-4 py-2 sticky left-20 z-5 border border-right-gray-200">PID</th>
                                         {entries.length > 0 && Object.keys(entries[0])
                                             .filter(name => name !== "pid")
                                             .map(columnName => (
@@ -172,10 +284,19 @@ export default function AdminSearch() {
                         </thead>
                         <tbody>
                             {filteredEntries.map((item, index) => (
-                                <tr key={index} className="group hover:bg-gray-50">
+                                <tr key={index} className="group hover:bg-gray-50" onClick={() => handleRowSelection(item.pid)} >
                                     {roles.includes("admin") || roles.includes("treasurer") || roles.includes("registrar") ? (
                                         <>
-                                            <td className="outline outline-gray-200 outline-1 border border-gray-200 px-4 py-2 bg-white sticky left-0 z-5 group-hover:bg-gray-50">
+                                            <td className="px-4 py-2 w-10 text-center sticky left-0 z-5 bg-white outline outline-1 outline-gray-200 group-hover:bg-gray-50">
+                                                <input
+                                                    type="radio"
+                                                    name="row-selection"
+                                                    checked={selectedRow === item.pid}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={() => handleRowSelection(item.pid)}
+                                                />
+                                            </td>
+                                            <td className="outline outline-gray-200 outline-1 px-4 py-2 bg-white sticky left-20 z-5 group-hover:bg-gray-50">
                                                 {item.pid}
                                             </td>
                                             {Object.keys(item)
