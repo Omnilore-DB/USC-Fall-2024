@@ -44,3 +44,22 @@ export const getPermissions = async (role: string): Promise<Permission[]> => {
     console.log(`Permissions for role "${role}":`, data);
     return data as Permission[];
 };
+
+
+export const getDataForTable = async (table: string) => {
+    try {
+        const { data, error } = await supabase
+            .from(table)
+            .select('*');
+
+        if (error) {
+            console.error(`Error fetching data for table ${table}:`, error.message);
+            return [];
+        }
+
+        return data ?? [];
+    } catch (error) {
+        console.error(`Unexpected error fetching data for table ${table}:`, error);
+        return [];
+    }
+};
