@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getTableSchema, upsertTableEntry } from "@/app/supabase"; // Assuming these functions exist
+import { getTableSchema, upsertTableEntry } from "@/app/supabase";
 
 interface InsertComponentProps {
   selectedTable: string | null;

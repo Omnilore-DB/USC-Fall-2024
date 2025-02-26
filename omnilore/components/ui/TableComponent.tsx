@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface TableComponentProps {
     entries: Record<string, any>[];
     roles: string[];
@@ -8,12 +10,6 @@ interface TableComponentProps {
     primaryKey: string;
 }
 
-const handleRowSelection = (pid: number) => {
-    if (selectedRow !== pid) {
-        setSelectedRow(pid);
-    }
-};
-
 const TableComponent = ({
     entries,
     roles,
@@ -21,6 +17,16 @@ const TableComponent = ({
     handleRowSelection,
     primaryKey
 }: TableComponentProps) => {
+    
+    const [localSelectedRow, setLocalSelectedRow] = useState<number | null>(selectedRow);
+
+    const handleRowClick = (pid: number) => {
+        if (localSelectedRow !== pid) {
+            setLocalSelectedRow(pid); // Instantly change the row color
+            handleRowSelection(pid); // Notify parent component asynchronously
+        }
+    };
+
     return (
         <div className="mt-6 overflow-x-auto">
             <table className="w-full border-collapse border border-gray-200">
@@ -49,34 +55,51 @@ const TableComponent = ({
                     {entries.map((item, index) => (
                         <tr
                             key={index}
-                            className="group hover:bg-gray-50"
-                            onClick={() => handleRowSelection(item[primaryKey])}
+                            className={`group cursor-pointer ${
+                                localSelectedRow === item[primaryKey] 
+                                    ? 'bg-gray-100' 
+                                    : 'hover:bg-gray-50'
+                            }`}
+                            onClick={() => handleRowClick(item[primaryKey])}
                         >
                             {roles.includes("admin") || roles.includes("treasurer") || roles.includes("registrar") ? (
                                 <>
-                                    <td className="px-4 py-2 w-10 text-center sticky left-0 z-5 bg-white outline outline-1 outline-gray-200 group-hover:bg-gray-50">
+                                    <td className={`px-4 py-2 w-10 text-center sticky left-0 z-5 outline outline-1 outline-gray-200
+                                            ${localSelectedRow === item[primaryKey] 
+                                                ? 'bg-gray-100' 
+                                                : 'hover:bg-gray-50 bg-white'
+                                            }`}
+                                    >
                                         <input
                                             type="radio"
                                             name="row-selection"
-                                            checked={selectedRow === item[primaryKey]}
+                                            checked={localSelectedRow === item[primaryKey]}
                                             onClick={(e) => e.stopPropagation()}
-                                            onChange={() => handleRowSelection(item[primaryKey])}
+                                            onChange={() => handleRowClick(item[primaryKey])}
                                         />
                                     </td>
-                                    <td className="outline outline-gray-200 outline-1 px-4 py-2 bg-white sticky left-20 z-5 group-hover:bg-gray-50">
+
+                                    <td 
+                                        className={`outline outline-gray-200 outline-1 px-4 py-2 sticky left-20 z-5
+                                            ${localSelectedRow === item[primaryKey] 
+                                                ? 'bg-gray-100' 
+                                                : 'hover:bg-gray-50 bg-white'
+                                            }`}
+                                    >
                                         {item[primaryKey]}
                                     </td>
+
                                     {Object.keys(item)
                                         .filter(name => name !== primaryKey)
                                         .map(columnName => (
-                                            <td key={columnName} className="border border-gray-200 px-4 py-2 group-hover:bg-gray-50">
+                                            <td key={columnName} className="border border-gray-200 px-4 py-2">
                                                 {item[columnName]}
                                             </td>
                                         ))}
                                 </>
                             ) : (
                                 Object.keys(item).map(columnName => (
-                                    <td key={columnName} className="border border-gray-200 px-4 py-2 group-hover:bg-gray-50">
+                                    <td key={columnName} className="border border-gray-200 px-4 py-2">
                                         {item[columnName]}
                                     </td>
                                 ))
