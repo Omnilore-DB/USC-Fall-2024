@@ -63,3 +63,44 @@ export const getDataForTable = async (table: string) => {
         return [];
     }
 };
+
+// Updated getTableSchema function using RPC
+export const getTableSchema = async (table: string) => {
+    try {
+        const { data, error } = await supabase.rpc('get_table_schema', { table_name: table });
+
+        if (error) {
+            console.error(`Failed to fetch schema for table ${table}:`, error.message);
+            return {};
+        }
+
+        const schema: Record<string, any> = {};
+        data?.forEach((column) => {
+            schema[column.column_name] = { type: column.data_type };
+        });
+
+        console.log(`Schema for table "${table}":`, schema);
+        return { columns: schema };
+    } catch (error) {
+        console.error(`Unexpected error fetching schema for table ${table}:`, error);
+        return {};
+    }
+};
+
+
+export const upsertTableEntry = async (table: string, data: Record<string, any>) => {
+    try {
+        const { error } = await supabase.from(table).upsert(data);
+
+        if (error) {
+            console.error(`Failed to upsert data in table ${table}:`, error.message);
+            throw new Error(error.message);
+        }
+
+        console.log(`Successfully upserted data into table "${table}"`);
+        return true;
+    } catch (error) {
+        console.error(`Unexpected error during upsert in table ${table}:`, error);
+        throw new Error('An unexpected error occurred during upsert.');
+    }
+};

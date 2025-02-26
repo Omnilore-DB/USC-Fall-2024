@@ -14,7 +14,6 @@ export default function AdminSearch() {
     const [entries, setEntries] = useState<Record<string, any>[]>([]);
     const [filteredEntries, setFilteredEntries] = useState<Record<string, any>[]>([]);
     const [roles, setRoles] = useState<string[]>([]);
-    const [selectedView, setSelectedView] = useState<View | null>(null);
     const [selectedRow, setSelectedRow] = useState<number | null>(null);
     const [isInsertOpen, setIsInsertOpen] = useState(false);
     const [editMode, setEditMode] = useState(false);
@@ -35,23 +34,37 @@ export default function AdminSearch() {
             setRoles(userRoles);
 
             const allPermissions: Record<string, Permission[]> = {};
-            const accessibleTables = new Set<string>();
+            const viewTables = new Set<string>();
+            const addTables = new Set<string>();
+            const editTables = new Set<string>();
+            const deleteTables = new Set<string>();
 
             for (const role of userRoles) {
                 const rolePermissions = await getPermissions(role);
                 allPermissions[role] = rolePermissions;
 
                 rolePermissions.forEach((permission) => {
+                    if (permission.can_create) {
+                        addTables.add(permission.table_name);
+                    }
                     if (permission.can_read) {
-                        accessibleTables.add(permission.table_name);
+                        viewTables.add(permission.table_name);
+                    }
+                    if (permission.can_write) {
+                        editTables.add(permission.table_name);
+                    }
+                    if (permission.can_delete) {
+                        deleteTables.add(permission.table_name);
                     }
                 });
             }
 
+            console.log("allPermissions", allPermissions)
+
             setPermissions(allPermissions);
-            setTables(Array.from(accessibleTables));
-            setSelectedTable(Array.from(accessibleTables)[0] || null);
-            console.log("Accessible tables:", accessibleTables);
+            setTables(Array.from(viewTables));
+            setSelectedTable(Array.from(viewTables)[0] || null);
+            console.log("Accessible tables:", viewTables);
         };
 
         setup().catch(console.error);
@@ -82,25 +95,17 @@ export default function AdminSearch() {
     
 
     const hasPermission = (action: keyof Permission) => {
-        if (!selectedView) return false;
+        console.log("running hasPermission");
 
-        console.log("selected view ", selectedView)
+        console.log("selectedTable", selectedTable);
+        console.log("current permissions", permissions);
+        
+        if (!selectedTable) return false;
 
         return roles.some((role) =>
-            permissions[role]?.some((p) => p.table_name === selectedView.name && p[action])
+            permissions[role]?.some((p) => p.table_name === selectedTable && p[action])
         );
     };
-
-    useEffect(() => {
-        if (!selectedView) {
-          return;
-        }
-        const fetchEntries = async () => {
-          const data = await selectedView.query_function();
-          setEntries(data);
-        };
-        fetchEntries().catch(console.error);
-      }, [selectedView]);
 
     useEffect(() => {
         const keywords = query.toLowerCase().split(" ").filter(Boolean);
@@ -112,30 +117,39 @@ export default function AdminSearch() {
             )
         ));
     }, [query, entries]);
+    
+    const handleAddClick = () => {
+        if (hasPermission("can_create")) {
+            setIsInsertOpen(true);
+            alert("ADD REGISTERED");
+            // Add addition logic here
 
-    const handleRowSelection = (pid: number) => {
-        if (selectedRow !== pid) {
-            setSelectedRow(pid);
+
+
+        } else {
+            alert("NO ADD PERMISSION");
         }
     };
 
     const handleEditClick = () => {
-        if (selectedRow !== null) {
-            const rowData = entries.find(entry => entry.pid === selectedRow);
-            if (rowData) {
-                setFormData(rowData);
-                setEditMode(true);
-                setIsInsertOpen(true);
-            }
+        if (!selectedRow) {
+            alert("Please select a row to edit.");
+            return;
         }
-    };
+        
+        if (hasPermission("can_write")) {
+            alert("EDIT REGISTERED");
+            // Add edit logic here
 
-
-    const handleAddClick = () => {
-        if (hasPermission("can_create")) {
-            setIsInsertOpen(true);
+            // setIsInsertOpen(true);
+            // const rowData = entries.find(entry => entry.pid === selectedRow);
+            //     if (rowData) {
+            //     setFormData(rowData);
+            //     setEditMode(true);
+            //     setIsInsertOpen(true);
+            // }
         } else {
-            alert("You do not have permission to create entries for this table.");
+            alert("NO EDIT PERMISSION");
         }
     };
 
@@ -146,19 +160,22 @@ export default function AdminSearch() {
         }
     
         if (hasPermission("can_delete")) {
-            console.log("Delete action initiated for row:", selectedRow);
-            // Add your delete logic here, e.g., call an API to delete the entry
+            alert("DELETE REGISTERED");
+            // Add delete logic here
+
+
+
         } else {
-            alert("You do not have permission to delete entries for this table.");
+            alert("NO DELETE PERMISSIONS");
         }
     };
 
-    
     const handleCloseModal = () => {
         setIsInsertOpen(false);
-        setFormData({}); // Clear form data when the modal closes
+        setFormData({});
     };
 
+    
     return (
         <div className="w-full flex justify-center items-center flex-col">
             <div className="w-5/6">
@@ -177,9 +194,9 @@ export default function AdminSearch() {
 
                 <SearchInput query={query} setQuery={setQuery} />
 
-                {selectedView && (
+                {selectedTable && (
                     <InsertComponent
-                        selectedView={selectedView}
+                        selectedTable={selectedTable}
                         isOpen={isInsertOpen}
                         setIsOpen={handleCloseModal}
                         formData={formData}

@@ -3,10 +3,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { View } from "@/app/schemas/schema";
+import { getTableSchema, upsertTableEntry } from "@/app/supabase"; // Assuming these functions exist
 
 interface InsertComponentProps {
-  selectedView: View;
+  selectedTable: string | null;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   formData: Record<string, any>;
@@ -14,24 +14,42 @@ interface InsertComponentProps {
   editMode: boolean;
 }
 
-export default function InsertComponent({ selectedView, isOpen, setIsOpen, formData, setFormData, editMode }: InsertComponentProps) {
+export default function InsertComponent({ selectedTable, isOpen, setIsOpen, formData, setFormData, editMode }: InsertComponentProps) {
+  const [schema, setSchema] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    const fetchSchema = async () => {
+      if (selectedTable) {
+        try {
+          const tableSchema = await getTableSchema(selectedTable);
+          setSchema(tableSchema);
+        } catch (error: any) {
+          console.error("Failed to fetch schema for table:", selectedTable, error);
+          toast.error("Failed to fetch table schema.");
+        }
+      }
+    };
+
+    fetchSchema().catch(console.error);
+  }, [selectedTable]);
+
   const handleInputChange = (key: string, value: string) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSubmit = async () => {
-    if (!selectedView) {
-      toast.error("No view selected");
+    if (!selectedTable) {
+      toast.error("No table selected");
       return;
     }
 
     try {
       if (editMode) {
-        await selectedView.upsert_function(formData); // Assume upsert handles updates
+        await upsertTableEntry(selectedTable, formData); // Assume upsert handles updates
         toast.success("Entry updated successfully");
       } else {
         const { pid, ...newEntry } = formData; // Remove PID if it's a new entry
-        await selectedView.upsert_function(newEntry);
+        await upsertTableEntry(selectedTable, newEntry);
         toast.success("Data inserted successfully");
       }
 
@@ -44,10 +62,9 @@ export default function InsertComponent({ selectedView, isOpen, setIsOpen, formD
 
   useEffect(() => {
     if (!isOpen) {
-        setFormData({}); // Clear form data when the modal is closed
+      setFormData({}); // Clear form data when the modal is closed
     }
   }, [isOpen]);
-
 
   return (
     <>
@@ -56,7 +73,7 @@ export default function InsertComponent({ selectedView, isOpen, setIsOpen, formD
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[90vh] flex flex-col">
             <h2 className="text-lg font-bold mb-4">{editMode ? "Edit Entry" : "Add New Entry"}</h2>
             <div className="overflow-y-auto flex-1 px-2" style={{ maxHeight: "60vh" }}>
-              {Object.keys(selectedView.schema?.columns || {})
+              {Object.keys(schema?.columns || {})
                 .filter(column => column.toLowerCase() !== "pid")
                 .map(column => (
                   <div key={column} className="flex flex-col mb-2">

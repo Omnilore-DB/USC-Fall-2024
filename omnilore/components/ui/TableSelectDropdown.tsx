@@ -13,7 +13,7 @@ const TableSelectDropdown = ({ tables, selectedTable, setSelectedTable }: TableS
     return (
         <Select.Root value={selectedTable || ""} onValueChange={setSelectedTable}>
             <Select.Trigger
-                className="flex items-center justify-between border-1 border-gray-200 bg-gray-100 px-3 py-2 rounded-lg w-full shadow-sm text-gray-800 font-semibold group focus:outline-none focus:ring-0 data-[state=open]:border-transparent transition"
+                className="flex items-center justify-between border-1 border-gray-200 bg-gray-100 px-3 py-1 rounded-lg w-full shadow-sm text-gray-800 font-semibold group focus:outline-none focus:ring-0 data-[state=open]:border-transparent transition"
             >
                 <Select.Value placeholder="Select a view" />
                 <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -32,7 +32,7 @@ const TableSelectDropdown = ({ tables, selectedTable, setSelectedTable }: TableS
                             >
                                 <Select.ItemText>{table}</Select.ItemText>
                                 <Select.ItemIndicator>
-                                    <Check className="w-4 h-4 text-blue-500" />
+                                    <Check className="w-4 h-4" />
                                 </Select.ItemIndicator>
                             </Select.Item>
                         ))

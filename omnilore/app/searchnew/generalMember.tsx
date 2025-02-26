@@ -25,7 +25,7 @@ export default function GeneralMemberSearch() {
             setRoles(roles);
             console.log("Roles", roles);
     
-            let newView = memberViews[0]; // General member
+            let newView = memberViews[0];
 
             if (roles.includes("treasurer")) {
                 console.log("User is a treasurer");
