@@ -69,7 +69,7 @@ export default function InsertComponent({ selectedTable, isOpen, setIsOpen, form
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-10">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-30">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[90vh] flex flex-col">
             <h2 className="text-lg font-bold mb-4">{editMode ? "Edit Entry" : "Add New Entry"}</h2>
             <div className="overflow-y-auto flex-1 px-2" style={{ maxHeight: "60vh" }}>

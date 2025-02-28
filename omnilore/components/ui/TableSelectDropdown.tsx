@@ -20,7 +20,7 @@ const TableSelectDropdown = ({ tables, selectedTable, setSelectedTable }: TableS
             </Select.Trigger>
             <Select.Content
                 position="popper"
-                className="border border-gray-200 bg-white rounded-lg shadow-lg w-full mt-1 z-10"
+                className="border border-gray-200 bg-white rounded-lg shadow-lg w-full mt-1 z-30"
             >
                 <Select.Viewport className="p-1">
                     {tables.length > 0 ? (

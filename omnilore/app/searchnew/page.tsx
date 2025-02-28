@@ -51,7 +51,7 @@ export default function Search() {
     }, []);
 
     return (
-        <div className="w-full flex justify-center items-center flex-col">
+        <div className="w-full h-screen flex flex-col">
             <nav className="w-full bg-white flex flex-row justify-between px-12 py-8">
                 <div className="flex flex-row items-center gap-3">
                     <img src={Logo.src} className="w-12 h-fit" alt="Omnilore Logo" />
@@ -68,11 +68,13 @@ export default function Search() {
             </nav>
 
             
-            {roles === null ? (
-                <div>Loading...</div>
-            ):(
-                isAdmin ? <AdminView /> : <GeneralMemberView />
-            )}
+            <div className="flex-grow flex flex-col w-full overflow-y-auto">
+                {roles === null ? (
+                    <div>Loading...</div>
+                ):(
+                    isAdmin ? <AdminView /> : <GeneralMemberView />
+                )}
+            </div>
         </div>
     );
 }

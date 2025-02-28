@@ -5,7 +5,7 @@ interface SearchInputProps {
 
 const SearchInput = ({ query, setQuery }: SearchInputProps) => {
     return (
-        <div className="relative w-full mt-4">
+        <div className="relative w-full">
             <img 
                 src="/search-icon.svg" 
                 alt="Search Icon" 

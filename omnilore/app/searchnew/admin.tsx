@@ -125,7 +125,6 @@ export default function AdminSearch() {
             // Add addition logic here
 
 
-
         } else {
             alert("NO ADD PERMISSION");
         }
@@ -177,43 +176,54 @@ export default function AdminSearch() {
 
     
     return (
-        <div className="w-full flex justify-center items-center flex-col">
-            <div className="w-5/6">
-                <div className="w-full flex justify-between">
-                    <div className="relative w-1/6">
-                    
-                    <TableSelectDropdown tables={tables} selectedTable={selectedTable} setSelectedTable={setSelectedTable} />
-
-                    </div>
-                    <div className="flex flex-row gap-1">
-                        <ActionButton actionType="add" onClick={handleAddClick} />
-                        <ActionButton actionType="edit" onClick={handleEditClick} disabled={selectedRow === null} />
-                        <ActionButton actionType="delete" onClick={handleDeleteClick}/>
-                    </div>
-                </div>
-
-                <SearchInput query={query} setQuery={setQuery} />
-
-                {selectedTable && (
-                    <InsertComponent
-                        selectedTable={selectedTable}
-                        isOpen={isInsertOpen}
-                        setIsOpen={handleCloseModal}
-                        formData={formData}
-                        setFormData={setFormData}
-                        editMode={editMode}
-                    />
-                )}
-                {primaryKey && (
-                    <TableComponent
-                        entries={filteredEntries}
-                        roles={roles}
-                        selectedRow={selectedRow}
-                        handleRowSelection={setSelectedRow}
-                        primaryKey={primaryKey}
-                    />
-                )}
+        <div className="w-full h-full flex flex-col items-center">
+    <div className="w-5/6 h-full flex flex-col gap-3">
+        <div className="flex justify-between">
+            <div className="w-1/5">
+                <TableSelectDropdown 
+                    tables={tables} 
+                    selectedTable={selectedTable} 
+                    setSelectedTable={setSelectedTable} 
+                />
+            </div>
+            <div className="flex gap-1">
+                <ActionButton actionType="add" onClick={handleAddClick} />
+                <ActionButton 
+                    actionType="edit" 
+                    onClick={handleEditClick} 
+                    disabled={selectedRow === null} 
+                />
+                <ActionButton actionType="delete" onClick={handleDeleteClick} />
             </div>
         </div>
+
+        <SearchInput query={query} setQuery={setQuery} />
+
+        {selectedTable && (
+            <InsertComponent
+                selectedTable={selectedTable}
+                isOpen={isInsertOpen}
+                setIsOpen={handleCloseModal}
+                formData={formData}
+                setFormData={setFormData}
+                editMode={editMode}
+            />
+        )}
+        
+        {primaryKey && (
+            <div className="flex-grow w-full overflow-y-auto mb-4">
+                <TableComponent
+                    entries={filteredEntries}
+                    roles={roles}
+                    selectedRow={selectedRow}
+                    handleRowSelection={setSelectedRow}
+                    primaryKey={primaryKey}
+                />
+            </div>
+        )}
+    </div>
+</div>
+
     );
+    
 }
