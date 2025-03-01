@@ -29,7 +29,7 @@ const TableComponent = ({
 
     return (
         <div className="flex flex-col h-full w-full">
-            <div className="flex-grow h-full w-full overflow-y-auto overflow-x-auto overflow-x: visible">
+            <div className="flex-grow h-full w-full overflow-y-auto overflow-x-auto overflow-x: visible custom-scrollbar">
                 <div className="h-full w-full min-h-full min-w-full">
                     <table className="w-full border-collapse border border-gray-200">
                         <thead className="bg-gray-100">

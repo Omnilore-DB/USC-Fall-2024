@@ -76,3 +76,32 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d6d6dd #f3f4f6;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  padding: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #d6d6dd;
+  border-radius: 10px;
+  border: 2px solid #f3f4f6;
+  min-height: 24px;
+}
+
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #bdbdc2 !important;
+}
