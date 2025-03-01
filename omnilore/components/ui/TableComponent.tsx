@@ -100,13 +100,20 @@ const TableComponent = ({
                             </tr>
                         </thead>
                         <tbody>
-                            {entries.map((item, index) => (
+                            {entries.map((item, index) => {
+                                const hasIssue = Object.keys(item).some(columnName => 
+                                    columnName === 'issues' && Array.isArray(item[columnName]) && item[columnName].length > 0
+                                );
+                                
+                                return (
                                 <tr
                                     key={index}
                                     className={`group cursor-pointer ${
-                                        localSelectedRow === item[primaryKey] 
-                                            ? 'bg-gray-100' 
-                                            : 'bg-white group-hover:bg-gray-50'
+                                        hasIssue 
+                                            ? 'bg-red-50' 
+                                            : localSelectedRow === item[primaryKey] 
+                                                ? 'bg-gray-100' 
+                                                : 'bg-white group-hover:bg-gray-50'
                                     }`}
                                     onClick={() => handleRowClick(item[primaryKey])}
                                 >
@@ -114,9 +121,11 @@ const TableComponent = ({
                                         <>
                                         <td 
                                                 className={`px-4 py-2 w-10 text-center sticky left-0 z-10
-                                                    ${localSelectedRow === item[primaryKey] 
-                                                        ? 'bg-gray-100' 
-                                                        : 'bg-white group-hover:bg-gray-50'
+                                                    ${ hasIssue 
+                                                            ? 'bg-red-50' 
+                                                            : localSelectedRow === item[primaryKey] 
+                                                                ? 'bg-gray-100' 
+                                                                : 'bg-white group-hover:bg-gray-50'
                                                     }`}
                                                 style={{
                                                     boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
@@ -139,9 +148,11 @@ const TableComponent = ({
                                 
                                             <td 
                                                 className={`px-4 py-2 sticky left-20 z-10
-                                                    ${localSelectedRow === item[primaryKey] 
-                                                        ? 'bg-gray-100' 
-                                                        : 'bg-white group-hover:bg-gray-50'
+                                                    ${ hasIssue 
+                                                            ? 'bg-red-50' 
+                                                            : localSelectedRow === item[primaryKey] 
+                                                                ? 'bg-gray-100' 
+                                                                : 'bg-white group-hover:bg-gray-50'
                                                     }`}
                                                     style={{
                                                         boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
@@ -157,9 +168,11 @@ const TableComponent = ({
                                                     <td 
                                                         key={columnName} 
                                                         className={` px-4 py-2
-                                                            ${localSelectedRow === item[primaryKey] 
-                                                                ? 'bg-gray-100' 
-                                                                : 'bg-white group-hover:bg-gray-50'
+                                                            ${hasIssue
+                                                                ? 'bg-red-50' 
+                                                                : localSelectedRow === item[primaryKey] 
+                                                                    ? 'bg-gray-100' 
+                                                                    : 'bg-white group-hover:bg-gray-50'
                                                             }`}
                                                             style={{
                                                                 boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
@@ -189,7 +202,7 @@ const TableComponent = ({
                                         ))
                                     )}
                                 </tr>
-                            ))}
+                            )})}
                             {entries.length === 0 && (
                                 <tr>
                                     <td
