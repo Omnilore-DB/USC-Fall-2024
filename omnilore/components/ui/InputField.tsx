@@ -11,9 +11,27 @@ interface ActionPanelProps {
     isArray: boolean;
     isEnum?: boolean;
     enumValues?: string[];
+    mode: string;
 }
 
-export default function InputField({ fieldName, fieldType, required, value, isArray, isEnum, enumValues }: ActionPanelProps) {
+export default function InputField({ fieldName, fieldType, required, value, isArray, isEnum, enumValues, mode }: ActionPanelProps) {
+    useEffect(() => {
+        // Reset fields when value changes (triggered when formData is cleared)
+        setArrayInput(isArray ? formatArray(normalizedValue) : normalizedValue);
+        setSelectedDate(fieldType.includes("timestamp") && normalizedValue ? new Date(normalizedValue) : null);
+
+        if (fieldType.includes("timestamp")) {
+            if (mode === "add" && !value) {
+                console.log("Resetting timestamp field to current time in add mode");
+                setSelectedDate(new Date());
+            } else if (value) {
+                setSelectedDate(new Date(value));
+            }
+        }
+
+    }, [value]);
+
+    
     console.log("INPUT FIELD", fieldName, fieldType, value);
 
     // Ensure value is an array if isArray is true and value is empty
@@ -27,10 +45,19 @@ export default function InputField({ fieldName, fieldType, required, value, isAr
         isArray ? formatArray(normalizedValue) : normalizedValue
     );
 
-    // State to handle DatePicker input
-    const [selectedDate, setSelectedDate] = useState(
-        fieldType.includes("timestamp") && normalizedValue ? new Date(normalizedValue) : null
-    );
+    // State to handle DatePicker input, defaulting to current time only on initial render if value is empty
+    const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+        return fieldType === "timestamp" || fieldType === "timestamptz"
+            ? value
+                ? new Date(value)
+                : mode === "add"
+                ? new Date()
+                : null
+            : null;
+    });
+
+    console.log("selectedDate ", selectedDate, " for value ", value);
+
 
     const handleChange = (date: Date) => {
         if (!date) return;
@@ -89,7 +116,7 @@ export default function InputField({ fieldName, fieldType, required, value, isAr
                             type="number" 
                             className="border border-gray-300 rounded p-2 w-full"
                             required={required}
-                            defaultValue={normalizedValue}
+                            defaultValue={normalizedValue ?? 0}
                         />
                     )}
 

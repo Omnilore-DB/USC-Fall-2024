@@ -21,17 +21,21 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode, sele
             document.body.style.overflow = "hidden";
         } else {
             document.body.style.overflow = "auto";
+            
+            // Clear form data when the panel is closed
+            if (!isOpen) {
+                setFormData({});
+            }
         }
-
+    
         if (mode === "edit" && selectedRow) {
             setFormData(selectedRow);
         } else {
             setFormData({});
         }
-
-        console.log("ACTION PANEL FORM DATA: ", formData);
-
+    
     }, [isOpen, selectedTable]);
+    
 
 
 
@@ -98,6 +102,7 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode, sele
                                     isArray={isArray} 
                                     isEnum={isEnum}
                                     enumValues={enumValues}
+                                    mode={mode}
                                 />
                             ))}
                     </div>
