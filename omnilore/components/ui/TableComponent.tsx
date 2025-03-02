@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface TableComponentProps {
     entries: Record<string, any>[];
     roles: string[];
-    selectedRow: number | null;
-    handleRowSelection: (primaryKeyValue: any) => void;
+    selectedRow: Record<string, any> | null;
+    handleRowSelection: (row: Record<string, any>) => void;
     primaryKey: string;
 }
 
@@ -18,18 +18,23 @@ const TableComponent = ({
     primaryKey
 }: TableComponentProps) => {
     
-    const [localSelectedRow, setLocalSelectedRow] = useState<number | null>(selectedRow);
+    const [localSelectedRow, setLocalSelectedRow] = useState<Record<string, any> | null>(selectedRow);
 
-    const handleRowClick = (pid: number) => {
-            if (localSelectedRow !== pid) {
-            setLocalSelectedRow(pid);
-            handleRowSelection(pid);
+    const handleRowClick = (row: Record<string, any>) => {
+        if (localSelectedRow !== row) {
+            setLocalSelectedRow(row);
+            handleRowSelection(row);
         }
     };
 
+    useEffect(() => {
+        console.log("UPDATED ROW OBJECT: ", localSelectedRow);
+    }, [localSelectedRow]);
+    
+
     return (
         <div className="flex flex-col h-full w-full">
-            <div className="flex-grow h-full w-full overflow-y-auto overflow-x-auto overflow-x: visible custom-scrollbar">
+            <div className="flex-grow h-full w-full overflow-y-auto overflow-x-auto overflow-x:visible custom-scrollbar">
                 <div className="h-full w-full min-h-full min-w-full">
                     <table className="w-full border-collapse border border-gray-200">
                         <thead className="bg-gray-100">
@@ -111,11 +116,11 @@ const TableComponent = ({
                                     className={`group cursor-pointer ${
                                         hasIssue 
                                             ? 'bg-red-50' 
-                                            : localSelectedRow === item[primaryKey] 
+                                            : (localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey]) 
                                                 ? 'bg-gray-100' 
                                                 : 'bg-white group-hover:bg-gray-50'
                                     }`}
-                                    onClick={() => handleRowClick(item[primaryKey])}
+                                    onClick={() => handleRowClick(item)}
                                 >
                                     {roles.includes("admin") || roles.includes("treasurer") || roles.includes("registrar") ? (
                                         <>
@@ -123,7 +128,7 @@ const TableComponent = ({
                                                 className={`px-4 py-2 w-10 text-center sticky left-0 z-10
                                                     ${ hasIssue 
                                                             ? 'bg-red-50' 
-                                                            : localSelectedRow === item[primaryKey] 
+                                                            : (localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey]) 
                                                                 ? 'bg-gray-100' 
                                                                 : 'bg-white group-hover:bg-gray-50'
                                                     }`}
@@ -140,7 +145,7 @@ const TableComponent = ({
                                                 <input
                                                     type="radio"
                                                     name="row-selection"
-                                                    checked={localSelectedRow === item[primaryKey]}
+                                                    checked={!!localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey]}
                                                     onClick={(e) => e.stopPropagation()}
                                                     onChange={() => handleRowClick(item[primaryKey])}
                                                 />
@@ -149,7 +154,7 @@ const TableComponent = ({
                                             <td className={`px-4 py-2 sticky left-20 z-10
                                                     ${ hasIssue 
                                                             ? 'bg-red-50' 
-                                                            : localSelectedRow === item[primaryKey] 
+                                                            : (localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey])
                                                                 ? 'bg-gray-100' 
                                                                 : 'bg-white group-hover:bg-gray-50'
                                                     }`}
@@ -169,7 +174,7 @@ const TableComponent = ({
                                                         className={` px-4 py-2
                                                             ${hasIssue
                                                                 ? 'bg-red-50' 
-                                                                : localSelectedRow === item[primaryKey] 
+                                                                : (localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey])
                                                                     ? 'bg-gray-100' 
                                                                     : 'bg-white group-hover:bg-gray-50'
                                                             }`}
@@ -192,7 +197,7 @@ const TableComponent = ({
                                             <td 
                                                 key={columnName} 
                                                 className={` px-4 py-2
-                                                    ${localSelectedRow === item[primaryKey] 
+                                                    ${(localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey])
                                                         ? 'bg-gray-100' 
                                                         : 'bg-white group-hover:bg-gray-50'
                                                     }`}

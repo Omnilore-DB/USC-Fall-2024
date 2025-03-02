@@ -7,10 +7,13 @@ interface ActionPanelProps {
     onClose: () => void;
     selectedTable: string;
     mode: string;
+    selectedRow?: Record<string, any>;
 }
 
-export default function ActionPanel({ isOpen, onClose, selectedTable, mode }: ActionPanelProps) {
-    const [fields, setFields] = useState<{ name: string; type: string; nullable: boolean; }[]>([]);
+export default function ActionPanel({ isOpen, onClose, selectedTable, mode, selectedRow }: ActionPanelProps) {
+    const [fields, setFields] = useState<{ name: string; type: string; nullable: boolean; isArray: boolean; }[]>([]);
+    const [formData, setFormData] = useState<Record<string, any>>({});
+
 
     useEffect(() => {
         if (isOpen && selectedTable) {
@@ -19,7 +22,18 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode }: Ac
         } else {
             document.body.style.overflow = "auto";
         }
+
+        if (mode === "edit" && selectedRow) {
+            setFormData(selectedRow);
+        } else {
+            setFormData({});
+        }
+
+        console.log("ACTION PANEL FORM DATA: ", formData);
+
     }, [isOpen, selectedTable]);
+
+
 
     const fetchSchema = async () => {
         const schema = await getTableSchema(selectedTable);
@@ -28,6 +42,7 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode }: Ac
                 name,
                 type: details.type,
                 nullable: details.nullable,
+                isArray: details.isArray,
             }));
             setFields(fieldList);
         }
@@ -43,7 +58,7 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode }: Ac
             )}
 
             <div
-                className={` border rounded-xl fixed bottom-0 right-0 h-[90%] w-1/3 bg-white shadow-lg z-50 transform ${
+                className={` border rounded-tl-xl fixed bottom-0 right-0 h-[90%] w-1/3 bg-white shadow-lg z-50 transform ${
                     isOpen ? "translate-x-0" : "translate-x-full"
                 } transition-transform duration-250`}
             >
@@ -69,9 +84,9 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode }: Ac
 
                     </div>
 
-                    <div className="p-8 flex flex-col w-full h-full">
-                            {fields.map(({ name, type, nullable }) => (
-                            <InputField key={name} fieldName={name} fieldType={type} required={!nullable} value={""} />
+                    <div className="flex flex-col w-full h-full gap-8 overflow-y-auto overflow-hidden custom-scrollbar p-8">
+                            {fields.map(({ name, type, nullable, isArray }) => (
+                            <InputField key={name} fieldName={name} fieldType={type} required={!nullable} value={formData[name]} isArray={isArray} />
                         ))}
                     </div>
                 </div>

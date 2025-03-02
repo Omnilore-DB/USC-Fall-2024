@@ -11,6 +11,12 @@ export interface Permission {
     can_delete: boolean;
 }
 
+interface TableColumn {
+    column_name: string;
+    udt_name: string;
+    is_nullable: boolean;
+}
+
 export async function getRoles(){
     const {error, data} = await supabase.rpc('get_current_user_roles');
     if (error) {
@@ -64,7 +70,6 @@ export const getDataForTable = async (table: string) => {
     }
 };
 
-// Updated getTableSchema function using RPC
 export const getTableSchema = async (table: string) => {
     try {
         const { data, error } = await supabase.rpc('get_table_schema', { table_name: table });
@@ -74,21 +79,21 @@ export const getTableSchema = async (table: string) => {
             return {};
         }
 
-        console.log(data);
-
         const schema: Record<string, any> = {};
-        data?.forEach((column) => {
-            schema[column.column_name] = { type: column.udt_name, nullable: column.is_nullable };
+        data?.forEach((column: TableColumn) => {
+            const isArray = column.udt_name.startsWith('_'); // Check if it's an array type
+
+            const type = isArray ? column.udt_name.substring(1) : column.udt_name; // Remove `_` prefix if array
+
+            schema[column.column_name] = { type, nullable: column.is_nullable, isArray };
         });
 
-        console.log(`Schema for table "${table}":`, schema);
         return { columns: schema };
     } catch (error) {
         console.error(`Unexpected error fetching schema for table ${table}:`, error);
         return {};
     }
 };
-
 
 export const upsertTableEntry = async (table: string, data: Record<string, any>) => {
     try {

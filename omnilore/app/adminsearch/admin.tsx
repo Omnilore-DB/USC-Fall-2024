@@ -12,7 +12,7 @@ export default function AdminSearch() {
     const [query, setQuery] = useState("");
     const [entries, setEntries] = useState<Record<string, any>[]>([]);
     const [roles, setRoles] = useState<string[]>([]);
-    const [selectedRow, setSelectedRow] = useState<number | null>(null);
+    const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null);
     const [editMode, setEditMode] = useState(false);
     const [permissions, setPermissions] = useState<Record<string, Permission[]>>({});
     const [tables, setTables] = useState<string[]>([]);
@@ -66,12 +66,9 @@ export default function AdminSearch() {
                 });
             }
 
-            console.log("allPermissions", allPermissions)
-
             setPermissions(allPermissions);
             setTables(Array.from(viewTables));
             setSelectedTable(Array.from(viewTables)[0] || null);
-            console.log("Accessible tables:", viewTables);
         };
 
         setup().catch(console.error);
@@ -101,11 +98,6 @@ export default function AdminSearch() {
 
 
     const hasPermission = (action: keyof Permission) => {
-        console.log("running has Permission");
-
-        console.log("selectedTable", selectedTable);
-        console.log("current permissions", permissions);
-
         if (!selectedTable) return false;
 
         return roles.some((role) =>
@@ -178,7 +170,7 @@ export default function AdminSearch() {
                             entries={filteredEntries}
                             roles={roles}
                             selectedRow={selectedRow}
-                            handleRowSelection={setSelectedRow}
+                            handleRowSelection={(row) => setSelectedRow(row)}
                             primaryKey={primaryKey}
                         />
                     </div>
@@ -190,6 +182,7 @@ export default function AdminSearch() {
                 onClose={() => setIsPanelOpen(false)}
                 selectedTable={selectedTable}
                 mode={editMode ? "edit" : "add"}
+                selectedRow ={selectedRow }
                     />
             )}
             
