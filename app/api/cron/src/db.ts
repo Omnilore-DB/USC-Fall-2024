@@ -48,40 +48,59 @@ export async function updateLastSyncTime(
 export async function upsertTransactions(
   transactionsToUpsert: Omit<SupabaseTransaction, "created_at" | "updated_at">[]
 ) {
-  const { error: transactionsError, data: transactionsData } = await supabase
+  const { error, data } = await supabase
     .from("transactions")
     .upsert(transactionsToUpsert, { onConflict: "sqsp_transaction_id" })
     .select();
 
-  if (transactionsError)
+  if (error)
     throw new Error(
-      `Failed to upsert transactions. ${transactionsError.hint}. ${transactionsError.message}`
+      `Failed to upsert transactions. ${error.hint}. ${error.message}`
     );
 
-  return transactionsData;
+  return data;
 }
 
 export async function upsertProducts(
   productsToUpsert: Omit<SupabaseProduct, "created_at" | "updated_at">[]
 ) {
-  const { error: productsError, data: productsData } = await supabase
+  const { error, data } = await supabase
     .from("products")
     .upsert(productsToUpsert, { onConflict: "sku" })
     .select();
 
-  if (productsError)
+  if (error)
     throw new Error(
-      `Failed to upsert products. ${productsError.hint}. ${productsError.message}`
+      `Failed to upsert products. ${error.hint}. ${error.message}`
     );
 
-  return productsData;
+  return data;
 }
 
 export async function getMembers() {
   const { data, error } = await supabase.from("members").select();
 
   if (error)
-    throw new Error(`Failed to get members. ${error.hint}. ${error.message}`);
+    throw new Error(
+      `Failed to get supabase members. ${error.hint}. ${error.message}`
+    );
 
   return data as SupabaseMember[];
+}
+
+export async function getTransactionsAfterDate(date: Date | string) {
+  // Convert Date object to ISO string if needed
+  const dateString = date instanceof Date ? date.toISOString() : date;
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("sqsp_transaction_id, issues, parsed_form_data")
+    .gte("updated_at", dateString);
+
+  if (error)
+    throw new Error(
+      `Failed to get supabase transactions after ${dateString}. ${error.hint}. ${error.message}`
+    );
+
+  return data;
 }

@@ -288,6 +288,7 @@ export type SupabaseTransaction = {
   updated_at: string; // timestampz
   sqsp_transaction_id: string; // varchar
   sqsp_order_id: string | null; // varchar | null
+  transaction_email: string; // text
   amount: number; // float8
   fee: number; // float8
   date: string; // timestampz
@@ -296,10 +297,9 @@ export type SupabaseTransaction = {
   external_transaction_id: string; // varchar
   user_names: string[]; // varchar[]
   user_amounts: number[]; // float8[]
-  user_emails: string[]; // varchar[]
   member_pid: number[]; // int8[]
   issues: Issue[]; // jsonb[]
-  user_form_input: Record<string, unknown>[]; // jsonb[]
+  parsed_form_data: Record<string, unknown>[]; // jsonb[]
 };
 
 export type SupabaseProduct = {
@@ -344,10 +344,10 @@ export type SupabaseMember = {
 
 export type TransactionData = {
   sku: string;
-  name: string;
-  email: string;
-  phone?: string;
   amount: number;
+  name?: string;
+  email?: string;
+  phone?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -381,7 +381,7 @@ type IssueCode =
   | "MISSING_FIELDS"
   | "PROFILE_NOT_FOUND"
   | "ORDER_NOT_FOUND"
-  | "SKU_NOT_FOUND"
+  | "SKU_UNASSIGNED"
   | "MEMBER_CONFLICT";
 
 export type Product = {

@@ -12,8 +12,8 @@ import { apiResponse } from "../src/utils";
 
 export async function POST() {
   return apiResponse(async () => {
-    const lastUpdated = await getLastSyncTime("transactions");
     const now = new Date().toISOString();
+    const lastUpdated = await getLastSyncTime("transactions");
 
     const ts = await fetchTransactions(lastUpdated, now);
     const processedTs = await processDetails(ts);

@@ -29,19 +29,22 @@ export async function fetchTransactions(
 
     const pageTransactions = json.documents
       .filter(t => t.payments.length > 0)
-      .map(t => ({
-        transaction_id: t.id,
-        order_id: t.salesOrderId,
-        date: t.createdOn,
-        total: Number(t.total.value),
-        fee: Number(t.total.value) - Number(t.totalNetPayment.value),
-        payment_platform: t.payments[0].provider,
-        external_transaction_id: t.payments[0].externalTransactionId,
-        transaction_email: t.customerEmail,
-        skus: [],
-        data: [],
-        issues: [],
-      }));
+      .map(
+        t =>
+          ({
+            transaction_id: t.id,
+            order_id: t.salesOrderId,
+            date: t.createdOn,
+            total: Number(t.total.value),
+            fee: Number(t.total.value) - Number(t.totalNetPayment.value),
+            payment_platform: t.payments[0].provider,
+            external_transaction_id: t.payments[0].externalTransactionId,
+            transaction_email: t.customerEmail,
+            skus: [],
+            data: [],
+            issues: [],
+          } satisfies Transaction)
+      );
 
     allTransactions.push(...pageTransactions);
     nextPageUrl = json.pagination?.nextPageUrl || "";
@@ -143,7 +146,7 @@ export async function processOrder(t: Transaction): Promise<Transaction> {
     if (p.sku === null) {
       t.issues.push({
         message: "No SKU assigned",
-        code: "SKU_NOT_FOUND",
+        code: "SKU_UNASSIGNED",
         info: {
           line_item_idx: idx,
           order_id: t.order_id,
@@ -152,7 +155,7 @@ export async function processOrder(t: Transaction): Promise<Transaction> {
       });
     }
 
-    t.skus.push(p.sku ?? "NO_SKU_ASSIGNED");
+    t.skus.push(p.sku ?? "SKU_UNASSIGNED");
 
     const isValid =
       cust.has("Email") &&
@@ -171,11 +174,13 @@ export async function processOrder(t: Transaction): Promise<Transaction> {
     }
 
     t.data.push({
-      sku: p.sku ?? "NO_SKU_ASSIGNED",
+      sku: p.sku ?? "SKU_UNASSIGNED",
       email: cust.get("Email")!,
       name:
         cust.get("Name") ??
-        `${cust.get("First Name")} ${cust.get("Last Name")}`,
+        (cust.has("First Name") && cust.has("Last Name")
+          ? `${cust.get("First Name")} ${cust.get("Last Name")}`
+          : ""),
       amount: Number(p.unitPricePaid.value),
       phone: cust.get("Phone"),
       address: cust.get("Address"),

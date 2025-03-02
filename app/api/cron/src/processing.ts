@@ -42,16 +42,18 @@ export function prepareTransactionsForUpsert(ts: Transaction[]) {
     return {
       sqsp_transaction_id: t.transaction_id,
       sqsp_order_id: t.order_id,
-      user_emails: hasData ? t.data.map(d => d.email) : [t.transaction_email],
+      transaction_email: t.transaction_email,
       amount: t.total,
       date: t.date,
       skus: t.skus,
       payment_platform: t.payment_platform as SupabasePaymentPlatform,
       fee: t.fee,
       external_transaction_id: t.external_transaction_id,
-      user_names: hasData ? t.data.map(d => d.name) : [],
+      parsed_form_data: t.data,
+      user_names: hasData
+        ? t.data.map(d => d.name).filter(n => n !== undefined)
+        : [],
       user_amounts: hasData ? t.data.map(d => d.amount) : [],
-      user_form_input: t.data,
       member_pid: [],
       issues: t.issues.map(i => ({
         message: i.message,
