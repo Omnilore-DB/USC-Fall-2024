@@ -22,7 +22,7 @@ type PaymentRefund = {
   externalTransactionId: string;
 };
 
-// Processing fee refunds within a payment’s processing fees
+// Processing fee refunds within a payment's processing fees
 type ProcessingFeeRefund = {
   id: string;
   amount: Money;
@@ -73,7 +73,7 @@ type Tax = {
   description?: string;
 };
 
-// A sales line item for an order (for orders, this is in the “salesLineItems” array)
+// A sales line item for an order (for orders, this is in the "salesLineItems" array)
 type SalesLineItem = {
   id: string;
   discountAmount: Money;
@@ -279,11 +279,11 @@ export type SquarespaceSpecificInventoryAPIResponse = {
   inventory: SquarespaceInventoryItem[];
 };
 
-// --- SUPABASE ORDER SCHEMA ---
+// --- SUPABASE SCHEMA ---
 
-type SupabasePaymentPlatform = "STRIPE" | "PAYPAL" | "MAIL";
+export type SupabasePaymentPlatform = "STRIPE" | "PAYPAL" | "MAIL";
 
-export type SupabaseOrder = {
+export type SupabaseTransaction = {
   created_at: string; // timestampz
   updated_at: string; // timestampz
   sqsp_transaction_id: string; // varchar
@@ -298,7 +298,8 @@ export type SupabaseOrder = {
   user_amounts: number[]; // float8[]
   user_emails: string[]; // varchar[]
   member_pid: number[]; // int8[]
-  issues: string[]; // varchar[]
+  issues: Issue[]; // jsonb[]
+  user_form_input: Record<string, unknown>[]; // jsonb[]
 };
 
 export type SupabaseProduct = {
@@ -307,6 +308,35 @@ export type SupabaseProduct = {
   id: string; // varchar
   sku: string; // varchar
   descriptor: string; // varchar
+};
+
+export type SupabaseMember = {
+  pid: number; // bigint, auto-generated identity, primary key
+  first_name: string; // text
+  last_name: string; // text
+  street_address: string | null; // text
+  city: string | null; // text
+  state: string | null; // text
+  zip: string | null; // text
+  phone: string | null; // text
+  email: string | null; // text
+  emergency_contact: string | null; // text
+  emergency_contact_phone: string | null; // text
+  member_status: string | null; // text
+  expiration_date: string | null; // date
+  partner: string | null; // text
+  date_of_birth: string | null; // date
+  deceased_date: string | null; // date
+  public: boolean; // boolean, default true
+  orientation_date: string | null; // date
+  date_joined: string | null; // date
+  notes: string | null; // text
+  photo_link: string | null; // text
+  gender: string | null; // text
+  photo_path: string | null; // text
+  created_at: string; // timestampz
+  updated_at: string; // timestampz
+  alias: string | null; // text
 };
 
 // --- APPLICATION TYPES ---
@@ -337,8 +367,22 @@ export type Transaction = {
   transaction_email: string;
   skus: string[];
   data: TransactionData[];
-  issues: { message: string; info: Record<string, unknown> }[];
+  issues: Issue[];
 };
+
+type Issue = {
+  message: string;
+  code: IssueCode;
+  info: Record<string, unknown>;
+};
+
+type IssueCode =
+  | "FETCH_ERROR"
+  | "MISSING_FIELDS"
+  | "PROFILE_NOT_FOUND"
+  | "ORDER_NOT_FOUND"
+  | "SKU_NOT_FOUND"
+  | "MEMBER_CONFLICT";
 
 export type Product = {
   id: string;

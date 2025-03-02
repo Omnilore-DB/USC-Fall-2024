@@ -1,4 +1,3 @@
-import { fetchWithRetry } from "./utils";
 import type {
   Product,
   SquarespaceInventoryAPIResponse,
@@ -16,7 +15,7 @@ export async function fetchTransactions(
   let nextPageUrl = `https://api.squarespace.com/1.0/commerce/transactions?modifiedAfter=${lastUpdated}&modifiedBefore=${now}`;
 
   while (nextPageUrl) {
-    const res = await fetchWithRetry(nextPageUrl, {
+    const res = await fetch(nextPageUrl, {
       headers: { Authorization: `Bearer ${process.env.SQUARESPACE_API_KEY}` },
     });
 
@@ -54,7 +53,7 @@ export async function fetchTransactions(
 export async function processDonation(t: Transaction): Promise<Transaction> {
   t.skus.push("SQDONATION");
 
-  const res = await fetchWithRetry(
+  const res = await fetch(
     `https://api.squarespace.com/1.0/profiles?filter=email,${encodeURIComponent(
       t.transaction_email
     )}`,
@@ -65,7 +64,8 @@ export async function processDonation(t: Transaction): Promise<Transaction> {
 
   if (!res.ok) {
     t.issues.push({
-      message: "Failed to fetch profile",
+      message: "Failed to fetch user info from Squarespace Profiles API",
+      code: "FETCH_ERROR",
       info: {
         email: t.transaction_email,
         status: res.status,
@@ -79,7 +79,8 @@ export async function processDonation(t: Transaction): Promise<Transaction> {
 
   if (json.profiles.length < 1) {
     t.issues.push({
-      message: "No profile found",
+      message: "No user info found from Squarespace Profiles API",
+      code: "PROFILE_NOT_FOUND",
       info: {
         email: t.transaction_email,
         status: res.status,
@@ -99,7 +100,7 @@ export async function processDonation(t: Transaction): Promise<Transaction> {
 }
 
 export async function processOrder(t: Transaction): Promise<Transaction> {
-  const res = await fetchWithRetry(
+  const res = await fetch(
     `https://api.squarespace.com/1.0/commerce/orders/${t.order_id}`,
     {
       headers: { Authorization: `Bearer ${process.env.SQUARESPACE_API_KEY}` },
@@ -108,7 +109,8 @@ export async function processOrder(t: Transaction): Promise<Transaction> {
 
   if (res.status === 404) {
     t.issues.push({
-      message: "Order not found",
+      message: "Order not found in Squarespace Orders API",
+      code: "ORDER_NOT_FOUND",
       info: {
         order_id: t.order_id,
         transaction_id: t.transaction_id,
@@ -119,7 +121,8 @@ export async function processOrder(t: Transaction): Promise<Transaction> {
 
   if (!res.ok) {
     t.issues.push({
-      message: "Failed to fetch order",
+      message: "Failed to fetch order from Squarespace Orders API",
+      code: "FETCH_ERROR",
       info: {
         order_id: t.order_id,
         transaction_id: t.transaction_id,
@@ -140,6 +143,7 @@ export async function processOrder(t: Transaction): Promise<Transaction> {
     if (p.sku === null) {
       t.issues.push({
         message: "No SKU assigned",
+        code: "SKU_NOT_FOUND",
         info: {
           line_item_idx: idx,
           order_id: t.order_id,
@@ -157,6 +161,7 @@ export async function processOrder(t: Transaction): Promise<Transaction> {
     if (!isValid) {
       t.issues.push({
         message: "Important fields missing",
+        code: "MISSING_FIELDS",
         info: {
           line_item_idx: idx,
           order_id: t.order_id,
@@ -190,7 +195,7 @@ export async function fetchProducts(): Promise<Product[]> {
   let nextPageUrl = `https://api.squarespace.com/1.0/commerce/inventory`;
 
   while (nextPageUrl) {
-    const res = await fetchWithRetry(nextPageUrl, {
+    const res = await fetch(nextPageUrl, {
       headers: { Authorization: `Bearer ${process.env.SQUARESPACE_API_KEY}` },
     });
 

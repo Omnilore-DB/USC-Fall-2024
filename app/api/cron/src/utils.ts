@@ -1,47 +1,55 @@
 export const wait = (ms: number) =>
   new Promise(resolve => setTimeout(resolve, ms));
 
-export async function fetchWithRetry(
-  url: string,
-  options: RequestInit,
-  maxRetries = 5
-): Promise<Response> {
-  let retryCount = 0;
-  let lastError: Error | null = null;
+/**
+ * Process a batch of items with a specified processor function and batch size
+ * @param items Items to process
+ * @param processorFn Function to process each item
+ * @param batchSize Number of items to process in parallel
+ * @param delayMs Delay between batches in milliseconds
+ * @returns Processed items
+ */
+export async function batchWithDelay<T, R>(
+  items: T[],
+  processorFn: (item: T) => Promise<R>,
+  { batchSize, delayMs }: { batchSize: number; delayMs: number }
+): Promise<R[]> {
+  const results: R[] = [];
 
-  while (retryCount < maxRetries) {
-    try {
-      const res = await fetch(url, options);
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const done = wait(delayMs);
+    const processedBatch = await Promise.all(
+      batch.map(item => processorFn(item))
+    );
+    results.push(...processedBatch);
 
-      // If we hit rate limit, wait and retry
-      if (res.status === 429) {
-        const retryAfter = res.headers.get("Retry-After");
-        const waitTime = retryAfter
-          ? parseInt(retryAfter) * 1000
-          : Math.pow(2, retryCount) * 1000;
-        console.log(
-          `Rate limited, waiting ${waitTime}ms before retry ${
-            retryCount + 1
-          }/${maxRetries}`
-        );
-        await wait(waitTime);
-        retryCount++;
-        continue;
-      }
-
-      return res;
-    } catch (error) {
-      lastError = error as Error;
-      const waitTime = Math.pow(2, retryCount) * 1000;
-      console.log(
-        `Request failed, waiting ${waitTime}ms before retry ${
-          retryCount + 1
-        }/${maxRetries}`
-      );
-      await wait(waitTime);
-      retryCount++;
+    // Add a small delay between batches
+    if (i + batchSize < items.length) {
+      await done;
     }
   }
 
-  throw lastError || new Error("Max retries reached");
+  return results;
+}
+
+/**
+ * Wraps a function that returns a Promise<Response> or a Response in a try-catch block.
+ * If the function throws an error, it returns a Response with the error message.
+ * Otherwise, it returns the Response from the function.
+ */
+export function apiResponse(
+  fn: () => Promise<Response> | Response
+): Promise<Response> | Response {
+  try {
+    return fn();
+  } catch (error) {
+    console.error(error);
+    return Response.json(
+      {
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
+  }
 }

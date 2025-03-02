@@ -1,26 +1,34 @@
-import { getLastUpdateTime, updateLastSyncTime, upsertOrders } from "../src/db";
-import { prepareOrdersForUpsert, processTransactions } from "../src/processing";
+import {
+  getLastSyncTime,
+  updateLastSyncTime,
+  upsertTransactions,
+} from "../src/db";
+import {
+  prepareTransactionsForUpsert,
+  processDetails,
+} from "../src/processing";
 import { fetchTransactions } from "../src/squarespace";
+import { apiResponse } from "../src/utils";
 
 export async function POST() {
-  try {
-    const lastUpdated = await getLastUpdateTime();
+  return apiResponse(async () => {
+    const lastUpdated = await getLastSyncTime("transactions");
     const now = new Date().toISOString();
 
-    const transactions = await fetchTransactions(lastUpdated, now);
-    const processedOrders = await processTransactions(transactions);
-    const ordersToUpsert = prepareOrdersForUpsert(processedOrders);
+    const ts = await fetchTransactions(lastUpdated, now);
+    const processedTs = await processDetails(ts);
+    const tsToUpsert = prepareTransactionsForUpsert(processedTs);
 
-    const upsertedOrders = await upsertOrders(ordersToUpsert);
-    await updateLastSyncTime(now);
+    const upsertedTs = await upsertTransactions(tsToUpsert);
+    await updateLastSyncTime("transactions", now);
 
     return Response.json({
-      message: `Found ${transactions.length} transactions, processed ${
-        processedOrders.length
-      }, upserted ${upsertedOrders.length}, issues with ${
-        processedOrders.filter(r => r.issues.length > 0).length
+      message: `Found ${ts.length} transactions, processed ${
+        processedTs.length
+      }, upserted ${upsertedTs.length}, issues with ${
+        processedTs.filter(r => r.issues.length > 0).length
       }.`,
-      warnings: processedOrders
+      warnings: processedTs
         .filter(r => r.issues.length > 0)
         .map(r => ({
           transaction_id: r.transaction_id,
@@ -29,10 +37,5 @@ export async function POST() {
           date: r.date,
         })),
     });
-  } catch (error) {
-    return Response.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
-  }
+  });
 }
