@@ -9,9 +9,11 @@ interface ActionPanelProps {
     required: boolean;
     value: any;
     isArray: boolean;
+    isEnum?: boolean;
+    enumValues?: string[];
 }
 
-export default function InputField({ fieldName, fieldType, required, value, isArray }: ActionPanelProps) {
+export default function InputField({ fieldName, fieldType, required, value, isArray, isEnum, enumValues }: ActionPanelProps) {
     console.log("INPUT FIELD", fieldName, fieldType, value);
 
     // Ensure value is an array if isArray is true and value is empty
@@ -33,9 +35,6 @@ export default function InputField({ fieldName, fieldType, required, value, isAr
     const handleChange = (date: Date) => {
         if (!date) return;
         setSelectedDate(date);
-
-        // Convert selected date back to microsecond-precision format
-        const formattedTimestamp = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX");
     };
 
     return (
@@ -56,7 +55,16 @@ export default function InputField({ fieldName, fieldType, required, value, isAr
                 />
             )}
 
-            {isArray ? (
+            {isEnum ? (
+                // Render a dropdown for ENUM values
+                <select className="border border-gray-300 rounded p-2 w-full" required={required} defaultValue={normalizedValue}>
+                    {enumValues?.map((option) => (
+                        <option key={option} value={option}>
+                            {option}
+                        </option>
+                    ))}
+                </select>
+            ) : isArray ? (
                 // Render an input field for array values with "[content]" formatting
                 <input
                     type="text"

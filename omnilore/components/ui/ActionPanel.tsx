@@ -11,7 +11,7 @@ interface ActionPanelProps {
 }
 
 export default function ActionPanel({ isOpen, onClose, selectedTable, mode, selectedRow }: ActionPanelProps) {
-    const [fields, setFields] = useState<{ name: string; type: string; nullable: boolean; isArray: boolean; }[]>([]);
+    const [fields, setFields] = useState<{ name: string; type: string; nullable: boolean; isArray: boolean; isEnum: boolean; enumValues: string[] }[]>([]);
     const [formData, setFormData] = useState<Record<string, any>>({});
 
 
@@ -43,10 +43,13 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode, sele
                 type: details.type,
                 nullable: details.nullable,
                 isArray: details.isArray,
+                isEnum: details.isEnum,
+                enumValues: details.enumValues || [],
             }));
             setFields(fieldList);
         }
     };
+    
 
     return (
         <>
@@ -85,9 +88,18 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode, sele
                     </div>
 
                     <div className="flex flex-col w-full h-full gap-8 overflow-y-auto overflow-hidden custom-scrollbar p-8">
-                            {fields.map(({ name, type, nullable, isArray }) => (
-                            <InputField key={name} fieldName={name} fieldType={type} required={!nullable} value={formData[name]} isArray={isArray} />
-                        ))}
+                        {fields.map(({ name, type, nullable, isArray, isEnum, enumValues }) => (
+                                <InputField 
+                                    key={name} 
+                                    fieldName={name} 
+                                    fieldType={type} 
+                                    required={!nullable} 
+                                    value={formData[name]} 
+                                    isArray={isArray} 
+                                    isEnum={isEnum}
+                                    enumValues={enumValues}
+                                />
+                            ))}
                     </div>
                 </div>
             </div>

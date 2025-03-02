@@ -80,12 +80,33 @@ export const getTableSchema = async (table: string) => {
         }
 
         const schema: Record<string, any> = {};
+        
+        // Fetch all ENUM types and their values
+        const { data: enumData, error: enumError } = await supabase.rpc('get_all_enum_values');
+
+        if (enumError) {
+            console.error("Failed to fetch ENUM values:", enumError.message);
+        }
+
+        // Group ENUM values by type name
+        const enumMap = enumData?.reduce((acc: Record<string, string[]>, row: { enum_type: string, enum_value: string }) => {
+            if (!acc[row.enum_type]) acc[row.enum_type] = [];
+            acc[row.enum_type].push(row.enum_value);
+            return acc;
+        }, {}) || {};
+
         data?.forEach((column: TableColumn) => {
             const isArray = column.udt_name.startsWith('_'); // Check if it's an array type
-
             const type = isArray ? column.udt_name.substring(1) : column.udt_name; // Remove `_` prefix if array
+            const isEnum = Object.keys(enumMap).includes(type); // Check if it's an ENUM
 
-            schema[column.column_name] = { type, nullable: column.is_nullable, isArray };
+            schema[column.column_name] = { 
+                type, 
+                nullable: column.is_nullable, 
+                isArray, 
+                isEnum,
+                enumValues: isEnum ? enumMap[type] : [] // Attach ENUM values if applicable
+            };
         });
 
         return { columns: schema };
@@ -94,6 +115,7 @@ export const getTableSchema = async (table: string) => {
         return {};
     }
 };
+
 
 export const upsertTableEntry = async (table: string, data: Record<string, any>) => {
     try {
