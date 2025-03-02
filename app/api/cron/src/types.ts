@@ -1,7 +1,10 @@
+import type { donation_form, forum_form, membership_form } from "./zod";
+import type { z } from "zod";
+
 // --- Shared types ---
 type Money = {
   currency: string;
-  value: string; // as provided by the API (e.g., "150.00")
+  value: string;
 };
 
 type Link = {
@@ -14,7 +17,6 @@ type Link = {
 
 // --- TRANSACTIONS API TYPES ---
 
-// Payment refunds
 type PaymentRefund = {
   id: string;
   amount: Money;
@@ -22,7 +24,6 @@ type PaymentRefund = {
   externalTransactionId: string;
 };
 
-// Processing fee refunds within a payment's processing fees
 type ProcessingFeeRefund = {
   id: string;
   amount: Money;
@@ -32,7 +33,6 @@ type ProcessingFeeRefund = {
   externalTransactionId: string;
 };
 
-// Payment processing fees (can have nested fee refunds)
 type PaymentProcessingFee = {
   id: string;
   amount: Money;
@@ -45,7 +45,6 @@ type PaymentProcessingFee = {
   feeRefunds: ProcessingFeeRefund[];
 };
 
-// A Payment transaction
 type Payment = {
   id: string;
   amount: Money;
@@ -62,7 +61,6 @@ type Payment = {
   externalCustomerId: string | null;
 };
 
-// Taxes (used in sales line items and shipping)
 type Tax = {
   amount: Money;
   rate: string;
@@ -73,7 +71,6 @@ type Tax = {
   description?: string;
 };
 
-// A sales line item for an order (for orders, this is in the "salesLineItems" array)
 type SalesLineItem = {
   id: string;
   discountAmount: Money;
@@ -83,14 +80,12 @@ type SalesLineItem = {
   taxes: Tax[];
 };
 
-// A discount applied to an order or donation
 type Discount = {
   description: string;
   name: string;
   amount: Money;
 };
 
-// A shipping line item
 type ShippingLineItem = {
   id: string;
   amount: Money;
@@ -172,13 +167,11 @@ type OrderLineItem = {
   lineItemType: string;
 };
 
-// Shipping line for orders
 type OrderShippingLine = {
   method: string;
   amount: Money;
 };
 
-// Discount lines for orders
 type OrderDiscountLine = {
   description?: string;
   name: string;
@@ -186,7 +179,6 @@ type OrderDiscountLine = {
   promoCode?: string;
 };
 
-// Fulfillment details for an order
 type OrderFulfillment = {
   shipDate: string;
   carrierName: string;
@@ -195,7 +187,6 @@ type OrderFulfillment = {
   trackingUrl: string;
 };
 
-// Notes and form submission entries
 type OrderInternalNote = {
   content: string;
 };
@@ -205,7 +196,6 @@ type OrderFormSubmission = {
   value: string;
 };
 
-// Full Order response type
 export type SquarespaceOrderAPIResponse = {
   id: string;
   orderNumber: string;
@@ -242,7 +232,7 @@ type SquarespaceProfile = {
   id: string;
   firstName: string;
   lastName: string;
-  email?: string;
+  email: string;
   // Additional fields can be added as needed.
 };
 
@@ -266,16 +256,11 @@ export type SquarespaceInventoryItem = {
 };
 
 export type SquarespaceInventoryAPIResponse = {
-  /** Array of InventoryItem resources. If no physical or service product variants exist, this array is empty. */
   inventory: SquarespaceInventoryItem[];
-  /** Pagination details for iterating on the available InventoryItems. */
   pagination: Pagination;
 };
 
-// --- INVENTORY API TYPES (Retrieve Specific Inventory) ---
-
 export type SquarespaceSpecificInventoryAPIResponse = {
-  /** Array of InventoryItem resources. If the merchant site doesn't have any physical or service products, this array is empty. */
   inventory: SquarespaceInventoryItem[];
 };
 
@@ -300,6 +285,7 @@ export type SupabaseTransaction = {
   member_pid: number[]; // int8[]
   issues: Issue[]; // jsonb[]
   parsed_form_data: Record<string, unknown>[]; // jsonb[]
+  raw_form_data: Record<string, string>[]; // jsonb[]
 };
 
 export type SupabaseProduct = {
@@ -341,20 +327,17 @@ export type SupabaseMember = {
 
 // --- APPLICATION TYPES ---
 // (Internal types to map API data into.)
-
 export type TransactionData = {
   sku: string;
   amount: number;
-  name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  emergency_contact_name?: string;
-  emergency_contact_phone?: string;
-};
+  first_name?: string;
+  last_name?: string;
+} & (
+  | z.infer<typeof forum_form>
+  | z.infer<typeof membership_form>
+  | z.infer<typeof donation_form>
+  | {}
+);
 
 export type Transaction = {
   transaction_id: string;
@@ -367,6 +350,7 @@ export type Transaction = {
   transaction_email: string;
   skus: string[];
   data: TransactionData[];
+  raw_data: Record<string, string>[];
   issues: Issue[];
 };
 
@@ -382,7 +366,8 @@ type IssueCode =
   | "PROFILE_NOT_FOUND"
   | "ORDER_NOT_FOUND"
   | "SKU_UNASSIGNED"
-  | "MEMBER_CONFLICT";
+  | "MEMBER_CONFLICT"
+  | "VALIDATION_ERROR";
 
 export type Product = {
   id: string;

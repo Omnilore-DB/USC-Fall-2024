@@ -18,7 +18,6 @@ export async function batchWithDelay<T, R>(
 
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
-    const done = wait(delayMs);
     const processedBatch = await Promise.all(
       batch.map(item => processorFn(item))
     );
@@ -26,7 +25,7 @@ export async function batchWithDelay<T, R>(
 
     // Add a small delay between batches
     if (i + batchSize < items.length) {
-      await done;
+      await wait(delayMs);
     }
   }
 

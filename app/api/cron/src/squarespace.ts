@@ -1,3 +1,4 @@
+import { validateDonationData, validateOrderData } from "./zod";
 import type {
   Product,
   SquarespaceInventoryAPIResponse,
@@ -5,6 +6,7 @@ import type {
   SquarespaceProfileAPIResponse,
   SquarespaceTransactionsAPIResponse,
   Transaction,
+  TransactionData,
 } from "./types";
 
 export async function fetchTransactions(
@@ -42,6 +44,7 @@ export async function fetchTransactions(
             transaction_email: t.customerEmail,
             skus: [],
             data: [],
+            raw_data: [],
             issues: [],
           } satisfies Transaction)
       );
@@ -55,6 +58,7 @@ export async function fetchTransactions(
 
 export async function processDonation(t: Transaction): Promise<Transaction> {
   t.skus.push("SQDONATION");
+  t.raw_data.push({});
 
   const res = await fetch(
     `https://api.squarespace.com/1.0/profiles?filter=email,${encodeURIComponent(
@@ -92,13 +96,30 @@ export async function processDonation(t: Transaction): Promise<Transaction> {
     return t;
   }
 
-  t.data.push({
-    sku: "SQDONATION",
-    name: json.profiles[0].firstName + " " + json.profiles[0].lastName,
-    email: t.transaction_email,
-    amount: t.total,
-  });
+  const result = validateDonationData(
+    {
+      first_name: json.profiles[0].firstName,
+      last_name: json.profiles[0].lastName,
+      email: t.transaction_email,
+    },
+    {
+      onError: e => {
+        t.issues.push({
+          message: "Invalid donation data",
+          code: "VALIDATION_ERROR",
+          info: {
+            errors: e.issues,
+          },
+        });
+      },
+    }
+  );
 
+  t.data.push({
+    ...result.data,
+    sku: "SQDONATION",
+    amount: t.total,
+  } satisfies TransactionData);
   return t;
 }
 
@@ -143,6 +164,12 @@ export async function processOrder(t: Transaction): Promise<Transaction> {
       (p.customizations ?? []).map(obj => [obj.label, obj.value] as const)
     );
 
+    t.raw_data.push(
+      Object.fromEntries(
+        (p.customizations ?? []).map(obj => [obj.label, obj.value] as const)
+      )
+    );
+
     if (p.sku === null) {
       t.issues.push({
         message: "No SKU assigned",
@@ -157,39 +184,45 @@ export async function processOrder(t: Transaction): Promise<Transaction> {
 
     t.skus.push(p.sku ?? "SKU_UNASSIGNED");
 
-    const isValid =
-      cust.has("Email") &&
-      (cust.has("Name") || (cust.has("First Name") && cust.has("Last Name")));
-
-    if (!isValid) {
-      t.issues.push({
-        message: "Important fields missing",
-        code: "MISSING_FIELDS",
-        info: {
-          line_item_idx: idx,
-          order_id: t.order_id,
-          transaction_id: t.transaction_id,
+    const result = validateOrderData(
+      {
+        // Name should no longer be used in favor of first_name and last_name, but legacy order data still uses it
+        first_name: cust.get("First Name") ?? cust.get("Name")?.split(" ")[0],
+        last_name:
+          cust.get("Last Name") ??
+          cust.get("Name")?.split(" ").slice(1).join(" "),
+        email: cust.get("Email"),
+        phone: cust.get("Phone"),
+        address: cust.get("Address"),
+        city: cust.get("City"),
+        state: cust.get("State"),
+        // Zip Code is the valid name, some legacy orders have Zip
+        zip_code: cust.get("Zip Code") ?? cust.get("Zip"),
+        emergency_contact_name: cust.get("Emergency Contact Name"),
+        emergency_contact_phone: cust.get("Emergency Contact Phone"),
+      },
+      {
+        onError: e => {
+          t.issues.push({
+            message: "Failed to parse order data",
+            code: "VALIDATION_ERROR",
+            info: {
+              line_item_idx: idx,
+              order_id: t.order_id,
+              transaction_id: t.transaction_id,
+              errors: e.issues,
+            },
+          });
         },
-      });
-    }
+      }
+    );
 
     t.data.push({
+      ...(result.isValid ? result.data : {}),
       sku: p.sku ?? "SKU_UNASSIGNED",
-      email: cust.get("Email")!,
-      name:
-        cust.get("Name") ??
-        (cust.has("First Name") && cust.has("Last Name")
-          ? `${cust.get("First Name")} ${cust.get("Last Name")}`
-          : ""),
       amount: Number(p.unitPricePaid.value),
-      phone: cust.get("Phone"),
-      address: cust.get("Address"),
-      city: cust.get("City"),
-      state: cust.get("State"),
-      zip_code: cust.get("Zip Code"),
-      emergency_contact_name: cust.get("Emergency Contact Name"),
-      emergency_contact_phone: cust.get("Emergency Contact Phone"),
-    });
+    } as TransactionData);
+    // The 'as' is to satisfy the type checker, but required keys can still be undefined
   });
 
   return t;

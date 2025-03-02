@@ -37,33 +37,34 @@ export async function processDetails(
  * @returns List of transactions formatted for our database
  */
 export function prepareTransactionsForUpsert(ts: Transaction[]) {
-  return ts.map(t => {
-    const hasData = t.data.length > 0;
-    return {
-      sqsp_transaction_id: t.transaction_id,
-      sqsp_order_id: t.order_id,
-      transaction_email: t.transaction_email,
-      amount: t.total,
-      date: t.date,
-      skus: t.skus,
-      payment_platform: t.payment_platform as SupabasePaymentPlatform,
-      fee: t.fee,
-      external_transaction_id: t.external_transaction_id,
-      parsed_form_data: t.data,
-      user_names: hasData
-        ? t.data.map(d => d.name).filter(n => n !== undefined)
-        : [],
-      user_amounts: hasData ? t.data.map(d => d.amount) : [],
-      member_pid: [],
-      issues: t.issues.map(i => ({
-        message: i.message,
-        code: i.code,
-        info: Object.fromEntries(
-          Object.entries(i.info).filter(
-            ([key]) => key !== "order_id" && key !== "transaction_id"
-          )
+  return ts.map(
+    t =>
+      ({
+        sqsp_transaction_id: t.transaction_id,
+        sqsp_order_id: t.order_id,
+        transaction_email: t.transaction_email,
+        amount: t.total,
+        date: t.date,
+        skus: t.skus,
+        payment_platform: t.payment_platform as SupabasePaymentPlatform,
+        fee: t.fee,
+        external_transaction_id: t.external_transaction_id,
+        raw_form_data: t.raw_data,
+        parsed_form_data: t.data,
+        user_names: t.data.map(d =>
+          `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim()
         ),
-      })),
-    } satisfies Omit<SupabaseTransaction, "created_at" | "updated_at">;
-  });
+        user_amounts: t.data.map(d => d.amount),
+        member_pid: [],
+        issues: t.issues.map(i => ({
+          message: i.message,
+          code: i.code,
+          info: Object.fromEntries(
+            Object.entries(i.info).filter(
+              ([key]) => key !== "order_id" && key !== "transaction_id"
+            )
+          ),
+        })),
+      } satisfies Omit<SupabaseTransaction, "created_at" | "updated_at">)
+  );
 }
