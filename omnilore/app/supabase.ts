@@ -74,9 +74,11 @@ export const getTableSchema = async (table: string) => {
             return {};
         }
 
+        console.log(data);
+
         const schema: Record<string, any> = {};
         data?.forEach((column) => {
-            schema[column.column_name] = { type: column.data_type };
+            schema[column.column_name] = { type: column.udt_name, nullable: column.is_nullable };
         });
 
         console.log(`Schema for table "${table}":`, schema);

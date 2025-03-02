@@ -21,7 +21,7 @@ const TableComponent = ({
     const [localSelectedRow, setLocalSelectedRow] = useState<number | null>(selectedRow);
 
     const handleRowClick = (pid: number) => {
-        if (localSelectedRow !== pid) {
+            if (localSelectedRow !== pid) {
             setLocalSelectedRow(pid);
             handleRowSelection(pid);
         }
@@ -146,8 +146,7 @@ const TableComponent = ({
                                                 />
                                             </td>
                                 
-                                            <td 
-                                                className={`px-4 py-2 sticky left-20 z-10
+                                            <td className={`px-4 py-2 sticky left-20 z-10
                                                     ${ hasIssue 
                                                             ? 'bg-red-50' 
                                                             : localSelectedRow === item[primaryKey] 
@@ -179,7 +178,12 @@ const TableComponent = ({
                                                                 outline: 'none'
                                                             }}
                                                     >
-                                                        {item[columnName]}
+                                                        {columnName === "issues" && Array.isArray(item[columnName]) && item[columnName].length > 0
+                                                            ? item[columnName].map((issue) => issue.message).join(", ")
+                                                            : typeof item[columnName] === "object" && item[columnName] !== null
+                                                                ? JSON.stringify(item[columnName])
+                                                                : item[columnName]
+                                                        }
                                                     </td>
                                                 ))}
                                         </>
