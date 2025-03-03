@@ -1,13 +1,11 @@
-import { validateDonationData, validateOrderData } from "./zod";
+import type { Product, Transaction, TransactionData } from "./types";
+import { processFormData } from "./squarespace/form_processor";
 import type {
-  Product,
   SquarespaceInventoryAPIResponse,
   SquarespaceOrderAPIResponse,
   SquarespaceProfileAPIResponse,
   SquarespaceTransactionsAPIResponse,
-  Transaction,
-  TransactionData,
-} from "./types";
+} from "./squarespace/types";
 
 export async function fetchTransactions(
   lastUpdated: string,
@@ -96,29 +94,12 @@ export async function processDonation(t: Transaction): Promise<Transaction> {
     return t;
   }
 
-  const result = validateDonationData(
-    {
-      first_name: json.profiles[0].firstName,
-      last_name: json.profiles[0].lastName,
-      email: t.transaction_email,
-    },
-    {
-      onError: e => {
-        t.issues.push({
-          message: "Invalid donation data",
-          code: "VALIDATION_ERROR",
-          info: {
-            errors: e.issues,
-          },
-        });
-      },
-    }
-  );
-
   t.data.push({
-    ...result.data,
     sku: "SQDONATION",
     amount: t.total,
+    first_name: json.profiles[0].firstName,
+    last_name: json.profiles[0].lastName,
+    email: t.transaction_email,
   } satisfies TransactionData);
   return t;
 }
@@ -184,41 +165,25 @@ export async function processOrder(t: Transaction): Promise<Transaction> {
 
     t.skus.push(p.sku ?? "SKU_UNASSIGNED");
 
-    const result = validateOrderData(
-      {
-        // Name should no longer be used in favor of first_name and last_name, but legacy order data still uses it
-        first_name: cust.get("First Name") ?? cust.get("Name")?.split(" ")[0],
-        last_name:
-          cust.get("Last Name") ??
-          cust.get("Name")?.split(" ").slice(1).join(" "),
-        email: cust.get("Email"),
-        phone: cust.get("Phone"),
-        address: cust.get("Address"),
-        city: cust.get("City"),
-        state: cust.get("State"),
-        // Zip Code is the valid name, some legacy orders have Zip
-        zip_code: cust.get("Zip Code") ?? cust.get("Zip"),
-        emergency_contact_name: cust.get("Emergency Contact Name"),
-        emergency_contact_phone: cust.get("Emergency Contact Phone"),
-      },
-      {
-        onError: e => {
-          t.issues.push({
-            message: "Failed to parse order data",
-            code: "VALIDATION_ERROR",
-            info: {
-              line_item_idx: idx,
-              order_id: t.order_id,
-              transaction_id: t.transaction_id,
-              errors: e.issues,
-            },
-          });
-        },
-      }
+    const result = processFormData(
+      (p.customizations ?? []).map(obj => [obj.label, obj.value] as const)
     );
 
+    if (Object.keys(result.invalid_data).length > 0) {
+      t.issues.push({
+        message: "Invalid order data",
+        code: "VALIDATION_ERROR",
+        info: {
+          line_item_idx: idx,
+          order_id: t.order_id,
+          transaction_id: t.transaction_id,
+          errors: result.invalid_data,
+        },
+      });
+    }
+
     t.data.push({
-      ...(result.isValid ? result.data : {}),
+      ...result.valid_data,
       sku: p.sku ?? "SKU_UNASSIGNED",
       amount: Number(p.unitPricePaid.value),
     } as TransactionData);
