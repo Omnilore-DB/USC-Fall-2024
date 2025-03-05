@@ -1,22 +1,22 @@
-'use client'
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import Logo from "@/components/assets/logo.png"
+import Logo from "@/components/assets/logo.png";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import AlertBox from "@/components/alertbox";
-import {supabase} from "@/app/supabase";
+import { supabase } from "@/app/supabase";
 import Company from "@/components/ui/company";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
+  const [alertMessage, setAlertMessage] = useState("");
   const searchParams = useSearchParams();
   const token = searchParams.get("token"); // Get token from URL
   const DEFAULT_GENERAL_EMAIL = "member@omnilore.org";
@@ -27,49 +27,38 @@ export default function LoginPage() {
       handleTokenLogin(token);
     }
   }, [token]);
-    
+
   const handleTokenLogin = async (token: string) => {
     console.log("Token received:", token);
 
-    // Decode the Base64 token
-    let decodedToken: string;
-    try {
-        decodedToken = atob(token);
-    } catch (error) {
-        console.error("Error decoding token:", error);
-        alert("Invalid token format.");
-        return;
-    }
+    // Extract the current UTC date (YYYY-MM-DD)
+    const pre64_token = "somekey" + new Date().toISOString().split("T")[0];
+    // Encode the token in Base64
+    const calculated_token = Buffer.from(pre64_token).toString("base64");
 
-    // Extract the expected token format ("somekeyYYYY-MM-DD")
-    const tokenPrefix = "somekey";
-    if (!decodedToken.startsWith(tokenPrefix)) {
-      alert("Invalid token. Please log in manually.");
-      return;
-    }
+    if (calculated_token !== token) return;
 
     // Proceed with authentication using Supabase
     try {
       await supabase.auth.signInWithPassword({
         email: "member@omnilore.org",
-        password: token, // Using token as a password for authentication
+        password: DEFAULT_GENERAL_PASSWORD, // Using token as a password for authentication
       });
 
-        // Redirect to the search page after successful login
-        router.push("/search");
+      // Redirect to the search page after successful login
+      router.push("/search");
     } catch (error) {
-        console.error("Authentication error:", error);
-        alert("Authentication failed. Please try again.");
+      console.error("Authentication error:", error);
+      alert("Authentication failed. Please try again.");
     }
   };
-    
 
   const redirectToAdminLogin = () => {
-    router.push('/admin-login');
+    router.push("/admin-login");
   };
 
   const redirectToGeneralMemberLogin = async () => {
-    router.push('/general-login');
+    router.push("/general-login");
     // const { data, error } = await supabase.auth.signInWithPassword({
     //   email: DEFAULT_GENERAL_EMAIL,
     //   password: DEFAULT_GENERAL_PASSWORD,
@@ -87,34 +76,41 @@ export default function LoginPage() {
       <header className="p-4">
         <Company />
       </header>
-      {showAlert && <AlertBox message={alertMessage} onClose={() => setShowAlert(false)} />}
+      {showAlert && (
+        <AlertBox message={alertMessage} onClose={() => setShowAlert(false)} />
+      )}
       <main className="flex-grow flex flex-col md:flex-row justify-center p-4 pb-20 items-center">
         <div className="w-full max-w-md space-y-8 md:pr-8">
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-semibold">Welcome back Member!</h2>
           </div>
-          <div className="space-y-4">        
-            <Button 
-              className="h-30 w-full bg-blue-600 hover:bg-blue-700 text-white text-lg" 
-              onClick={redirectToGeneralMemberLogin}>
+          <div className="space-y-4">
+            <Button
+              className="h-30 w-full bg-blue-600 hover:bg-blue-700 text-white text-lg"
+              onClick={redirectToGeneralMemberLogin}
+            >
               General Member Log In
             </Button>
           </div>
           <div className="text-center">
             <span className="px-2 bg-white text-sm text-gray-500">OR</span>
           </div>
-          <Button variant="outline"
+          <Button
+            variant="outline"
             className="h-30 w-full border-blue-600 text-blue-600 hover:bg-blue-50 text-lg"
-            onClick={redirectToAdminLogin}>
+            onClick={redirectToAdminLogin}
+          >
             Admin Member Log In
           </Button>
         </div>
-        <div className="flex justify-center mt-4 ml-10"> {/* New div for logo */}
+        <div className="flex justify-center mt-4 ml-10">
+          {" "}
+          {/* New div for logo */}
           <img src={Logo.src} className="w-64 h-fit" />
         </div>
       </main>
     </div>
-  )
+  );
 }
 // **********************
 // 'use client'
@@ -163,7 +159,6 @@ export default function LoginPage() {
 //         alert("Invalid token. Please log in manually.");
 //     }
 // };
-
 
 //   // const redirectToSignUp = () => {
 //   //   router.push('/signup');
@@ -253,7 +248,7 @@ export default function LoginPage() {
 //           </Button> */}
 //         </div>
 //         <div className="flex justify-center mt-4 ml-10"> {/* New div for logo */}
-//           <img src={Logo.src} className="w-64 h-fit" />        
+//           <img src={Logo.src} className="w-64 h-fit" />
 //         </div>
 //       </main>
 //     </div>
