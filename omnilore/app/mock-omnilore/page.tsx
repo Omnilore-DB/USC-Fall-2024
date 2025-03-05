@@ -19,7 +19,7 @@ export default function MockOmniloreRosters() {
         if (username === "owlsrus" && password === "SDGbook25") {
             setIsLoggedIn(true);
             localStorage.setItem("omnilore_token", "fake_jwt_token_123");
-            setShowLoginPrompt(false); // Hide login modal
+            setShowLoginPrompt(false); 
             setErrorMessage("");
         } else {
             setErrorMessage("Invalid credentials. Please try again.");
@@ -38,10 +38,10 @@ export default function MockOmniloreRosters() {
 
     return (
         <div className="p-8">
-            <h1 className="text-2xl font-bold">Mock Omnilore Rosters</h1>
+            <h1 className="text-2xl font-bold">Mock Omnilore</h1>
 
             {!isLoggedIn ? (
-                <button className="mt-4 px-4 py-2 bg-blue-500 text-white" onClick={handleLoginAttempt}>
+                <button className="mt-4 px-4 py-2 bg-orange-500 text-white" onClick={handleLoginAttempt}>
                     Log In to Omnilore
                 </button>
             ) : (
