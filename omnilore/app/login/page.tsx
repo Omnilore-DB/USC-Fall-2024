@@ -30,18 +30,36 @@ export default function LoginPage() {
     
   const handleTokenLogin = async (token: string) => {
     console.log("Token received:", token);
-    
-    // Allow multiple test tokens for debugging
-    const validTokens = ["demo_token_12345", "fake_jwt_token_123"];
-    
-    if (validTokens.includes(token)) {
+
+    // Decode the Base64 token
+    let decodedToken: string;
+    try {
+        decodedToken = atob(token);
+    } catch (error) {
+        console.error("Error decoding token:", error);
+        alert("Invalid token format.");
+        return;
+    }
+
+    // Extract the expected token format ("somekeyYYYY-MM-DD")
+    const tokenPrefix = "somekey";
+    if (!decodedToken.startsWith(tokenPrefix)) {
+      alert("Invalid token. Please log in manually.");
+      return;
+    }
+
+    // Proceed with authentication using Supabase
+    try {
       await supabase.auth.signInWithPassword({
         email: "member@omnilore.org",
-        password: token, // Using token as a password for testing
+        password: token, // Using token as a password for authentication
       });
-        router.push("/search"); // Redirect to dashboard after successful login
-      } else {
-        alert("Invalid token. Please log in manually.");
+
+        // Redirect to the search page after successful login
+        router.push("/search");
+    } catch (error) {
+        console.error("Authentication error:", error);
+        alert("Authentication failed. Please try again.");
     }
   };
     
