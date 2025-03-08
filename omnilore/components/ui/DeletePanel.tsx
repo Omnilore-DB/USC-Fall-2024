@@ -18,34 +18,29 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode, sele
 
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && selectedTable) {
             fetchSchema();
             document.body.style.overflow = "hidden";
-    
-            // Scroll to top when panel opens
+
             if (scrollContainerRef.current) {
                 scrollContainerRef.current.scrollTop = 0;
             }
-    
-            // Set form data only when opening the panel
-            if (mode === "edit" && selectedRow) {
-                console.log("EDIT MODE");
-                setFormData(selectedRow);
-                console.log("form data ", formData);
-            } else {
-                console.log("ADD MODE");
-                setFormData({});
-                console.log("form data ", formData);
-            }
-    
         } else {
-            // Clear form data when panel is closing
-            console.log("Panel closed, clearing form data");
-            setFormData({});
             document.body.style.overflow = "auto";
+            
+            // Clear form data when the panel is closed
+            if (!isOpen) {
+                setFormData({});
+            }
         }
-    }, [isOpen, selectedTable]);
     
+        if (mode === "edit" && selectedRow) {
+            setFormData(selectedRow);
+        } else {
+            setFormData({});
+        }
+    
+    }, [isOpen, selectedTable]);
     
 
 

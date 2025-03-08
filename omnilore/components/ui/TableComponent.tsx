@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface TableComponentProps {
     entries: Record<string, any>[];
     roles: string[];
     selectedRow: Record<string, any> | null;
     handleRowSelection: (row: Record<string, any>) => void;
-    primaryKey: string;
+    primaryKeys: string[];
+    enableRowSelection?: boolean;
 }
 
 const TableComponent = ({
@@ -15,10 +16,23 @@ const TableComponent = ({
     roles,
     selectedRow,
     handleRowSelection,
-    primaryKey
+    primaryKeys,
+    enableRowSelection = true
 }: TableComponentProps) => {
     
     const [localSelectedRow, setLocalSelectedRow] = useState<Record<string, any> | null>(selectedRow);
+    const [columnWidths, setColumnWidths] = useState<number[]>([]);
+    const headerRefs = useRef<(HTMLTableCellElement | null)[]>([]);
+
+    useEffect(() => {
+        if (headerRefs.current.length > 0) {
+          const newWidths = headerRefs.current.map(
+            (th) => th?.offsetWidth || 50
+          );
+          setColumnWidths(newWidths);
+        }
+      }, [entries, primaryKeys]);
+      
 
     const handleRowClick = (row: Record<string, any>) => {
         if (localSelectedRow !== row) {
@@ -30,7 +44,6 @@ const TableComponent = ({
     useEffect(() => {
         console.log("UPDATED ROW OBJECT: ", localSelectedRow);
     }, [localSelectedRow]);
-    
 
     return (
         <div className="flex flex-col h-full w-full">
@@ -39,69 +52,54 @@ const TableComponent = ({
                     <table className="w-full border-collapse border border-gray-200">
                         <thead className="bg-gray-100">
                             <tr>
-                                {roles.includes("admin") || roles.includes("treasurer") || roles.includes("registrar") ? (
-                                    <>
-                                        <th className="sticky top-0 z-20 bg-gray-100 px-4 py-2 left-0 outline-none"
-                                            style={{
-                                                boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
-                                            }}>
-                                            <span 
-                                                className="absolute -top-[1px] left-0 w-full h-[1px] bg-gray-200"
-                                                aria-hidden="true"
-                                            />
-                                            <span 
-                                                className="absolute top-0 -left-[1px] h-full w-[1px] bg-gray-200"
-                                                aria-hidden="true"
-                                            />
-                                            Select
-                                        </th>
+                                {(() => {
+                                    let leftOffset = 0;
 
-                                        <th className="sticky top-0 z-20 bg-gray-100 px-4 py-2 left-20 outline-none"
-                                            style={{
-                                                boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
-                                                outline: 'none'
-                                            }}
-                                        >
-                                            <span 
-                                                className="absolute -top-[1px] left-0 w-full h-[1px] bg-gray-200"
-                                                aria-hidden="true"
-                                            />
-                                            
-                                            {primaryKey}
-                                        </th>
-
-                                        {entries.length > 0 && Object.keys(entries[0])
-                                            .filter(name => name !== primaryKey)
-                                            .map(columnName => (
-                                                <th 
-                                                    key={columnName} 
-                                                    className="sticky top-0 z-10 bg-gray-100 px-4 py-2 outline-none"
+                                    return (
+                                        <>
+                                            {enableRowSelection && (roles.includes('admin') || roles.includes('treasurer') || roles.includes('registrar')) && (
+                                                <th
+                                                    ref={(el) => headerRefs.current[0] = el}
+                                                    className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-none"
                                                     style={{
-                                                        boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
-                                                        outline: 'none'
+                                                        left: `${leftOffset}px`,
+                                                        boxShadow: 'inset 0 0 0 0.5px #e5e7eb'
                                                     }}
                                                 >
-                                                    <span 
-                                                        className="absolute -top-[1px] left-0 w-full h-[1px] bg-gray-200"
-                                                        aria-hidden="true"
-                                                    />
-                                                    {columnName}
+                                                    Select
                                                 </th>
-                                            ))
-                                        }
-                                    </>
-                                ) : (
-                                    entries.length > 0 && Object.keys(entries[0]).map(columnName => (
-                                        <th key={columnName} className="px-4 py-2" 
-                                        style={{
-                                            boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
-                                            outline: 'none'
-                                        }}
-                                        >
+                                            )}
+
+                                            {primaryKeys.map((key, colIndex) => {
+                                                leftOffset += columnWidths[colIndex] || 50; // Set left based on measured width
+
+                                                return (
+                                                    <th
+                                                        key={key}
+                                                        ref={(el) => headerRefs.current[colIndex + 1] = el} // Store ref for measurement
+                                                        className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-none"
+                                                        style={{
+                                                            left: `${leftOffset}px`,
+                                                            boxShadow: 'inset 0 0 0 0.5px #e5e7eb'
+                                                        }}
+                                                    >
+                                                        {key}
+                                                    </th>
+                                                );
+                                            })}
+                                        </>
+                                    );
+                                })()}
+
+                                {entries.length > 0 && Object.keys(entries[0])
+                                    .filter(name => !primaryKeys.includes(name))
+                                    .map(columnName => (
+                                        <th key={columnName} className="sticky top-0 z-10 bg-gray-100 px-4 py-2 outline-none"
+                                            style={{ boxShadow: 'inset 0 0 0 0.5px #e5e7eb' }}>
                                             {columnName}
                                         </th>
                                     ))
-                                )}
+                                }
                             </tr>
                         </thead>
                         <tbody>
@@ -109,6 +107,8 @@ const TableComponent = ({
                                 const hasIssue = Object.keys(item).some(columnName => 
                                     columnName === 'issues' && Array.isArray(item[columnName]) && item[columnName].length > 0
                                 );
+
+                                const isSelected = localSelectedRow && primaryKeys.every(key => localSelectedRow[key] === item[key]);
                                 
                                 return (
                                 <tr
@@ -116,19 +116,76 @@ const TableComponent = ({
                                     className={`group cursor-pointer ${
                                         hasIssue 
                                             ? 'bg-red-50' 
-                                            : (localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey]) 
+                                            : (isSelected) 
                                                 ? 'bg-gray-100' 
                                                 : 'bg-white group-hover:bg-gray-50'
                                     }`}
                                     onClick={() => handleRowClick(item)}
                                 >
+                                {(() => {
+                                    let leftOffset = 0;
+
+                                    return (
+                                        <>
+                                        {/* (roles.includes('admin') || roles.includes('treasurer') || roles.includes('registrar'))  */}
+                                            {enableRowSelection && (
+                                                <td 
+                                                    className={`px-4 py-2 w-10 text-center sticky z-10
+                                                        ${ hasIssue 
+                                                                ? 'bg-red-50' 
+                                                                : (isSelected) 
+                                                                    ? 'bg-gray-100' 
+                                                                    : 'bg-white group-hover:bg-gray-50'
+                                                        }`}
+                                                    style={{
+                                                        left: `${leftOffset}px`,
+                                                        boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
+                                                        outline: 'none'
+                                                    }}
+                                                >
+                                                    <span 
+                                                        className="absolute top-0 -left-[1px] h-full w-[1px] bg-gray-200"
+                                                        aria-hidden="true"
+                                                    />
+                                                    
+                                                    <input
+                                                        type="radio"
+                                                        name="row-selection"
+                                                        checked={!!isSelected}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        onChange={() => handleRowClick(item)}
+                                                    />
+                                                </td>
+                                            )}
+
+                                            {primaryKeys.map((key, colIndex) => {
+                                                leftOffset += columnWidths[colIndex] || 50;
+                                                return(
+                                                <td key={key} 
+                                                // ref={(el) => headerRefs.current[index + 1] = el}
+                                                className={`px-4 py-2 sticky z-10 ${hasIssue ? 'bg-red-50' : isSelected ? 'bg-gray-100' : 'bg-white group-hover:bg-gray-50'}`}
+                                                    style={{ 
+                                                        left: `${leftOffset}px`,
+                                                        boxShadow: 'inset 0 0 0 0.5px #e5e7eb' 
+                                                    }}>
+                                                    {item[key] ?? ''}
+                                                </td>
+                                                )
+                                            })}
+
+                                        </>
+                                    );
+                                })()}
+
+
                                     {roles.includes("admin") || roles.includes("treasurer") || roles.includes("registrar") ? (
                                         <>
+                                        {/* {enableRowSelection && ( 
                                         <td 
                                                 className={`px-4 py-2 w-10 text-center sticky left-0 z-10
                                                     ${ hasIssue 
                                                             ? 'bg-red-50' 
-                                                            : (localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey]) 
+                                                            : (isSelected) 
                                                                 ? 'bg-gray-100' 
                                                                 : 'bg-white group-hover:bg-gray-50'
                                                     }`}
@@ -145,36 +202,29 @@ const TableComponent = ({
                                                 <input
                                                     type="radio"
                                                     name="row-selection"
-                                                    checked={!!localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey]}
+                                                    checked={!!isSelected}
                                                     onClick={(e) => e.stopPropagation()}
-                                                    onChange={() => handleRowClick(item[primaryKey])}
+                                                    onChange={() => handleRowClick(item)}
                                                 />
                                             </td>
+                                        )}
                                 
-                                            <td className={`px-4 py-2 sticky left-20 z-10
-                                                    ${ hasIssue 
-                                                            ? 'bg-red-50' 
-                                                            : (localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey])
-                                                                ? 'bg-gray-100' 
-                                                                : 'bg-white group-hover:bg-gray-50'
-                                                    }`}
-                                                    style={{
-                                                        boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
-                                                        outline: 'none'
-                                                    }}
-                                            >
-                                                {item[primaryKey]}
-                                            </td>
-                                
+                                            {primaryKeys.map((key) => (
+                                                <td key={key} className={`px-4 py-2 sticky left-20 z-10 ${hasIssue ? 'bg-red-50' : isSelected ? 'bg-gray-100' : 'bg-white group-hover:bg-gray-50'}`}
+                                                    style={{ boxShadow: 'inset 0 0 0 0.5px #e5e7eb' }}>
+                                                    {item[key] ?? ''}
+                                                </td>
+                                            ))} */}
+
                                             {Object.keys(item)
-                                                .filter(name => name !== primaryKey)
+                                                .filter(name => !primaryKeys.includes(name))
                                                 .map(columnName => (
                                                     <td 
                                                         key={columnName} 
                                                         className={` px-4 py-2
                                                             ${hasIssue
                                                                 ? 'bg-red-50' 
-                                                                : (localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey])
+                                                                : (isSelected)
                                                                     ? 'bg-gray-100' 
                                                                     : 'bg-white group-hover:bg-gray-50'
                                                             }`}
@@ -197,7 +247,7 @@ const TableComponent = ({
                                             <td 
                                                 key={columnName} 
                                                 className={` px-4 py-2
-                                                    ${(localSelectedRow && localSelectedRow[primaryKey] === item[primaryKey])
+                                                    ${(isSelected)
                                                         ? 'bg-gray-100' 
                                                         : 'bg-white group-hover:bg-gray-50'
                                                     }`}
