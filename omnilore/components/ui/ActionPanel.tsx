@@ -49,7 +49,6 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode, sele
     
 
 
-
     const fetchSchema = async () => {
         const schema = await getTableSchema(selectedTable);
         if (schema?.columns) {

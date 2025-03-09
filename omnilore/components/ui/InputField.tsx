@@ -4,166 +4,192 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
 
 interface ActionPanelProps {
-    fieldName: string;
-    fieldType: string;
-    required: boolean;
-    value: any;
-    isArray: boolean;
-    isEnum?: boolean;
-    enumValues?: string[];
-    mode: string;
+  fieldName: string;
+  fieldType: string;
+  required: boolean;
+  value: any;
+  isArray: boolean;
+  isEnum?: boolean;
+  enumValues?: string[];
+  mode: string;
 }
 
-export default function InputField({ fieldName, fieldType, required, value, isArray, isEnum, enumValues, mode }: ActionPanelProps) {
-    // useEffect(() => {
-    //     setArrayInput(isArray ? formatArray(normalizedValue) : normalizedValue);
-    //     setSelectedDate(fieldType.includes("timestamp") && normalizedValue ? new Date(normalizedValue) : null);
+export default function InputField({
+  fieldName,
+  fieldType,
+  required,
+  value,
+  isArray,
+  isEnum,
+  enumValues,
+  mode,
+}: ActionPanelProps) {
+  const [arrayInput, setArrayInput] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-    //     if (fieldType.includes("timestamp")) {
-    //         if (mode === "add" && !value) {
-    //             // console.log("Resetting timestamp field to current time in add mode");
-    //             setSelectedDate(new Date());
-    //         } else if (value) {
-    //             setSelectedDate(new Date(value));
-    //         }
-    //     }
+  // Format array elements for display
+  const formatArray = (arr: any[]) =>
+    `[${arr
+      .map((v) => (typeof v === "object" ? JSON.stringify(v) : v))
+      .join(", ")}]`;
 
-    // }, [value, mode]);
+  // Determine the normalized value
+  const normalizedValue = isArray
+    ? Array.isArray(value)
+      ? value
+      : []
+    : value;
 
-    useEffect(() => {
-        if (mode === "add") {
-            setArrayInput(isArray ? "[]" : ""); 
-            setSelectedDate(null);
-            if (fieldType.includes("timestamp") || fieldType.includes("timestampz")) {
-                setSelectedDate(new Date());
-            }
-        } else {
-            setArrayInput(isArray ? formatArray(normalizedValue) : normalizedValue);
-            
-            if (fieldType.includes("timestamp") && value) {
-                setSelectedDate(new Date(value));
-            }
-        }
-    }, [mode, value]);
-    
+  // Handle date change from DatePicker
+  const handleChange = (date: Date | null) => {
+    if (!date) return;
+    setSelectedDate(date);
+  };
 
-    const normalizedValue = isArray ? (Array.isArray(value) ? value : []) : value;
+  useEffect(() => {
+    if (mode === "add") {
+      setArrayInput(isArray ? "[]" : "");
+      setSelectedDate(null);
 
-    const formatArray = (arr: any[]) => `[${arr.map(v => (typeof v === "object" ? JSON.stringify(v) : v)).join(", ")}]`;
+      // For timestamps or date, default to current date
+      if (
+        fieldType.includes("timestamp") ||
+        fieldType.includes("timestampz") ||
+        fieldType === "date"
+      ) {
+        setSelectedDate(new Date());
+      }
+    } else {
+      // On edit mode
+      setArrayInput(isArray ? formatArray(normalizedValue) : normalizedValue);
 
-    const [arrayInput, setArrayInput] = useState(
-        isArray ? formatArray(normalizedValue) : normalizedValue
-    );
+      // If there's a timestamp/date in value, parse it
+      if (
+        (fieldType.includes("timestamp") ||
+          fieldType.includes("timestampz") ||
+          fieldType === "date") &&
+        value
+      ) {
+        setSelectedDate(new Date(value));
+      }
+    }
+  }, [mode, value]);
 
-    const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
-        return fieldType === "timestamp" || fieldType === "timestamptz"
-            ? value
-                ? new Date(value)
-                : mode === "add"
-                ? new Date()
-                : null
-            : null;
-    });
+  return (
+    <div>
+      <div className="text-medium">
+        <span className="font-semibold text-[#616161]">{fieldName}</span>
+        {required && <span className="text-red-500">*</span>}
+        <span className="font-light text-[#8C8C8C]"> {fieldType}</span>
+      </div>
 
-    // console.log("selectedDate ", selectedDate, " for value ", value);
+      {/* Timestamp (with time) */}
+      {(fieldType === "timestamp" || fieldType === "timestamptz") && (
+        <DatePicker
+          selected={selectedDate}
+          onChange={handleChange}
+          showTimeSelect
+          dateFormat="yyyy-MM-dd HH:mm:ss.SSSSSS"
+          className="border border-gray-300 rounded p-2 w-full"
+        />
+      )}
 
+      {/* Date (no time) */}
+      {fieldType === "date" && (
+        <DatePicker
+          selected={selectedDate}
+          onChange={handleChange}
+          dateFormat="yyyy-MM-dd"
+          className="border border-gray-300 rounded p-2 w-full"
+        />
+      )}
 
-    const handleChange = (date: Date) => {
-        if (!date) return;
-        setSelectedDate(date);
-    };
+      {isEnum ? (
+        <select
+          className="border border-gray-300 rounded p-2 w-full"
+          required={required}
+          defaultValue={normalizedValue}
+        >
+          {enumValues?.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      ) : isArray ? (
+        <input
+          type="text"
+          className="border border-gray-300 rounded p-2 w-full"
+          required={required}
+          value={arrayInput}
+          onChange={(e) => setArrayInput(e.target.value)}
+        />
+      ) : (
+        <>
+          {(fieldType === "text" || fieldType === "varchar") && (
+            <input
+              type="text"
+              className="border border-gray-300 rounded p-2 w-full"
+              required={required}
+              defaultValue={normalizedValue}
+            />
+          )}
 
-    return (
-        <div>
-            <div className="text-medium"> 
-                <span className="font-semibold text-[#616161]">{fieldName}</span>
-                {required && <span className="text-red-500">*</span>}
-                <span className="font-light text-[#8C8C8C]"> {fieldType}</span>
-            </div>
+          {(fieldType === "int2" ||
+            fieldType === "int4" ||
+            fieldType === "int8" ||
+            fieldType === "numeric" ||
+            fieldType === "float4" ||
+            fieldType === "float8") && (
+            <input
+              type="number"
+              className="border border-gray-300 rounded p-2 w-full"
+              required={required}
+              defaultValue={normalizedValue ?? 0}
+            />
+          )}
 
-            {(fieldType === "timestamp" || fieldType === "timestamptz") && (
-                <DatePicker
-                    selected={selectedDate}
-                    onChange={handleChange}
-                    showTimeSelect
-                    dateFormat="yyyy-MM-dd HH:mm:ss.SSSSSS"
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-            )}
+          {fieldType === "bool" && (
+            <input
+              type="checkbox"
+              className="border border-gray-300 rounded p-2"
+              required={required}
+              defaultChecked={normalizedValue === "true"}
+            />
+          )}
 
-            {isEnum ? (
-                <select className="border border-gray-300 rounded p-2 w-full" required={required} defaultValue={normalizedValue}>
-                    {enumValues?.map((option) => (
-                        <option key={option} value={option}>
-                            {option}
-                        </option>
-                    ))}
-                </select>
-            ) : isArray ? (
-                <input
-                    type="text"
-                    className="border border-gray-300 rounded p-2 w-full"
-                    required={required}
-                    value={arrayInput}
-                    onChange={(e) => setArrayInput(e.target.value)}
-                />
-            ) : (
-                <>
-                    {(fieldType === "text" || fieldType === "varchar") && (
-                        <input 
-                            type="text" 
-                            className="border border-gray-300 rounded p-2 w-full"
-                            required={required}
-                            defaultValue={normalizedValue}
-                        />
-                    )}
+          {fieldType === "uuid" && (
+            <input
+              type="text"
+              className="border border-gray-300 rounded p-2 w-full"
+              required={required}
+              defaultValue={normalizedValue}
+              readOnly
+            />
+          )}
 
-                    {(fieldType === "int2" || fieldType === "int4" || fieldType === "int8" || fieldType === "numeric" || fieldType === "float4" || fieldType === "float8") && (
-                        <input 
-                            type="number" 
-                            className="border border-gray-300 rounded p-2 w-full"
-                            required={required}
-                            defaultValue={normalizedValue ?? 0}
-                        />
-                    )}
+          {(fieldType === "json" || fieldType === "jsonb") && (
+            <input
+              type="text"
+              className="border border-gray-300 rounded p-2 w-full"
+              required={required}
+              defaultValue={
+                typeof normalizedValue === "object"
+                  ? JSON.stringify(normalizedValue)
+                  : normalizedValue
+              }
+            />
+          )}
 
-                    {fieldType === "bool" && (
-                        <input 
-                            type="checkbox" 
-                            className="border border-gray-300 rounded p-2"
-                            required={required}
-                            defaultChecked={normalizedValue === "true"}
-                        />
-                    )}
-
-                    {fieldType === "uuid" && (
-                        <input 
-                            type="text" 
-                            className="border border-gray-300 rounded p-2 w-full"
-                            required={required}
-                            defaultValue={normalizedValue}
-                            readOnly
-                        />
-                    )}
-
-                    {(fieldType === "json" || fieldType === "jsonb") && (
-                        <input
-                            type="text"
-                            className="border border-gray-300 rounded p-2 w-full"
-                            required={required}
-                            defaultValue={typeof normalizedValue === "object" ? JSON.stringify(normalizedValue) : normalizedValue}
-                        />
-                    )}
-
-                    {fieldType === "bytea" && (
-                        <input 
-                            type="file" 
-                            className="border border-gray-300 rounded p-2 w-full"
-                            required={required}
-                        />
-                    )}
-                </>
-            )}
-        </div>
-    );
+          {fieldType === "bytea" && (
+            <input
+              type="file"
+              className="border border-gray-300 rounded p-2 w-full"
+              required={required}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
 }

@@ -131,10 +131,8 @@ export default function Search() {
                     <div>Loading...</div>
                 ):(
                     <div className="w-full h-full flex flex-col items-center">
-                    {/* <div className="w-full flex justify-center items-center flex-col"> */}
                     <div className="w-5/6 h-full flex flex-col gap-3">
 
-            {/* <div className="w-5/6 mt-6"> */}
                 <h1 className="text-3xl font-semibold">Members</h1>
                 <p className="text-base text-gray-600">Connect with Omnilore Members</p>
                 <div className="relative w-full mt-4">
