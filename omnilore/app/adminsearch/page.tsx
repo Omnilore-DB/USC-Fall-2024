@@ -211,7 +211,7 @@ export default function Search() {
                             onClose={() => setIsEntryPanelOpen(false)}
                             selectedTable={selectedTable}
                             mode={editMode ? "edit" : "add"}
-                            selectedRow ={ selectedRow }
+                            selectedRow ={ selectedRow || undefined }
                                 />
                         )}
                         

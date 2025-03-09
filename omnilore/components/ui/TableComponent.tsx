@@ -62,7 +62,9 @@ const TableComponent = ({
                                         <>
                                             {adminView && (roles.includes('admin') || roles.includes('treasurer') || roles.includes('registrar')) && (
                                                 <th
-                                                    ref={(el) => headerRefs.current[0] = el}
+                                                    ref={(el) => {
+                                                        headerRefs.current[0] = el;
+                                                    }}
                                                     className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-none"
                                                     style={{
                                                         left: `${leftOffset}px`,
@@ -82,7 +84,9 @@ const TableComponent = ({
                                                 return (
                                                     <th
                                                         key={key}
-                                                        ref={(el) => headerRefs.current[colIndex + 1] = el} // Store ref for measurement
+                                                        ref={(el) => {
+                                                            headerRefs.current[0] = el;
+                                                        }}
                                                         className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-none"
                                                         style={{
                                                             left: `${leftOffset}px`,
