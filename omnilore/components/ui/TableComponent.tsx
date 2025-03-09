@@ -65,6 +65,7 @@ const TableComponent = ({
                                                     ref={(el) => {
                                                         headerRefs.current[0] = el;
                                                     }}
+                                                  
                                                     className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-none"
                                                     style={{
                                                         left: `${leftOffset}px`,
@@ -85,8 +86,10 @@ const TableComponent = ({
                                                     <th
                                                         key={key}
                                                         ref={(el) => {
-                                                            headerRefs.current[0] = el;
-                                                        }}
+                                                            headerRefs.current[colIndex + 1] = el;
+                                                          }}
+                                                          
+                                                        // ref={(el) => headerRefs.current[colIndex + 1] = el} // Store ref for measurement
                                                         className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-none"
                                                         style={{
                                                             left: `${leftOffset}px`,
