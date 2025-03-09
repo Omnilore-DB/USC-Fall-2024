@@ -1,6 +1,7 @@
 'use client';
-
 import { useState, useEffect, useRef } from 'react';
+import UserIcon from "@/components/assets/user-icon.png"
+
 
 interface TableComponentProps {
     entries: Record<string, any>[];
@@ -8,7 +9,8 @@ interface TableComponentProps {
     selectedRow: Record<string, any> | null;
     handleRowSelection: (row: Record<string, any>) => void;
     primaryKeys: string[];
-    enableRowSelection?: boolean;
+    adminView?: boolean;
+    showImages?: boolean;
 }
 
 const TableComponent = ({
@@ -17,7 +19,8 @@ const TableComponent = ({
     selectedRow,
     handleRowSelection,
     primaryKeys,
-    enableRowSelection = true
+    adminView = true,
+    showImages = false
 }: TableComponentProps) => {
     
     const [localSelectedRow, setLocalSelectedRow] = useState<Record<string, any> | null>(selectedRow);
@@ -57,7 +60,7 @@ const TableComponent = ({
 
                                     return (
                                         <>
-                                            {enableRowSelection && (roles.includes('admin') || roles.includes('treasurer') || roles.includes('registrar')) && (
+                                            {adminView && (roles.includes('admin') || roles.includes('treasurer') || roles.includes('registrar')) && (
                                                 <th
                                                     ref={(el) => headerRefs.current[0] = el}
                                                     className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-none"
@@ -70,7 +73,10 @@ const TableComponent = ({
                                                 </th>
                                             )}
 
-                                            {primaryKeys.map((key, colIndex) => {
+
+                                            
+                                            {adminView && (
+                                            primaryKeys.map((key, colIndex) => {
                                                 leftOffset += columnWidths[colIndex] || 50; // Set left based on measured width
 
                                                 return (
@@ -86,7 +92,8 @@ const TableComponent = ({
                                                         {key}
                                                     </th>
                                                 );
-                                            })}
+                                            }
+                                            ))}
                                         </>
                                     );
                                 })()}
@@ -128,7 +135,7 @@ const TableComponent = ({
                                     return (
                                         <>
                                         {/* (roles.includes('admin') || roles.includes('treasurer') || roles.includes('registrar'))  */}
-                                            {enableRowSelection && (
+                                            {adminView && (
                                                 <td 
                                                     className={`px-4 py-2 w-10 text-center sticky z-10
                                                         ${ hasIssue 
@@ -158,20 +165,22 @@ const TableComponent = ({
                                                 </td>
                                             )}
 
-                                            {primaryKeys.map((key, colIndex) => {
-                                                leftOffset += columnWidths[colIndex] || 50;
-                                                return(
-                                                <td key={key} 
-                                                // ref={(el) => headerRefs.current[index + 1] = el}
-                                                className={`px-4 py-2 sticky z-10 ${hasIssue ? 'bg-red-50' : isSelected ? 'bg-gray-100' : 'bg-white group-hover:bg-gray-50'}`}
-                                                    style={{ 
-                                                        left: `${leftOffset}px`,
-                                                        boxShadow: 'inset 0 0 0 0.5px #e5e7eb' 
-                                                    }}>
-                                                    {item[key] ?? ''}
-                                                </td>
-                                                )
-                                            })}
+                                            {adminView && (
+                                                primaryKeys.map((key, colIndex) => {
+                                                    leftOffset += columnWidths[colIndex] || 50;
+                                                    return(
+                                                    <td key={key} 
+                                                    // ref={(el) => headerRefs.current[index + 1] = el}
+                                                    className={`px-4 py-2 sticky z-10 ${hasIssue ? 'bg-red-50' : isSelected ? 'bg-gray-100' : 'bg-white group-hover:bg-gray-50'}`}
+                                                        style={{ 
+                                                            left: `${leftOffset}px`,
+                                                            boxShadow: 'inset 0 0 0 0.5px #e5e7eb' 
+                                                        }}>
+                                                        {item[key] ?? ''}
+                                                    </td>
+                                                    )
+                                                }))
+                                        }
 
                                         </>
                                     );
@@ -219,6 +228,30 @@ const TableComponent = ({
                                             {Object.keys(item)
                                                 .filter(name => !primaryKeys.includes(name))
                                                 .map(columnName => (
+                                                    showImages && (columnName === "Photo" || columnName === "photo_link") ? (
+                                                        <td 
+                                                          key={columnName} 
+                                                          className={`px-4 py-2 ${
+                                                            hasIssue
+                                                              ? 'bg-red-50'
+                                                              : isSelected
+                                                                ? 'bg-gray-100'
+                                                                : 'bg-white group-hover:bg-gray-50'
+                                                          }`}
+                                                          style={{
+                                                            boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
+                                                            outline: 'none'
+                                                          }}
+                                                        >
+                                                          <div className="w-12 h-12 overflow-hidden rounded-full border border-gray-300">
+                                                            <img 
+                                                              src={item[columnName] || UserIcon.src} 
+                                                              alt="" 
+                                                              className="w-full h-full object-cover"
+                                                            />
+                                                          </div>
+                                                        </td>
+                                                      ) : (
                                                     <td 
                                                         key={columnName} 
                                                         className={` px-4 py-2
@@ -240,6 +273,7 @@ const TableComponent = ({
                                                                 : item[columnName]
                                                         }
                                                     </td>
+                                                )
                                                 ))}
                                         </>
                                     ) : (

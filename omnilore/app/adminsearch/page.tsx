@@ -197,7 +197,8 @@ export default function Search() {
                                         selectedRow={selectedRow}
                                         handleRowSelection={(row) => setSelectedRow(row)}
                                         primaryKeys={primaryKeys}
-                                        enableRowSelection={true}
+                                        adminView={true}
+                                        showImages={false}
                                     />
                                 </div>
                             )}
