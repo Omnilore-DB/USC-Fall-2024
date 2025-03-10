@@ -50,7 +50,7 @@ export const queryTableWithFields = async (
         const { data, error } = await supabase
             .from(table)
             .select(selectedFields)
-            .order("pid", { ascending: true });
+            .order("id", { ascending: true });
 
         if (error || !data) {
             console.error(`Error fetching data from table ${table}:`, error);

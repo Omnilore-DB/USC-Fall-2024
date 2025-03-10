@@ -4,7 +4,7 @@ interface DeletePanelProps {
     isOpen: boolean;
     onClose: () => void;
     selectedTable: string;
-    selectedRow?: Record<string, any>;
+    selectedRow?: Record<string, any> | null;
     onDelete: () => void;
 }
 

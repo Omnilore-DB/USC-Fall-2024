@@ -8,10 +8,11 @@ interface ActionPanelProps {
     selectedTable: string;
     mode: string;
     selectedRow?: Record<string, any>;
+    primaryKeys?: string[];
 }
 
 export default function ActionPanel({ isOpen, onClose, selectedTable, mode, selectedRow }: ActionPanelProps) {
-    const [fields, setFields] = useState<{ name: string; type: string; nullable: boolean; isArray: boolean; isEnum: boolean; enumValues: string[] }[]>([]);
+    const [fields, setFields] = useState<{ name: string; type: string; nullable: boolean; isAutoIncrement: boolean; isArray: boolean; isEnum: boolean; enumValues: string[] }[]>([]);
     const [formData, setFormData] = useState<Record<string, any>>({});
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -35,6 +36,7 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode, sele
             } else {
                 console.log("ADD MODE");
                 setFormData({});
+                setFields([]);
                 console.log("form data ", formData);
             }
     
@@ -44,7 +46,7 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode, sele
             setFormData({});
             document.body.style.overflow = "auto";
         }
-    }, [isOpen, selectedTable]);
+    }, [isOpen, selectedTable, mode, selectedRow]);
     
     
 
@@ -56,6 +58,7 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode, sele
                 name,
                 type: details.type,
                 nullable: details.nullable,
+                isAutoIncrement: details.isAutoIncrement,
                 isArray: details.isArray,
                 isEnum: details.isEnum,
                 enumValues: details.enumValues || [],
@@ -102,13 +105,14 @@ export default function ActionPanel({ isOpen, onClose, selectedTable, mode, sele
                     </div>
 
                     <div ref={scrollContainerRef} className="flex flex-col w-full h-full gap-8 overflow-y-auto overflow-hidden custom-scrollbar p-8">
-                        {fields.map(({ name, type, nullable, isArray, isEnum, enumValues }) => (
+                        {fields.map(({ name, type, nullable, isAutoIncrement, isArray, isEnum, enumValues }) => (
                                 <InputField 
                                     key={name} 
                                     fieldName={name} 
                                     fieldType={type} 
                                     required={!nullable} 
                                     value={formData[name]} 
+                                    isAutoIncrement={isAutoIncrement}
                                     isArray={isArray} 
                                     isEnum={isEnum}
                                     enumValues={enumValues}

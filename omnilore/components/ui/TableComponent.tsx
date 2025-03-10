@@ -9,7 +9,7 @@ interface TableComponentProps {
     selectedRow: Record<string, any> | null;
     handleRowSelection: (row: Record<string, any>) => void;
     primaryKeys: string[];
-    adminView?: boolean;
+    adminTable?: boolean;
     showImages?: boolean;
 }
 
@@ -19,7 +19,7 @@ const TableComponent = ({
     selectedRow,
     handleRowSelection,
     primaryKeys,
-    adminView = true,
+    adminTable = true,
     showImages = false
 }: TableComponentProps) => {
 
@@ -71,7 +71,7 @@ const TableComponent = ({
 
                                     return (
                                         <>
-                                            {adminView && (
+                                            {adminTable && (
                                                 <th
                                                     ref={(el) => {
                                                         headerRefs.current[0] = el;
@@ -88,7 +88,7 @@ const TableComponent = ({
                                             )}
 
 
-                                            {adminView && (
+                                            {adminTable && (
                                                 primaryKeys.map((key, colIndex) => {
                                                     leftOffset += columnWidths[colIndex] || 50;
 
@@ -148,10 +148,11 @@ const TableComponent = ({
 
                                             return (
                                                 <>
-                                                    {adminView && (
+                                                    {/* Select body */}
+                                                    {adminTable && (
                                                         <td
                                                             className={`px-4 py-2 w-10 text-center sticky z-10
-                                                        ${hasIssue
+                                                                ${hasIssue
                                                                     ? 'bg-red-50'
                                                                     : (isSelected)
                                                                         ? 'bg-gray-100'
@@ -177,8 +178,9 @@ const TableComponent = ({
                                                             />
                                                         </td>
                                                     )}
-
-                                                    {adminView && (
+                        
+                                                    {/* Primary keys body */}
+                                                    {adminTable && (
                                                         primaryKeys.map((key, colIndex) => {
                                                             leftOffset += columnWidths[colIndex] || 50;
                                                             return (
@@ -198,9 +200,8 @@ const TableComponent = ({
                                             );
                                         })()}
 
-
-                                        {roles.includes("admin") || roles.includes("treasurer") || roles.includes("registrar") ? (
-                                            <>
+                                        
+<>
                                                 {Object.keys(item)
                                                     .filter(name => !primaryKeys.includes(name))
                                                     .map(columnName => (
@@ -251,24 +252,6 @@ const TableComponent = ({
                                                         )
                                                     ))}
                                             </>
-                                        ) : (
-                                            Object.keys(item).map(columnName => (
-                                                <td
-                                                    key={columnName}
-                                                    className={` px-4 py-2
-                                                    ${(isSelected)
-                                                            ? 'bg-gray-100'
-                                                            : 'bg-white group-hover:bg-gray-50'
-                                                        }`}
-                                                    style={{
-                                                        boxShadow: 'inset 0 0 0 0.5px #e5e7eb',
-                                                        outline: 'none'
-                                                    }}
-                                                >
-                                                    {item[columnName]}
-                                                </td>
-                                            ))
-                                        )}
                                     </tr>
                                 )
                             })}

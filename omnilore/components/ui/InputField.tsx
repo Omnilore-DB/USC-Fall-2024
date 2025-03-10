@@ -7,6 +7,7 @@ interface ActionPanelProps {
   fieldName: string;
   fieldType: string;
   required: boolean;
+  isAutoIncrement: boolean;
   value: any;
   isArray: boolean;
   isEnum?: boolean;
@@ -18,6 +19,7 @@ export default function InputField({
   fieldName,
   fieldType,
   required,
+  isAutoIncrement,
   value,
   isArray,
   isEnum,
@@ -48,17 +50,14 @@ export default function InputField({
 
   useEffect(() => {
     if (mode === "add") {
-      setArrayInput(isArray ? "[]" : "");
-      setSelectedDate(null);
-
-      // For timestamps or date, default to current date
-      if (
-        fieldType.includes("timestamp") ||
-        fieldType.includes("timestampz") ||
-        fieldType === "date"
-      ) {
-        setSelectedDate(new Date());
-      }
+        if (isArray) {
+          setArrayInput("[]");
+        } else if (fieldType === "timestamp" || fieldType === "timestamptz" || fieldType === "date") {
+          setSelectedDate(new Date());
+        } else {
+          setArrayInput("");
+          setSelectedDate(null);
+        }
     } else {
       // On edit mode
       setArrayInput(isArray ? formatArray(normalizedValue) : normalizedValue);
@@ -146,6 +145,8 @@ export default function InputField({
               className="border border-gray-300 rounded p-2 w-full"
               required={required}
               defaultValue={normalizedValue ?? 0}
+              placeholder={isAutoIncrement ? "automatically generated" : ""}
+
             />
           )}
 

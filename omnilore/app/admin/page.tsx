@@ -16,7 +16,6 @@ export default function Search() {
     const router = useRouter();
     const [query, setQuery] = useState("");
     const [roles, setRoles] = useState<string[]>([]);
-    const [isAdmin, setIsAdmin] = useState<boolean>(false);
     const [entries, setEntries] = useState<Record<string, any>[]>([]);
     const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null);
     const [editMode, setEditMode] = useState(false);
@@ -136,13 +135,12 @@ export default function Search() {
         }
 
         setIsDeletePanelOpen(true);
-        alert("DELETE REGISTERED");
     };
 
 
     const openEntryPanel = (mode: 'add' | 'edit') => {
         if (mode === 'edit' && selectedRow === null) {
-            alert("Please select a row to edit.");
+            alert("Select a row");
             return;
         }
 
