@@ -13,7 +13,7 @@ import DeletePanel from "@/components/ui/DeletePanel";
 
 
 export default function Search() {
-    const router = useRouter();
+
     const [query, setQuery] = useState("");
     const [roles, setRoles] = useState<string[]>([]);
     const [entries, setEntries] = useState<Record<string, any>[]>([]);
@@ -72,9 +72,10 @@ export default function Search() {
                 });
             }
 
+            const tablesArray = Array.from(viewTables);
             setPermissions(allPermissions);
-            setTables(Array.from(viewTables));
-            setSelectedTable(Array.from(viewTables)[0] || null);
+            setTables(tablesArray);
+            setSelectedTable(tablesArray[0] || null);
         };
 
         setup().catch(console.error);
@@ -110,23 +111,6 @@ export default function Search() {
             permissions[role]?.some((p) => p.table_name === selectedTable && p[action])
         );
     };
-
-    // const handleDeleteClick = () => {
-    //     if (!selectedRow) {
-    //         alert("Please select a row to delete.");
-    //         return;
-    //     }
-
-    //     if (hasPermission("can_delete")) {
-    //         alert("DELETE REGISTERED");
-    //         // Add delete logic here
-
-
-
-    //     } else {
-    //         alert("NO DELETE PERMISSIONS");
-    //     }
-    // };
 
     const openDeletePanel = () => {
         if (selectedRow == null) {
@@ -168,7 +152,9 @@ export default function Search() {
                                     <TableSelectDropdown
                                         tables={tables}
                                         selectedTable={selectedTable}
-                                        setSelectedTable={setSelectedTable}
+                                        setSelectedTable={(table) => {
+                                            setSelectedTable(table);
+                                        }}
                                     />
                                 </div>
                                 <div className="flex gap-1">
@@ -196,7 +182,7 @@ export default function Search() {
                                         selectedRow={selectedRow}
                                         handleRowSelection={(row) => setSelectedRow(row)}
                                         primaryKeys={primaryKeys}
-                                        adminView={true}
+                                        adminTable={true}
                                         showImages={false}
                                     />
                                 </div>
