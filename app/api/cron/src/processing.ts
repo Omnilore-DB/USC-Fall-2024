@@ -131,7 +131,7 @@ export const convert = {
         const result = parse_form_data(form_data);
         if (Object.keys(result.invalid_data).length > 0) {
           order.issues.push({
-            message: "Invalid order data",
+            message: "Validation errors or warnings",
             code: "VALIDATION_ERROR",
             more: {
               line_item_idx: idx,
