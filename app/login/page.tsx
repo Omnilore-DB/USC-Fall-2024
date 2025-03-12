@@ -16,9 +16,34 @@ export default function LoginPage() {
   const [emailError, setEmailError] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token"); // Get token from URL
   const DEFAULT_GENERAL_EMAIL = "member@omnilore.org";
   const DEFAULT_GENERAL_PASSWORD = "CBIWbvMQNUStFCGhnXwV";
 
+  const handleTokenLogin = async (token: string) => {
+    console.log("Token received:", token);
+    
+    // Allow multiple test tokens for debugging
+    const validTokens = ["demo_token_12345", "fake_jwt_token_123"];
+    
+    if (validTokens.includes(token)) {
+      await supabase.auth.signInWithPassword({
+        email: "member@omnilore.org",
+        password: token, // Using token as a password for testing
+      });
+        router.push("/search"); // Redirect to dashboard after successful login
+      } else {
+        alert("Invalid token. Please log in manually.");
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      handleTokenLogin(token);
+    }
+  }, [token]);
+  
   const redirectToAdminLogin = () => {
     router.push('/admin-login');
   };
