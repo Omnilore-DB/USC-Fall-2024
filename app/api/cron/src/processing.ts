@@ -1,70 +1,224 @@
-import { processDonation, processOrder } from "./squarespace";
-import { batchWithDelay } from "./utils";
+import { batchWithDelay, make_data, make_error, type Result } from "./utils";
+import type { ParsedFormData } from "./types";
 import type {
-  Transaction,
-  SupabaseTransaction,
+  SupabaseMemberInsert,
   SupabasePaymentPlatform,
-} from "./types";
+  SupabaseProductInsert,
+  SupabaseProductType,
+  SupabaseTransactionInsert,
+} from "./supabase/types";
+import type {
+  SquarespaceInventoryItem,
+  SquarespaceTransactionDocument,
+} from "./squarespace/types";
+import {
+  fetchSquarespaceOrder,
+  fetchSquarespaceProfile,
+} from "./squarespace/api";
+import { parse_form_data } from "./squarespace/form_processor";
 
-export async function processDetails(
-  transactions: Transaction[]
-): Promise<Transaction[]> {
-  // Process transactions in batches of 5 with a delay of 1 second between batches
-  // Squarespace API has a rate limit of 300 requests per minute
-  return batchWithDelay(
-    transactions,
-    t => (t.order_id ? processOrder(t) : processDonation(t)),
-    { batchSize: 5, delayMs: 1000 }
-  );
-}
+export const convert = {
+  product: (p: SquarespaceInventoryItem): SupabaseProductInsert => {
+    let type: SupabaseProductType = "UNKNOWN";
+    let year: string | null = null;
+    let group_id: string | null = null;
 
-/**
- * Prepares transaction data from Squarespace to be saved in our database.
- *
- * This function takes transactions from Squarespace and formats them to match our database structure.
- * Here's what it does in simple terms:
- *
- * 1. Takes a list of transactions from Squarespace
- * 2. For each transaction:
- *    - Gets basic info like transaction ID, order ID, total amount, date etc.
- *    - If there's customer data (like name and email), uses that
- *    - If no customer data, falls back to transaction email
- *    - Keeps track of any issues that happened during processing
- *    - Removes unnecessary info from error messages
- * 3. Returns the data in a format ready to be saved to our database
- *
- * @param ts - List of transactions from Squarespace
- * @returns List of transactions formatted for our database
- */
-export function prepareTransactionsForUpsert(ts: Transaction[]) {
-  return ts.map(
-    t =>
-      ({
-        sqsp_transaction_id: t.transaction_id,
-        sqsp_order_id: t.order_id,
-        transaction_email: t.transaction_email,
-        amount: t.total,
-        date: t.date,
-        skus: t.skus,
-        payment_platform: t.payment_platform as SupabasePaymentPlatform,
-        fee: t.fee,
-        external_transaction_id: t.external_transaction_id,
-        raw_form_data: t.raw_data,
-        parsed_form_data: t.data,
-        user_names: t.data.map(d =>
-          `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim()
-        ),
-        user_amounts: t.data.map(d => d.amount),
-        member_pid: [],
-        issues: t.issues.map(i => ({
-          message: i.message,
-          code: i.code,
-          info: Object.fromEntries(
-            Object.entries(i.info).filter(
-              ([key]) => key !== "order_id" && key !== "transaction_id"
-            )
-          ),
-        })),
-      } satisfies Omit<SupabaseTransaction, "created_at" | "updated_at">)
-  );
-}
+    // Check for Forum SKU: SQF[yy]00[nn]
+    const forumMatch = p.sku.match(/^SQF(\d{2})00(\d+)$/);
+    if (forumMatch) {
+      type = "FORUM";
+
+      const _year = parseInt(forumMatch[1], 10);
+      if (_year >= 25) {
+        year = `20${_year}`;
+
+        const _group_id = parseInt(forumMatch[2], 10);
+        group_id = `${_year}-${Math.trunc(_group_id / 10).toString()}`;
+      }
+    }
+
+    // Check for Membership SKU: SQM[F|L|A][E|U][yy]00[nn]
+    const memMatch = p.sku.match(/^SQM([FLA])([EU])(\d{2})00(\d+)$/);
+    if (memMatch) {
+      type = "MEMBERSHIP";
+
+      const _year = parseInt(memMatch[3], 10);
+      if (_year >= 25) year = `20${_year}`;
+    }
+
+    return {
+      sku: p.sku,
+      descriptor: p.descriptor,
+      sq_id: p.variantId,
+      type,
+      year,
+      group_id,
+    };
+  },
+
+  transactions: async (
+    ts: SquarespaceTransactionDocument[]
+  ): Promise<SupabaseTransactionInsert[]> => {
+    // Process transactions in batches of 5 with a delay of 1 second between batches
+    // Squarespace API has a rate limit of 300 requests per minute
+    return batchWithDelay(
+      ts,
+      t =>
+        t.salesOrderId
+          ? convert.transaction.order(t)
+          : convert.transaction.donation(t),
+      { batchSize: 5, delayMs: 1000 }
+    );
+  },
+
+  transaction: {
+    order: async (
+      t: SquarespaceTransactionDocument
+    ): Promise<SupabaseTransactionInsert> => {
+      if (!t.salesOrderId) {
+        throw new Error(
+          `Transaction has no order ID but must if you want to process as an order. Transactions with no order ID are donations. Transaction ID: ${t.id}`
+        );
+      }
+
+      const order: SupabaseTransactionInsert = {
+        sqsp_transaction_id: t.id,
+        sqsp_order_id: t.salesOrderId,
+        date: t.createdOn,
+        amount: Number(t.total.value),
+        fee: Number(t.total.value) - Number(t.totalNetPayment.value),
+        payment_platform:
+          (t.payments.at(0)?.provider as SupabasePaymentPlatform) ?? "MAIL",
+        external_transaction_id: t.payments.at(0)?.id,
+        transaction_email: t.customerEmail,
+        skus: [],
+        issues: [],
+        raw_form_data: [],
+        parsed_form_data: [],
+      };
+
+      const { data, error } = await fetchSquarespaceOrder(t.salesOrderId);
+
+      if (error) {
+        order.issues.push(
+          error.with({
+            transaction_id: t.id,
+          })
+        );
+
+        return order;
+      }
+
+      data.lineItems.forEach((p, idx) => {
+        const form_data: [string, string][] = (p.customizations ?? []).map(
+          obj => [obj.label, obj.value]
+        );
+
+        order.raw_form_data.push(Object.fromEntries(form_data));
+        order.skus.push(p.sku ?? "SKU_UNASSIGNED");
+        if (!p.sku) {
+          order.issues.push({
+            message: "No SKU assigned",
+            code: "SKU_UNASSIGNED",
+            more: {
+              line_item_idx: idx,
+              order_id: t.salesOrderId,
+              transaction_id: t.id,
+            },
+          });
+        }
+
+        const result = parse_form_data(form_data);
+        if (Object.keys(result.invalid_data).length > 0) {
+          order.issues.push({
+            message: "Invalid order data",
+            code: "VALIDATION_ERROR",
+            more: {
+              line_item_idx: idx,
+              order_id: t.salesOrderId,
+              transaction_id: t.id,
+              errors: result.invalid_data,
+            },
+          });
+        }
+
+        order.parsed_form_data.push({
+          ...result.valid_data,
+          sku: p.sku ?? "SKU_UNASSIGNED",
+          amount: Number(p.unitPricePaid.value),
+        });
+      });
+
+      return order;
+    },
+
+    donation: async (
+      t: SquarespaceTransactionDocument
+    ): Promise<SupabaseTransactionInsert> => {
+      if (t.salesOrderId) {
+        throw new Error(
+          `Transaction has order ID but must NOT if you want to process as a donation. Transactions with order ID are orders. Transaction ID: ${t.id}`
+        );
+      }
+
+      const donation: SupabaseTransactionInsert = {
+        sqsp_transaction_id: t.id,
+        sqsp_order_id: null,
+        date: t.createdOn,
+        amount: Number(t.total.value),
+        fee: Number(t.total.value) - Number(t.totalNetPayment.value),
+        payment_platform:
+          (t.payments.at(0)?.provider as SupabasePaymentPlatform) ?? "MAIL",
+        external_transaction_id: t.payments.at(0)?.id,
+        transaction_email: t.customerEmail,
+        skus: ["SQDONATION"],
+        issues: [],
+        raw_form_data: [],
+        parsed_form_data: [],
+      };
+
+      const { data, error } = await fetchSquarespaceProfile(t.customerEmail);
+
+      if (error) {
+        donation.issues.push(
+          error.with({
+            transaction_id: t.id,
+          })
+        );
+
+        return donation;
+      }
+
+      donation.raw_form_data.push({});
+      donation.parsed_form_data.push({
+        sku: "SQDONATION",
+        amount: Number(t.total.value),
+        first_name: data.firstName,
+        last_name: data.lastName,
+        email: data.email,
+      });
+
+      return donation;
+    },
+  },
+
+  member: (d: ParsedFormData): Result<SupabaseMemberInsert> => {
+    if (!d.first_name || !d.last_name || (!d.email && !d.phone)) {
+      return make_error({
+        message: "Member has no name or neither an email or phone",
+        code: "VALIDATION_ERROR",
+        more: {
+          parsed_form_data: d,
+        },
+      });
+    }
+
+    return make_data({
+      ...d,
+      sku: undefined,
+      amount: undefined,
+      first_name: d.first_name,
+      last_name: d.last_name,
+    });
+  },
+};

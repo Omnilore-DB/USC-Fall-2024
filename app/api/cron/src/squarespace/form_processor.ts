@@ -1,12 +1,13 @@
-import { SupabaseMember } from "../types";
+import type { SupabaseMember, SupabaseMemberInsert } from "../supabase/types";
 import {
+  remove_extra_whitespace,
   string,
   email,
   phone,
   state,
   zip_code,
   type SchemaItem,
-} from "./form_schemas";
+} from "../validations/schemas";
 
 const FORM_DATA_MAP = new Map(
   Object.entries({
@@ -33,6 +34,10 @@ const FORM_DATA_MAP = new Map(
     Phone: {
       column: "phone",
       processor: phone,
+    },
+    "Street Address": {
+      column: "street_address",
+      processor: string,
     },
     Address: {
       column: "street_address",
@@ -68,25 +73,28 @@ const FORM_DATA_MAP = new Map(
 type ProcessedFormData = {
   valid_data: Partial<SupabaseMember>;
   invalid_data: InvalidProcessedFormData;
-  miscellaneous_fields: string[];
 };
 
 type InvalidProcessedFormData = {
   [key: SquarespaceFormLabel]: { raw_value: string; errors: unknown };
 };
 
-export function processFormData(data: [string, string][]): ProcessedFormData {
-  const valid_data: Partial<SupabaseMember> = {};
+export function parse_form_data(data: [string, string][]): ProcessedFormData {
+  const valid_data: Partial<SupabaseMemberInsert> = {};
   const invalid_data: InvalidProcessedFormData = {};
-  const miscellaneous_fields: string[] = [];
 
-  for (const [label, value] of data) {
-    if (label.length > 30) {
-      miscellaneous_fields.push(label);
-      continue;
-    }
+  for (let [label, value] of data) {
+    label = remove_extra_whitespace(label);
 
     if (!FORM_DATA_MAP.has(label)) {
+      if (label.length > 30) {
+        invalid_data[label] = {
+          raw_value: value,
+          errors: `This label is not in the FORM_DATA_MAP and is more than 30 characters long, so we wont process it. This is not an error.`,
+        };
+        continue;
+      }
+
       invalid_data[label] = {
         raw_value: value,
         errors: `This label is not in the FORM_DATA_MAP, so we do not know how to process it and map it to a column in the Supabase member table.`,
@@ -96,13 +104,13 @@ export function processFormData(data: [string, string][]): ProcessedFormData {
 
     const {
       column,
-      processor: { preprocessor, schema },
+      processor: { pre, schema },
 
       columns,
       transform,
     } = FORM_DATA_MAP.get(label)!;
 
-    const parsed = schema.safeParse(preprocessor(value));
+    const parsed = schema.safeParse(pre(value));
     if (!parsed.success) {
       invalid_data[label] = { raw_value: value, errors: parsed.error.issues };
       continue;
@@ -118,7 +126,7 @@ export function processFormData(data: [string, string][]): ProcessedFormData {
     valid_data[column] = parsed.data;
   }
 
-  return { valid_data, invalid_data, miscellaneous_fields };
+  return { valid_data, invalid_data };
 }
 
 type SquarespaceFormLabel = string;

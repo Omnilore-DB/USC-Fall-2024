@@ -2,31 +2,32 @@ import { z } from "zod";
 
 export type SchemaItem = {
   schema: z.ZodSchema;
-  preprocessor: (v: string) => string;
+  pre: (v: string) => string;
 };
 
-const remove_extra_whitespace = (v: string) => v.replace(/\s+/g, " ").trim();
-const remove_all_whitespace = (v: string) => v.replace(/\s+/g, "");
-const remove_non_digits = (v: string) => v.replace(/\D/g, "");
+export const remove_extra_whitespace = (v: string) =>
+  v.replace(/\s+/g, " ").trim();
+export const remove_all_whitespace = (v: string) => v.replace(/\s+/g, "");
+export const remove_non_digits = (v: string) => v.replace(/\D/g, "");
 
 export const string = {
   schema: z.string().nonempty(),
-  preprocessor: remove_extra_whitespace,
+  pre: remove_extra_whitespace,
 } satisfies SchemaItem;
 
 export const email = {
   schema: z.string().email(),
-  preprocessor: remove_all_whitespace,
+  pre: remove_all_whitespace,
 } satisfies SchemaItem;
 
 export const phone = {
   schema: z.string().regex(/^\d{10}$/),
-  preprocessor: remove_non_digits,
+  pre: remove_non_digits,
 } satisfies SchemaItem;
 
 export const zip_code = {
   schema: z.string().regex(/^\d{5}(-\d{4})?$/),
-  preprocessor: remove_all_whitespace,
+  pre: remove_all_whitespace,
 } satisfies SchemaItem;
 
 export const state = {
@@ -84,5 +85,13 @@ export const state = {
     "WI",
     "WY",
   ]),
-  preprocessor: (v: string) => remove_all_whitespace(v).toUpperCase(),
+  pre: (v: string) => remove_all_whitespace(v).toUpperCase(),
+} satisfies SchemaItem;
+
+export const formatted_sku = {
+  schema: z
+    .string()
+    .regex(/^SQF(\d{2})00(\d+)$/)
+    .or(z.string().regex(/^SQM([FLA])([EU])(\d{2})00(\d+)$/)),
+  pre: (v: string) => remove_extra_whitespace(v).toUpperCase(),
 } satisfies SchemaItem;

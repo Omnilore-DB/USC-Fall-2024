@@ -1,3 +1,5 @@
+import type { Issue, IssueCode } from "./types";
+
 export const wait = (ms: number) =>
   new Promise(resolve => setTimeout(resolve, ms));
 
@@ -37,11 +39,11 @@ export async function batchWithDelay<T, R>(
  * If the function throws an error, it returns a Response with the error message.
  * Otherwise, it returns the Response from the function.
  */
-export function apiResponse(
+export async function apiResponse(
   fn: () => Promise<Response> | Response
-): Promise<Response> | Response {
+): Promise<Response> {
   try {
-    return fn();
+    return await fn();
   } catch (error) {
     console.error(error);
     return Response.json(
@@ -52,3 +54,45 @@ export function apiResponse(
     );
   }
 }
+
+export const make_error = <T extends Record<string, unknown>>(error: {
+  message: string;
+  code: IssueCode;
+  more: T;
+}) => {
+  return {
+    error: {
+      ...error,
+      with: <U extends Record<string, unknown>>(obj: U) => {
+        return {
+          ...error,
+          more: { ...error.more, ...obj },
+          toString: function () {
+            return JSON.stringify(this);
+          },
+        };
+      },
+      toString: function () {
+        return JSON.stringify(this);
+      },
+    },
+    data: null,
+  };
+};
+
+export const make_data = <T>(data: T) => {
+  return {
+    data,
+    error: null,
+  };
+};
+
+export type Result<T> =
+  | {
+      data: T;
+      error: null;
+    }
+  | {
+      data: null;
+      error: Issue;
+    };

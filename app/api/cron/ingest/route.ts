@@ -1,41 +1,65 @@
+import { get, upsert, update, perform } from "../src/supabase/api";
+import { convert } from "../src/processing";
 import {
-  getLastSyncTime,
-  updateLastSyncTime,
-  upsertTransactions,
-} from "../src/db";
-import {
-  prepareTransactionsForUpsert,
-  processDetails,
-} from "../src/processing";
-import { fetchTransactions } from "../src/squarespace";
+  fetchSquarespaceProducts,
+  fetchSquarespaceTransactions,
+} from "../src/squarespace/api";
 import { apiResponse } from "../src/utils";
 
 export async function POST() {
   return apiResponse(async () => {
-    const now = new Date().toISOString();
-    const lastUpdated = await getLastSyncTime("transactions");
+    const start_time = new Date();
 
-    const ts = await fetchTransactions(lastUpdated, now);
-    const processedTs = await processDetails(ts);
-    const tsToUpsert = prepareTransactionsForUpsert(processedTs);
+    const { data: products, error: products_error } =
+      await fetchSquarespaceProducts();
 
-    const upsertedTs = await upsertTransactions(tsToUpsert);
-    await updateLastSyncTime("transactions", now);
+    if (products_error) {
+      throw new Error(products_error.toString());
+    }
+
+    const upsertedProducts = await upsert.products(
+      products.map(convert.product)
+    );
+
+    const { data: ts, error: ts_error } = await fetchSquarespaceTransactions(
+      await get.last_sync(),
+      start_time
+    );
+
+    if (ts_error) {
+      throw new Error(ts_error.toString());
+    }
+
+    const convertedTs = await convert.transactions(ts);
+    const upsertedTs = await upsert.transactions(convertedTs);
+
+    const new_members = await update.members_given_transactions(upsertedTs);
+
+    await update.last_sync(start_time);
+    await perform.calculate_member_conflicts();
 
     return Response.json({
       message: `Found ${ts.length} transactions, processed ${
-        processedTs.length
+        convertedTs.length
       }, upserted ${upsertedTs.length}, issues with ${
-        processedTs.filter(r => r.issues.length > 0).length
-      }.`,
-      warnings: processedTs
+        convertedTs.filter(r => r.issues.length > 0).length
+      }. Created ${new_members.length} new members. Found ${
+        products.length
+      } products, upserted ${upsertedProducts.length}.`,
+      warnings: upsertedTs
         .filter(r => r.issues.length > 0)
         .map(r => ({
-          transaction_id: r.transaction_id,
-          order_id: r.order_id,
+          id: r.id,
           issues: r.issues,
           date: r.date,
         })),
+      new_members: new_members.map(m => ({
+        id: m.id,
+        first_name: m.first_name,
+        last_name: m.last_name,
+        email: m.email,
+        phone: m.phone,
+      })),
     });
   });
 }
