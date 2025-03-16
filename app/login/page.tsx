@@ -70,7 +70,6 @@ export default function LoginPage() {
         </div>
         <div className="flex justify-center mt-4 ml-10">
           {" "}
-          {/* New div for logo */}
           <img src={Logo.src} className="w-64 h-fit" />
         </div>
       </main>
