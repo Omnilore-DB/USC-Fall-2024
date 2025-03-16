@@ -57,7 +57,7 @@ export default function LoginPage() {
                 router.push("/members");
             }
         } catch (error) {
-            setAlertMessage(error.message || "Login failed. Please try again.");
+            setAlertMessage((error as Error).message || "Login failed. Please try again.");
             setShowAlert(true);
         }
     };
