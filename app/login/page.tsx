@@ -1,10 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/assets/logo.png";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AlertBox from "@/components/alertbox";
 import { supabase } from "@/app/supabase";
 import Company from "@/components/ui/company";
@@ -18,6 +17,39 @@ export default function LoginPage() {
   const [alertMessage, setAlertMessage] = useState("");
   const DEFAULT_GENERAL_EMAIL = "member@omnilore.org";
   const DEFAULT_GENERAL_PASSWORD = "CBIWbvMQNUStFCGhnXwV";
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token"); // Get token from URL
+
+  useEffect(() => {
+    if (token) {
+      handleTokenLogin(token);
+    }
+  }, [token]);
+
+  const handleTokenLogin = async (token: string) => {
+    console.log("Token received:", token);
+
+    // Extract the current UTC date (YYYY-MM-DD)
+    const pre64_token = "somekey" + new Date().toISOString().split("T")[0];
+    // Encode the token in Base64
+    const calculated_token = Buffer.from(pre64_token).toString("base64");
+
+    if (calculated_token !== token) return;
+
+    // Proceed with authentication using Supabase
+    try {
+      await supabase.auth.signInWithPassword({
+        email: "member@omnilore.org",
+        password: DEFAULT_GENERAL_PASSWORD, // Using token as a password for authentication
+      });
+
+      // Redirect to the search page after successful login
+      router.push("/members");
+    } catch (error) {
+      console.error("Authentication error:", error);
+      alert("Authentication failed. Please try again.");
+    }
+  };
 
   const redirectToAdminLogin = () => {
     router.push("/admin-login");
