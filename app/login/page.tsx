@@ -3,13 +3,21 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import AlertBox from "@/components/alertbox";
 import { supabase, getRoles } from "@/app/supabase";
 import Image from "next/image";
 import LandingPageImage from "@/components/assets/landingpage.png";
 
-export default function LoginPage() {
+export default function WrappedLoginPage() {
+  return (
+    <Suspense>
+      <LoginPage />
+    </Suspense>
+  );
+}
+
+function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
