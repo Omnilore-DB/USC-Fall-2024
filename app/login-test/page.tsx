@@ -9,6 +9,9 @@ import AlertBox from "@/components/alertbox";
 import { supabase } from "@/app/supabase";
 import Company from "@/components/ui/company";
 import NavBar from "@/components/ui/NavBar";
+import Image from "next/image";
+import LandingPageImage from "@/components/assets/landingpage.png";
+
 
 export default function LoginPage() {
     const router = useRouter();
@@ -67,10 +70,15 @@ export default function LoginPage() {
                         Login
                     </button>
                 </div>
-                <div className="flex justify-center w-[57%] h-full bg-gradient-to-t to-[#EDF2FD] from-[#FAF0EA] items-center">
-                    <span>content</span>
-                    {/* <MemberImage></MemberImage> */}
-
+                <div className="flex justify-end items-end w-[57%] h-full bg-gradient-to-t to-[#EDF2FD] from-[#FAF0EA]">
+                <Image 
+                    src={LandingPageImage} 
+                    alt="landing page image" 
+                    layout="intrinsic" 
+                    width={800}
+                    height={0}
+                    className="w-5/6 h-auto"
+                />
                 </div>
             </div>
         </div>
@@ -78,9 +86,3 @@ export default function LoginPage() {
     
 }
 
-
-// const MemberImage = () => {
-//     return (
-
-//     );
-// };
