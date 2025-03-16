@@ -1,22 +1,28 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useRouter, useSearchParams } from "next/navigation";
-import Logo from "@/components/assets/logo.png";
 import { useEffect, useState } from "react";
 import AlertBox from "@/components/alertbox";
-import { supabase } from "@/app/supabase";
-import Company from "@/components/ui/company";
+import { supabase, getRoles } from "@/app/supabase";
+import Image from "next/image";
+import LandingPageImage from "@/components/assets/landingpage.png";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [emailError, setEmailError] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+
+  // Default general member credentials
+  const GENERAL_MEMBER_LOGIN = "owlsrus";
+  const GENERAL_MEMBER_PASSWORD = "SDGbook25";
+
   const DEFAULT_GENERAL_EMAIL = "member@omnilore.org";
   const DEFAULT_GENERAL_PASSWORD = "CBIWbvMQNUStFCGhnXwV";
+
   const searchParams = useSearchParams();
   const token = searchParams.get("token"); // Get token from URL
 
@@ -28,7 +34,6 @@ export default function LoginPage() {
 
   const handleTokenLogin = async (token: string) => {
     console.log("Token received:", token);
-
     // Extract the current UTC date (YYYY-MM-DD)
     const pre64_token = "somekey" + new Date().toISOString().split("T")[0];
     // Encode the token in Base64
@@ -51,60 +56,98 @@ export default function LoginPage() {
     }
   };
 
-  const redirectToAdminLogin = () => {
-    router.push("/admin-login");
-  };
+  const handleLogin = async () => {
+    try {
+      let userEmail = email;
+      let userPassword = password;
 
-  const generalMemberLogin = async () => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: DEFAULT_GENERAL_EMAIL,
-      password: DEFAULT_GENERAL_PASSWORD,
-    });
-    if (error) {
-      setAlertMessage(error.message);
-    } else {
-      setAlertMessage("Successfully logged in!");
-      router.push("/members");
+      // Map "owlsrus" login to default general member email and password
+      if (
+        email.toLowerCase() === GENERAL_MEMBER_LOGIN &&
+        password === GENERAL_MEMBER_PASSWORD
+      ) {
+        userEmail = DEFAULT_GENERAL_EMAIL;
+        userPassword = DEFAULT_GENERAL_PASSWORD;
+      }
+
+      // Authenticate user with Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: userEmail,
+        password: userPassword,
+      });
+
+      if (error) throw error;
+
+      // Fetch user roles
+      const roles = await getRoles();
+      if (!roles || roles.length === 0) {
+        throw new Error("Failed to retrieve roles");
+      }
+
+      console.log("Roles:", roles);
+
+      // Redirect based on role
+      if (roles.includes("admin")) {
+        router.push("/admin");
+      } else {
+        router.push("/members");
+      }
+    } catch (error) {
+      setAlertMessage(
+        (error as Error).message || "Login failed. Please try again."
+      );
+      setShowAlert(true);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="p-4">
-        <Company />
-      </header>
+    <div className="h-screen flex flex-col bg-white">
       {showAlert && (
         <AlertBox message={alertMessage} onClose={() => setShowAlert(false)} />
       )}
-      <main className="flex-grow flex flex-col md:flex-row justify-center p-4 pb-20 items-center">
-        <div className="w-full max-w-md space-y-8 md:pr-8">
-          <div className="text-center space-y-2">
-            <h2 className="text-3xl font-semibold">Welcome back Member!</h2>
+
+      <div className="flex h-full w-full justify-center items-center bg-red-500">
+        <div className="w-[43%] h-full gap-3 p-32 flex flex-col justify-center bg-white">
+          <div className="text-start space-y-2">
+            <h2 className="text-2xl font-semibold">Welcome back</h2>
           </div>
-          <div className="space-y-4">
-            <Button
-              className="h-30 w-full bg-blue-600 hover:bg-blue-700 text-white text-lg"
-              onClick={generalMemberLogin}
-            >
-              General Member Log In
-            </Button>
+          <div className="text-[#666C7A]">
+            Use your omnilore.org login information
           </div>
-          <div className="text-center">
-            <span className="px-2 bg-white text-sm text-gray-500">OR</span>
-          </div>
+
+          <Input
+            className="bg-[#EFF3F6] border-none rounded-lg h-10 w-full px-4"
+            type="text"
+            placeholder="Email or Username"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+          />
+          <Input
+            className="bg-[#EFF3F6] border-none rounded-lg h-10 w-full px-4"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+          />
           <Button
-            variant="outline"
-            className="h-30 w-full border-blue-600 text-blue-600 hover:bg-blue-50 text-lg"
-            onClick={redirectToAdminLogin}
+            className="h-10 w-full bg-[#1E1F28] rounded-lg text-white text-lg"
+            onClick={handleLogin}
           >
-            Admin Member Log In
+            Login
           </Button>
         </div>
-        <div className="flex justify-center mt-4 ml-10">
-          {" "}
-          <img src={Logo.src} className="w-64 h-fit" />
+
+        <div className="flex justify-end items-end w-[57%] h-full bg-gradient-to-t to-[#EDF2FD] from-[#FAF0EA]">
+          <Image
+            src={LandingPageImage}
+            alt="landing page image"
+            layout="intrinsic"
+            width={800}
+            height={0}
+            className="w-5/6 h-auto"
+          />
         </div>
-      </main>
+      </div>
     </div>
   );
 }
