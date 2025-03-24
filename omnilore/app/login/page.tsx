@@ -1,10 +1,12 @@
 'use client'
 
+import { useSearchParams } from 'next/navigation';
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation";
 import Logo from "@/components/assets/logo.png"
-import { useState } from "react";
+import { useState, useEffect } from 'react';
 import AlertBox from "@/components/alertbox";
 import {supabase} from "@/app/supabase";
 import Company from "@/components/ui/company";
