@@ -1,5 +1,5 @@
-import type { Issue, ParsedFormData } from "../types";
 import type { Database as DatabaseGenerated } from "./generated.types";
+import type { Issue, ParsedFormData } from "../types";
 import type { MergeDeep } from "type-fest";
 
 // --- SUPABASE SCHEMA ---
