@@ -1,4 +1,4 @@
-import type { SupabaseMemberInsert } from "./types";
+import type { SupabaseMemberUpdate } from "./types";
 import { erase, perform, update } from "./api";
 
 // when we resolve a member conflict, the cases are:
@@ -19,7 +19,7 @@ async function resolve_member_conflict_different_members(
 async function resolve_member_conflict_merge(
   first_member_id: number,
   second_member_id: number,
-  merged_member: SupabaseMemberInsert
+  merged_member: SupabaseMemberUpdate
 ) {
   delete merged_member.id;
   delete merged_member.created_at;
@@ -37,3 +37,24 @@ export const resolve_member_conflict = {
   different_members: resolve_member_conflict_different_members,
   merge: resolve_member_conflict_merge,
 };
+
+// try {
+//   await resolve_member_conflict.merge(395, 977, {
+//     // first_name: "Michael",
+//     // last_name: "Goergen",
+//     // street_address: "1218 1st Place",
+//     // city: "Hermosa Beach",
+//     // state: "CA",
+//     // zip_code: "90254-3283",
+//     // phone: "3102511860",
+//     // email: "michael@seasidelawyer.com",
+//     // emergency_contact: "Loree Johnson",
+//     // emergency_contact_phone: "3104228360",
+//     // member_status: "YrE",
+//     // expiration_date: "2023-08-31",
+//     // date_of_birth: "1957-06-24",
+//     // public
+//   });
+// } catch (e) {
+//   console.error(e);
+// }
