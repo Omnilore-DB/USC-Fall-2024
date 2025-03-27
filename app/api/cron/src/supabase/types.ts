@@ -27,6 +27,11 @@ export type SupabaseMemberTransaction =
 export type SupabaseMemberTransactionInsert =
   Database["public"]["Tables"]["members_to_transactions"]["Insert"];
 
+export type SupabaseMemberConflict =
+  Database["public"]["Tables"]["member_conflicts"]["Row"];
+export type SupabaseMemberConflictInsert =
+  Database["public"]["Tables"]["member_conflicts"]["Insert"];
+
 export type Database = MergeDeep<
   DatabaseGenerated,
   {

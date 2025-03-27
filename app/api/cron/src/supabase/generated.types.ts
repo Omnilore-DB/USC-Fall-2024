@@ -2234,6 +2234,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      remap_member_fk: {
+        Args: {
+          old_member_id: number
+          new_member_id: number
+        }
+        Returns: undefined
+      }
       set_limit: {
         Args: {
           "": number
