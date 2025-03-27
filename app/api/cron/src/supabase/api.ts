@@ -6,6 +6,7 @@ import type {
   SupabaseMemberInsert,
   SupabaseMemberTransaction,
   SupabaseMemberTransactionInsert,
+  SupabaseMemberUpdate,
   SupabaseProduct,
   SupabaseProductInsert,
   SupabaseTransaction,
@@ -200,7 +201,11 @@ export const update = {
     return data[0];
   },
 
-  member: async (id: number, m: SupabaseMemberInsert) => {
+  member: async (id: number, m: SupabaseMemberUpdate) => {
+    delete m.id;
+    delete m.created_at;
+    delete m.updated_at;
+
     const { error, data } = await supabase
       .from("members")
       .update(m)

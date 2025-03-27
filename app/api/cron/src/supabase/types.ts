@@ -21,6 +21,8 @@ export type SupabaseProductInsert =
 export type SupabaseMember = Database["public"]["Tables"]["members"]["Row"];
 export type SupabaseMemberInsert =
   Database["public"]["Tables"]["members"]["Insert"];
+export type SupabaseMemberUpdate =
+  Database["public"]["Tables"]["members"]["Update"];
 
 export type SupabaseMemberTransaction =
   Database["public"]["Tables"]["members_to_transactions"]["Row"];
