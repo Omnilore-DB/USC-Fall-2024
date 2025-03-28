@@ -188,3 +188,26 @@ export const upsertTableEntry = async (
     throw new Error("An unexpected error occurred during upsert.");
   }
 };
+
+export const getRowById = async (table: string, id: number) => {
+  try {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error(
+        `Error fetching row with ID ${id} from table ${table}:`,
+        error.message,
+      );
+      return null;
+    }
+
+    return data;
+  } catch (err) {
+    console.error(`Unexpected error fetching row from ${table}`, err);
+    return null;
+  }
+};
