@@ -15,7 +15,7 @@ import {
   fetchSquarespaceOrder,
   fetchSquarespaceProfile,
 } from "./squarespace/api";
-import { parse_form_data } from "./squarespace/form_processor";
+import { parse_form_data } from "./squarespace/form-processor";
 
 export const convert = {
   product: (p: SquarespaceInventoryItem): SupabaseProductInsert => {

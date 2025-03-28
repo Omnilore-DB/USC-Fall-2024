@@ -2,9 +2,11 @@ import { convert } from "../processing";
 import type {
   Database,
   SupabaseMember,
+  SupabaseMemberConflict,
   SupabaseMemberInsert,
   SupabaseMemberTransaction,
   SupabaseMemberTransactionInsert,
+  SupabaseMemberUpdate,
   SupabaseProduct,
   SupabaseProductInsert,
   SupabaseTransaction,
@@ -182,6 +184,41 @@ export const update = {
 
     return new_members;
   },
+
+  member_conflicts: async (
+    mc: Omit<SupabaseMemberConflict, "created_at" | "updated_at">
+  ) => {
+    const { error, data } = await supabase
+      .from("member_conflicts")
+      .upsert(mc, { onConflict: "first_member_id,second_member_id" })
+      .select();
+
+    if (error)
+      throw new Error(
+        `Failed to upsert member conflicts. ${error.hint}. ${error.message}`
+      );
+
+    return data[0];
+  },
+
+  member: async (id: number, m: SupabaseMemberUpdate) => {
+    delete m.id;
+    delete m.created_at;
+    delete m.updated_at;
+
+    const { error, data } = await supabase
+      .from("members")
+      .update(m)
+      .eq("id", id)
+      .select();
+
+    if (error)
+      throw new Error(
+        `Failed to update member. ${error.hint}. ${error.message}`
+      );
+
+    return data[0];
+  },
 };
 
 export const insert = {
@@ -198,6 +235,17 @@ export const insert = {
       );
 
     return data[0];
+  },
+};
+
+export const erase = {
+  member: async (id: number) => {
+    const { error } = await supabase.from("members").delete().eq("id", id);
+
+    if (error)
+      throw new Error(
+        `Failed to delete member. ${error.hint}. ${error.message}`
+      );
   },
 };
 
@@ -230,5 +278,20 @@ export const perform = {
       }
     }
     return true;
+  },
+
+  remap_member_foreign_keys: async (
+    prev_member_id: number,
+    updated_member_id: number
+  ) => {
+    const { error } = await supabase.rpc("remap_member_fk", {
+      old_member_id: prev_member_id,
+      new_member_id: updated_member_id,
+    });
+
+    if (error)
+      throw new Error(
+        `Failed to remap member foreign keys. ${error.hint}. ${error.message}`
+      );
   },
 };

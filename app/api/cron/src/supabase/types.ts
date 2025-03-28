@@ -1,5 +1,5 @@
-import type { Issue, ParsedFormData } from "../types";
 import type { Database as DatabaseGenerated } from "./generated.types";
+import type { Issue, ParsedFormData } from "../types";
 import type { MergeDeep } from "type-fest";
 
 // --- SUPABASE SCHEMA ---
@@ -21,11 +21,18 @@ export type SupabaseProductInsert =
 export type SupabaseMember = Database["public"]["Tables"]["members"]["Row"];
 export type SupabaseMemberInsert =
   Database["public"]["Tables"]["members"]["Insert"];
+export type SupabaseMemberUpdate =
+  Database["public"]["Tables"]["members"]["Update"];
 
 export type SupabaseMemberTransaction =
   Database["public"]["Tables"]["members_to_transactions"]["Row"];
 export type SupabaseMemberTransactionInsert =
   Database["public"]["Tables"]["members_to_transactions"]["Insert"];
+
+export type SupabaseMemberConflict =
+  Database["public"]["Tables"]["member_conflicts"]["Row"];
+export type SupabaseMemberConflictInsert =
+  Database["public"]["Tables"]["member_conflicts"]["Insert"];
 
 export type Database = MergeDeep<
   DatabaseGenerated,
