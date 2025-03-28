@@ -1,83 +1,87 @@
-'use client'
+"use client";
 
-import { useEffect, useState, useMemo } from 'react'
-import { getRoles, getPermissions, Permission } from '@/app/supabase'
-import { queryTableWithPrimaryKey } from '@/app/queryFunctions'
-import TableComponent from '@/components/ui/TableComponent'
-import SearchInput from '@/components/ui/SearchInput'
-import ResolveConflictPanel from '@/components/ui/ResolveConflictPanel' 
-
+import { useEffect, useState, useMemo } from "react";
+import { getRoles, getPermissions, Permission } from "@/app/supabase";
+import { queryTableWithPrimaryKey } from "@/app/queryFunctions";
+import TableComponent from "@/components/ui/TableComponent";
+import SearchInput from "@/components/ui/SearchInput";
+import ResolveConflictPanel from "@/components/ui/ResolveConflictPanel";
 
 export default function ConflictsPage() {
-  const [roles, setRoles] = useState<string[]>([])
-  const [permissions, setPermissions] = useState<Record<string, Permission[]>>({})
-  const [entries, setEntries] = useState<Record<string, any>[]>([])
-  const [query, setQuery] = useState('')
-  const [primaryKeys, setPrimaryKeys] = useState<string[] | null>(null)
-  const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null)
-  const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const [roles, setRoles] = useState<string[]>([]);
+  const [permissions, setPermissions] = useState<Record<string, Permission[]>>(
+    {},
+  );
+  const [entries, setEntries] = useState<Record<string, any>[]>([]);
+  const [query, setQuery] = useState("");
+  const [primaryKeys, setPrimaryKeys] = useState<string[] | null>(null);
+  const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(
+    null,
+  );
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  const tableName = 'member_conflicts'
+  const tableName = "member_conflicts";
 
   const filteredEntries = useMemo(() => {
-    const keywords = query.toLowerCase().split(' ').filter(Boolean)
-    return entries.filter(item =>
-      keywords.every(kw =>
-        Object.values(item).some(value =>
-          value !== null && value.toString().toLowerCase().includes(kw)
-        )
-      )
-    )
-  }, [query, entries])
+    const keywords = query.toLowerCase().split(" ").filter(Boolean);
+    return entries.filter((item) =>
+      keywords.every((kw) =>
+        Object.values(item).some(
+          (value) =>
+            value !== null && value.toString().toLowerCase().includes(kw),
+        ),
+      ),
+    );
+  }, [query, entries]);
 
   const hasPermission = (action: keyof Permission) => {
-    return roles.some(role =>
-      permissions[role]?.some(p => p.table_name === tableName && p[action])
-    )
-  }
+    return roles.some((role) =>
+      permissions[role]?.some((p) => p.table_name === tableName && p[action]),
+    );
+  };
 
   const handleRowSelection = (row: Record<string, any>) => {
-    if (hasPermission('can_write')) {
-      setSelectedRow(row)
-      setIsPanelOpen(true)
+    if (hasPermission("can_write")) {
+      setSelectedRow(row);
+      setIsPanelOpen(true);
     } else {
-      alert('NO EDIT PERMISSION')
+      alert("NO EDIT PERMISSION");
     }
-  }
+  };
 
   useEffect(() => {
     const setup = async () => {
-      const userRoles = await getRoles()
+      const userRoles = await getRoles();
       if (!userRoles) {
-        console.error('Failed to fetch roles')
-        return
+        console.error("Failed to fetch roles");
+        return;
       }
-      setRoles(userRoles)
+      setRoles(userRoles);
 
-      const allPermissions: Record<string, Permission[]> = {}
+      const allPermissions: Record<string, Permission[]> = {};
       for (const role of userRoles) {
-        const rolePermissions = await getPermissions(role)
-        allPermissions[role] = rolePermissions
+        const rolePermissions = await getPermissions(role);
+        allPermissions[role] = rolePermissions;
       }
-      setPermissions(allPermissions)
-    }
+      setPermissions(allPermissions);
+    };
 
-    setup().catch(console.error)
-  }, [])
+    setup().catch(console.error);
+  }, []);
 
   useEffect(() => {
     const fetchEntries = async () => {
       try {
-        const { data, primaryKeys } = await queryTableWithPrimaryKey(tableName)
-        setEntries(data)
-        setPrimaryKeys(primaryKeys ?? [])
+        const { data, primaryKeys } = await queryTableWithPrimaryKey(tableName);
+        setEntries(data);
+        setPrimaryKeys(primaryKeys ?? []);
       } catch (error: any) {
-        console.error(`Failed to fetch ${tableName}`, error)
+        console.error(`Failed to fetch ${tableName}`, error);
       }
-    }
+    };
 
-    fetchEntries()
-  }, [])
+    fetchEntries();
+  }, []);
 
   return (
     <div className="w-full h-full flex flex-col bg-gray-100">
@@ -114,5 +118,5 @@ export default function ConflictsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -181,40 +181,33 @@ export const upsertTableEntry = async (
       throw new Error(error.message);
     }
 
-export const upsertTableEntry = async (table: string, data: Record<string, any>) => {
-    try {
-        const { error } = await supabase.from(table).upsert(data);
-
-        if (error) {
-            console.error(`Failed to upsert data in table ${table}:`, error.message);
-            throw new Error(error.message);
-        }
-
-        console.log(`Successfully upserted data into table "${table}"`);
-        return true;
-    } catch (error) {
-        console.error(`Unexpected error during upsert in table ${table}:`, error);
-        throw new Error('An unexpected error occurred during upsert.');
-    }
+    console.log(`Successfully upserted data into table "${table}"`);
+    return true;
+  } catch (error) {
+    console.error(`Unexpected error during upsert in table ${table}:`, error);
+    throw new Error("An unexpected error occurred during upsert.");
+  }
 };
 
 export const getRowById = async (table: string, id: number) => {
-    try {
-      const { data, error } = await supabase
-        .from(table)
-        .select('*')
-        .eq('id', id)
-        .single()
-  
-      if (error) {
-        console.error(`Error fetching row with ID ${id} from table ${table}:`, error.message)
-        return null
-      }
-  
-      return data
-    } catch (err) {
-      console.error(`Unexpected error fetching row from ${table}`, err)
-      return null
+  try {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error(
+        `Error fetching row with ID ${id} from table ${table}:`,
+        error.message,
+      );
+      return null;
     }
+
+    return data;
+  } catch (err) {
+    console.error(`Unexpected error fetching row from ${table}`, err);
+    return null;
   }
-  
+};

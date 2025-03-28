@@ -102,5 +102,5 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #bdbdc2 !important;
+  background-color: #bdbdc2 !important;
 }
