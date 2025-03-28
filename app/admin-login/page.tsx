@@ -44,7 +44,7 @@ export default function LoginPage() {
     setShowAlert(true);
     if (emailError) {
       setAlertMessage(
-        "Please correct the highlighted errors before logging in."
+        "Please correct the highlighted errors before logging in.",
       );
     } else {
       const { data, error } = await supabase.auth.signInWithPassword({

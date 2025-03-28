@@ -18,12 +18,12 @@ export async function POST() {
     }
 
     const upsertedProducts = await upsert.products(
-      products.map(convert.product)
+      products.map(convert.product),
     );
 
     const { data: ts, error: ts_error } = await fetchSquarespaceTransactions(
       await get.last_sync(),
-      start_time
+      start_time,
     );
 
     if (ts_error) {
@@ -42,18 +42,18 @@ export async function POST() {
       message: `Found ${ts.length} transactions, processed ${
         convertedTs.length
       }, upserted ${upsertedTs.length}, issues with ${
-        convertedTs.filter(r => r.issues.length > 0).length
+        convertedTs.filter((r) => r.issues.length > 0).length
       }. Created ${new_members.length} new members. Found ${
         products.length
       } products, upserted ${upsertedProducts.length}.`,
       warnings: upsertedTs
-        .filter(r => r.issues.length > 0)
-        .map(r => ({
+        .filter((r) => r.issues.length > 0)
+        .map((r) => ({
           id: r.id,
           issues: r.issues,
           date: r.date,
         })),
-      new_members: new_members.map(m => ({
+      new_members: new_members.map((m) => ({
         id: m.id,
         first_name: m.first_name,
         last_name: m.last_name,

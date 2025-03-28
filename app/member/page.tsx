@@ -1,15 +1,19 @@
-'use client'
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sidebar } from "@/components/sidebar"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Sidebar } from "@/components/sidebar";
 import Company from "@/components/ui/company";
 
 export default function MemberSearch() {
-    const tableTypes = [
-        "Member"
-    ];
+  const tableTypes = ["Member"];
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -19,46 +23,76 @@ export default function MemberSearch() {
       <main className="flex flex-row p-4 pt-10">
         <Sidebar />
         <div className="flex flex-col md:flex-row items-center space-x-10 w-full justify-center">
-            <div className="md:self-start">
-                <Select>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select Table type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {tableTypes.map((type) => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+          <div className="md:self-start">
+            <Select>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Table type" />
+              </SelectTrigger>
+              <SelectContent>
+                {tableTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-1/2 space-y-8 pt-3">
+            <div className="flex items-center space-x-4 flex-row justify-center">
+              <h2 className="text-3xl font-semibold text-center">
+                Search Member
+              </h2>
             </div>
-            <div className="w-1/2 space-y-8 pt-3">
-                <div className="flex items-center space-x-4 flex-row justify-center">
-                    <h2 className="text-3xl font-semibold text-center">Search Member</h2>
-                </div>
-                <div className="space-y-4">
-                    <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                        First Name
-                    </label>
-                    <Input id="firstName" type="text" placeholder="Enter first name" className="mt-1" />
-                    </div>
-                    <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                        Last Name
-                    </label>
-                    <Input id="lastName" type="text" placeholder="Enter last name" className="mt-1" />
-                    </div>
-                    <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email
-                    </label>
-                    <Input id="email" type="email" placeholder="Enter email" className="mt-1" />
-                    </div>
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Search</Button>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="firstName"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  First Name
+                </label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  placeholder="Enter first name"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="lastName"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Last Name
+                </label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  placeholder="Enter last name"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter email"
+                  className="mt-1"
+                />
+              </div>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                Search
+              </Button>
             </div>
+          </div>
         </div>
       </main>
     </div>
-  )
+  );
 }

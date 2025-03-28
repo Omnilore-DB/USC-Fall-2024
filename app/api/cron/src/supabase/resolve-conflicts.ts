@@ -7,7 +7,7 @@ import { erase, perform, update } from "./api";
 
 async function resolve_member_conflict_different_members(
   first_member_id: number,
-  second_member_id: number
+  second_member_id: number,
 ) {
   return await update.member_conflicts({
     first_member_id,
@@ -19,7 +19,7 @@ async function resolve_member_conflict_different_members(
 async function resolve_member_conflict_merge(
   first_member_id: number,
   second_member_id: number,
-  merged_member: SupabaseMemberUpdate
+  merged_member: SupabaseMemberUpdate,
 ) {
   delete merged_member.id;
   delete merged_member.created_at;

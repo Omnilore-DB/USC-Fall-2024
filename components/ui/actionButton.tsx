@@ -2,10 +2,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 
-const buttonStyles: Record<
-  "add" | "delete" | "edit",
-  { fillColor: string }
-> = {
+const buttonStyles: Record<"add" | "delete" | "edit", { fillColor: string }> = {
   add: {
     fillColor: "#C9FFAE",
   },
@@ -17,7 +14,8 @@ const buttonStyles: Record<
   },
 };
 
-interface ActionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ActionButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   actionType: "add" | "delete" | "edit";
 }
 
@@ -29,7 +27,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
       <button
         className={cn(
           "flex items-center gap-1 rounded-3xl text-sm font-medium transition-colors px-4",
-          className
+          className,
         )}
         ref={ref}
         style={{
@@ -40,7 +38,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
         <span className="font-semibold">{actionType}</span>
       </button>
     );
-  }
+  },
 );
 ActionButton.displayName = "ActionButton";
 

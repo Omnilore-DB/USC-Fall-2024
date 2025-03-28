@@ -17,7 +17,7 @@ export const string = {
 
 export const email = {
   schema: z.string().email(),
-  pre: s => remove_all_whitespace(s).toLowerCase(),
+  pre: (s) => remove_all_whitespace(s).toLowerCase(),
 } satisfies SchemaItem;
 
 export const phone = {

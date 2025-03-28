@@ -25,7 +25,7 @@ const supabase = createClient<Database>(
       autoRefreshToken: false,
       persistSession: false,
     },
-  }
+  },
 );
 
 export const get = {
@@ -37,14 +37,14 @@ export const get = {
 
     if (error)
       throw new Error(
-        `Failed to get last updated time for transactions. ${error.hint}`
+        `Failed to get last updated time for transactions. ${error.hint}`,
       );
 
     return new Date(data[0].last_sync);
   },
 
   all_members_matching: async (
-    member: SupabaseMemberInsert
+    member: SupabaseMemberInsert,
   ): Promise<SupabaseMember[]> => {
     const { data, error } = await supabase.rpc("get_normalized_member", {
       _first_name: member.first_name,
@@ -55,7 +55,7 @@ export const get = {
 
     if (error)
       throw new Error(
-        `Failed to get supabase members. ${error.hint}. ${error.message}`
+        `Failed to get supabase members. ${error.hint}. ${error.message}`,
       );
 
     return data;
@@ -66,7 +66,7 @@ export const get = {
 
     if (error)
       throw new Error(
-        `Failed to get supabase products. ${error.hint}. ${error.message}`
+        `Failed to get supabase products. ${error.hint}. ${error.message}`,
       );
 
     return data;
@@ -75,7 +75,7 @@ export const get = {
 
 export const upsert = {
   transactions: async (
-    transactionsToUpsert: SupabaseTransactionInsert[]
+    transactionsToUpsert: SupabaseTransactionInsert[],
   ): Promise<SupabaseTransaction[]> => {
     const { error, data } = await supabase
       .from("transactions")
@@ -84,14 +84,14 @@ export const upsert = {
 
     if (error)
       throw new Error(
-        `Failed to upsert transactions. ${error.hint}. ${error.message}`
+        `Failed to upsert transactions. ${error.hint}. ${error.message}`,
       );
 
     return data;
   },
 
   products: async (
-    productsToUpsert: SupabaseProductInsert[]
+    productsToUpsert: SupabaseProductInsert[],
   ): Promise<SupabaseProduct[]> => {
     const { error, data } = await supabase.rpc("upsert_products", {
       _products: productsToUpsert,
@@ -99,14 +99,14 @@ export const upsert = {
 
     if (error)
       throw new Error(
-        `Failed to upsert products. ${error.hint}. ${error.message}`
+        `Failed to upsert products. ${error.hint}. ${error.message}`,
       );
 
     return data;
   },
 
   member_transaction: async (
-    mt: SupabaseMemberTransactionInsert
+    mt: SupabaseMemberTransactionInsert,
   ): Promise<SupabaseMemberTransaction[]> => {
     const { data, error } = await supabase
       .from("members_to_transactions")
@@ -118,8 +118,8 @@ export const upsert = {
     if (error) {
       throw new Error(
         `Failed to insert member-to-transaction mapping with data ${JSON.stringify(
-          mt
-        )}: ${error.hint} ${error.message}`
+          mt,
+        )}: ${error.hint} ${error.message}`,
       );
     }
 
@@ -136,7 +136,7 @@ export const update = {
 
     if (error)
       throw new Error(
-        `Failed to update last sync time for transactions. ${error.hint}. ${error.message}`
+        `Failed to update last sync time for transactions. ${error.hint}. ${error.message}`,
       );
   },
 
@@ -144,7 +144,7 @@ export const update = {
     const new_members: SupabaseMember[] = [];
 
     const products = await get.products();
-    const sku_map = new Map(products.map(p => [p.sku, p]));
+    const sku_map = new Map(products.map((p) => [p.sku, p]));
 
     for (const t of ts) {
       for (const [i, d] of t.parsed_form_data.entries()) {
@@ -159,7 +159,7 @@ export const update = {
 
         const matches = (await get.all_members_matching(mem))
           .sort((a, b) => a.id - b.id)
-          .filter(match => perform.is_member_subset(match, mem));
+          .filter((match) => perform.is_member_subset(match, mem));
         if (matches.length > 0) {
           await upsert.member_transaction({
             member_id: matches[0].id,
@@ -186,7 +186,7 @@ export const update = {
   },
 
   member_conflicts: async (
-    mc: Omit<SupabaseMemberConflict, "created_at" | "updated_at">
+    mc: Omit<SupabaseMemberConflict, "created_at" | "updated_at">,
   ) => {
     const { error, data } = await supabase
       .from("member_conflicts")
@@ -195,7 +195,7 @@ export const update = {
 
     if (error)
       throw new Error(
-        `Failed to upsert member conflicts. ${error.hint}. ${error.message}`
+        `Failed to upsert member conflicts. ${error.hint}. ${error.message}`,
       );
 
     return data[0];
@@ -214,7 +214,7 @@ export const update = {
 
     if (error)
       throw new Error(
-        `Failed to update member. ${error.hint}. ${error.message}`
+        `Failed to update member. ${error.hint}. ${error.message}`,
       );
 
     return data[0];
@@ -231,7 +231,7 @@ export const insert = {
 
     if (error)
       throw new Error(
-        `Failed to insert new member. ${error.hint}. ${error.message}`
+        `Failed to insert new member. ${error.hint}. ${error.message}`,
       );
 
     return data[0];
@@ -244,7 +244,7 @@ export const erase = {
 
     if (error)
       throw new Error(
-        `Failed to delete member. ${error.hint}. ${error.message}`
+        `Failed to delete member. ${error.hint}. ${error.message}`,
       );
   },
 };
@@ -255,13 +255,13 @@ export const perform = {
 
     if (error)
       throw new Error(
-        `Failed to populate member conflicts. ${error.hint}. ${error.message}`
+        `Failed to populate member conflicts. ${error.hint}. ${error.message}`,
       );
   },
 
   is_member_subset: (
     existingMember: SupabaseMember,
-    newMemberData: SupabaseMemberInsert
+    newMemberData: SupabaseMemberInsert,
   ) => {
     const keys = Object.keys(newMemberData) as (keyof SupabaseMemberInsert)[];
 
@@ -282,7 +282,7 @@ export const perform = {
 
   remap_member_foreign_keys: async (
     prev_member_id: number,
-    updated_member_id: number
+    updated_member_id: number,
   ) => {
     const { error } = await supabase.rpc("remap_member_fk", {
       old_member_id: prev_member_id,
@@ -291,7 +291,7 @@ export const perform = {
 
     if (error)
       throw new Error(
-        `Failed to remap member foreign keys. ${error.hint}. ${error.message}`
+        `Failed to remap member foreign keys. ${error.hint}. ${error.message}`,
       );
   },
 };

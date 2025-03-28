@@ -10,7 +10,7 @@ const URL = "https://api.squarespace.com/1.0";
 
 export const fetchSquarespaceTransactions = async (
   last_updated: Date,
-  now: Date
+  now: Date,
 ) => {
   const documents: SquarespaceTransactionsAPIResponse["documents"] = [];
 
@@ -77,7 +77,7 @@ export const fetchSquarespaceProfile = async (email: string) => {
     `${URL}/profiles?filter=email,${encodeURIComponent(email)}`,
     {
       headers: { Authorization: `Bearer ${process.env.SQUARESPACE_API_KEY}` },
-    }
+    },
   );
 
   if (!res.ok) {

@@ -36,11 +36,7 @@ export default function InputField({
       .join(", ")}]`;
 
   // Determine the normalized value
-  const normalizedValue = isArray
-    ? Array.isArray(value)
-      ? value
-      : []
-    : value;
+  const normalizedValue = isArray ? (Array.isArray(value) ? value : []) : value;
 
   // Handle date change from DatePicker
   const handleChange = (date: Date | null) => {
@@ -50,14 +46,18 @@ export default function InputField({
 
   useEffect(() => {
     if (mode === "add") {
-        if (isArray) {
-          setArrayInput("[]");
-        } else if (fieldType === "timestamp" || fieldType === "timestamptz" || fieldType === "date") {
-          setSelectedDate(new Date());
-        } else {
-          setArrayInput("");
-          setSelectedDate(null);
-        }
+      if (isArray) {
+        setArrayInput("[]");
+      } else if (
+        fieldType === "timestamp" ||
+        fieldType === "timestamptz" ||
+        fieldType === "date"
+      ) {
+        setSelectedDate(new Date());
+      } else {
+        setArrayInput("");
+        setSelectedDate(null);
+      }
     } else {
       // On edit mode
       setArrayInput(isArray ? formatArray(normalizedValue) : normalizedValue);
@@ -146,7 +146,6 @@ export default function InputField({
               required={required}
               defaultValue={normalizedValue ?? 0}
               placeholder={isAutoIncrement ? "automatically generated" : ""}
-
             />
           )}
 

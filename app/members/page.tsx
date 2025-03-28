@@ -32,18 +32,19 @@ export default function Search() {
   const [selectedTable, setSelectedTable] = useState<string | null>("members");
   const [primaryKey, setPrimaryKey] = useState<string | null>(null);
   const [selectedRow, setSelectedRow] = useState<FormattedKeysMember | null>(
-    null
+    null,
   );
   const [isMemberPanelOpen, setIsMemberPanelOpen] = useState(false);
 
   const filteredEntries = useMemo(() => {
     const keywords = query.toLowerCase().split(" ").filter(Boolean);
-    return entries.filter(item =>
-      keywords.every(kw =>
+    return entries.filter((item) =>
+      keywords.every((kw) =>
         Object.values(item).some(
-          value => value !== null && value.toString().toLowerCase().includes(kw)
-        )
-      )
+          (value) =>
+            value !== null && value.toString().toLowerCase().includes(kw),
+        ),
+      ),
     );
   }, [query, entries]);
 
@@ -84,7 +85,7 @@ export default function Search() {
       try {
         const { data, primaryKey } = await queryTableWithFields(
           "members",
-          memberSchema
+          memberSchema,
         );
         setEntries(data);
         setPrimaryKey(primaryKey);
@@ -107,7 +108,7 @@ export default function Search() {
   }, [selectedRow]);
 
   const formattedData = useMemo(() => {
-    return filteredEntries.map(member => {
+    return filteredEntries.map((member) => {
       const name = `${member.first_name || ""}${
         member.alias && member.alias.trim() ? ` (${member.alias})` : ""
       } ${member.last_name || ""}`.trim();
@@ -154,7 +155,7 @@ export default function Search() {
                   type="text"
                   placeholder="Search by name or nickname..."
                   value={query}
-                  onChange={e => setQuery(e.target.value)}
+                  onChange={(e) => setQuery(e.target.value)}
                   className="w-full pr-2 pl-12 py-4 border border-gray-300 rounded-md text-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-300 focus:outline-none"
                 />
               </div>
