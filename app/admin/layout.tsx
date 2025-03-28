@@ -45,7 +45,7 @@ const TableButton = () => {
       viewBox="0 0 25 28"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={`stroke-[#85849E] group-hover:stroke-[#000000] ${isActive ? 'stroke-[#000000]' : ''}`}
+      className={` group-hover:stroke-[#000000] ${isActive ? 'stroke-[#000000]' : 'stroke-[#85849E]'}`}
     >
       <path
         d="M24 9.63025V4C24 2.34315 22.6569 1 21 1H4C2.34315 1 1 2.34315 1 4V9.63025M24 9.63025H1M24 9.63025V18.3151M1 9.63025V18.3151M24 18.3151V24C24 25.6569 22.6569 27 21 27H4C2.34315 27 1 25.6569 1 24V18.3151M24 18.3151H1"
@@ -81,7 +81,7 @@ const ReportsButton = () => {
       viewBox="0 0 25 29"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={`stroke-[#85849E] group-hover:stroke-[#000000] ${isActive ? 'stroke-[#000000]' : ''}`}
+      className={` group-hover:stroke-[#000000] ${isActive ? 'stroke-[#000000]' : 'stroke-[#85849E]'}`}
     >
       <path d="M14.9266 1H4C2.34315 1 1 2.34315 1 4V25C1 26.6569 2.34315 28 4 28H21C22.6569 28 24 26.6569 24 25V9.41304M14.9266 1L24 9.41304M14.9266 1V8.41304C14.9266 8.96533 15.3743 9.41304 15.9266 9.41304H24M6.27523 20.5652L10.775 15.85L14.225 19.225L18.825 13.825" strokeWidth="2"/>
     </svg>
@@ -114,7 +114,7 @@ const ConflictsButton = () => {
       viewBox="0 0 25 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={`stroke-[#85849E] group-hover:stroke-[#000000] ${isActive ? 'stroke-[#000000]' : ''}`}
+      className={` group-hover:stroke-[#000000] ${isActive ? 'stroke-[#000000]' : 'stroke-[#85849E]'}`}
     >
       <path d="M1 6.8149C1 6.74074 1 5.66568 1 4.42032C1 2.76347 2.34315 1.41992 4 1.41992H6.03531" strokeWidth="2" />
       <path d="M17.3648 1.41992C17.4611 1.41992 19.0049 1.41992 20.6587 1.41992C22.3156 1.41992 23.6589 2.76307 23.6589 4.41992V6.8149" strokeWidth="2" />
