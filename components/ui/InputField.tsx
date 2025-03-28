@@ -89,7 +89,7 @@ export default function InputField({
           onChange={handleChange}
           showTimeSelect
           dateFormat="yyyy-MM-dd HH:mm:ss.SSSSSS"
-          className="border border-gray-300 rounded p-2 w-full"
+          className="w-full rounded border border-gray-300 p-2"
         />
       )}
 
@@ -99,13 +99,13 @@ export default function InputField({
           selected={selectedDate}
           onChange={handleChange}
           dateFormat="yyyy-MM-dd"
-          className="border border-gray-300 rounded p-2 w-full"
+          className="w-full rounded border border-gray-300 p-2"
         />
       )}
 
       {isEnum ? (
         <select
-          className="border border-gray-300 rounded p-2 w-full"
+          className="w-full rounded border border-gray-300 p-2"
           required={required}
           defaultValue={normalizedValue}
         >
@@ -118,7 +118,7 @@ export default function InputField({
       ) : isArray ? (
         <input
           type="text"
-          className="border border-gray-300 rounded p-2 w-full"
+          className="w-full rounded border border-gray-300 p-2"
           required={required}
           value={arrayInput}
           onChange={(e) => setArrayInput(e.target.value)}
@@ -128,7 +128,7 @@ export default function InputField({
           {(fieldType === "text" || fieldType === "varchar") && (
             <input
               type="text"
-              className="border border-gray-300 rounded p-2 w-full"
+              className="w-full rounded border border-gray-300 p-2"
               required={required}
               defaultValue={normalizedValue}
             />
@@ -142,7 +142,7 @@ export default function InputField({
             fieldType === "float8") && (
             <input
               type="number"
-              className="border border-gray-300 rounded p-2 w-full"
+              className="w-full rounded border border-gray-300 p-2"
               required={required}
               defaultValue={normalizedValue ?? 0}
               placeholder={isAutoIncrement ? "automatically generated" : ""}
@@ -152,7 +152,7 @@ export default function InputField({
           {fieldType === "bool" && (
             <input
               type="checkbox"
-              className="border border-gray-300 rounded p-2"
+              className="rounded border border-gray-300 p-2"
               required={required}
               defaultChecked={normalizedValue === "true"}
             />
@@ -161,7 +161,7 @@ export default function InputField({
           {fieldType === "uuid" && (
             <input
               type="text"
-              className="border border-gray-300 rounded p-2 w-full"
+              className="w-full rounded border border-gray-300 p-2"
               required={required}
               defaultValue={normalizedValue}
               readOnly
@@ -171,7 +171,7 @@ export default function InputField({
           {(fieldType === "json" || fieldType === "jsonb") && (
             <input
               type="text"
-              className="border border-gray-300 rounded p-2 w-full"
+              className="w-full rounded border border-gray-300 p-2"
               required={required}
               defaultValue={
                 typeof normalizedValue === "object"
@@ -184,7 +184,7 @@ export default function InputField({
           {fieldType === "bytea" && (
             <input
               type="file"
-              className="border border-gray-300 rounded p-2 w-full"
+              className="w-full rounded border border-gray-300 p-2"
               required={required}
             />
           )}

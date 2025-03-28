@@ -84,16 +84,16 @@ export default function ConflictsPage() {
   }, []);
 
   return (
-    <div className="w-full h-full flex flex-col bg-gray-100">
-      <div className="flex-grow flex flex-col w-full overflow-y-auto justify-center items-center">
+    <div className="flex h-full w-full flex-col bg-gray-100">
+      <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
         {roles.length === 0 ? (
           <div>Don't have the necessary permission</div>
         ) : (
-          <div className="w-full h-full flex flex-col items-center gap-3 px-4 pt-4">
+          <div className="flex h-full w-full flex-col items-center gap-3 px-4 pt-4">
             <SearchInput query={query} setQuery={setQuery} />
 
             {primaryKeys && (
-              <div className="flex-grow w-full overflow-y-auto">
+              <div className="w-full flex-grow overflow-y-auto">
                 <TableComponent
                   entries={filteredEntries}
                   roles={roles}

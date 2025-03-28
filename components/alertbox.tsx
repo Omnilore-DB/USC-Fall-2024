@@ -9,12 +9,12 @@ interface AlertBoxProps {
 
 const AlertBox: React.FC<AlertBoxProps> = ({ message, onClose }) => {
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
-      <div className="bg-black p-6 rounded-lg shadow-lg text-white flex flex-col gap-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+      <div className="flex flex-col gap-4 rounded-lg bg-black p-6 text-white shadow-lg">
         <p>{message}</p>
         <button
           onClick={onClose}
-          className="bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-full w-fit self-end"
+          className="bottom-4 right-4 w-fit self-end rounded-full bg-blue-500 px-4 py-2 text-white"
         >
           Close
         </button>

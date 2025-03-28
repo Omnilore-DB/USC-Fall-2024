@@ -26,7 +26,7 @@ const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
     return (
       <button
         className={cn(
-          "flex items-center gap-1 rounded-3xl text-sm font-medium transition-colors px-4",
+          "flex items-center gap-1 rounded-3xl px-4 text-sm font-medium transition-colors",
           className,
         )}
         ref={ref}

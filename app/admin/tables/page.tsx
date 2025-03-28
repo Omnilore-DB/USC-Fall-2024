@@ -145,14 +145,14 @@ export default function Search() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-gray-100">
-      <div className="flex-grow flex flex-col w-full overflow-y-auto justify-center items-center">
+    <div className="flex h-full w-full flex-col bg-gray-100">
+      <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
         {roles === null ? (
           <div>Don't have the necessary permission</div>
         ) : (
-          <div className="w-[98%] h-[95%] flex flex-row items-center gap-4">
-            <div className="w-full h-full flex flex-col items-center">
-              <div className="w-full h-full flex flex-col gap-3 ">
+          <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
+            <div className="flex h-full w-full flex-col items-center">
+              <div className="flex h-full w-full flex-col gap-3">
                 {/* Select and add, delete, and edit buttons */}
                 <div className="flex justify-between">
                   <div className="w-1/5">
@@ -191,7 +191,7 @@ export default function Search() {
 
                 {/* Table Component */}
                 {primaryKeys && (
-                  <div className="flex-grow w-full overflow-y-auto">
+                  <div className="w-full flex-grow overflow-y-auto">
                     <TableComponent
                       entries={filteredEntries}
                       roles={roles}

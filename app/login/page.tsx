@@ -109,14 +109,14 @@ function LoginPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="flex h-screen flex-col bg-white">
       {showAlert && (
         <AlertBox message={alertMessage} onClose={() => setShowAlert(false)} />
       )}
 
-      <div className="flex h-full w-full justify-center items-center bg-red-500">
-        <div className="w-[43%] h-full gap-3 p-32 flex flex-col justify-center bg-white">
-          <div className="text-start space-y-2">
+      <div className="flex h-full w-full items-center justify-center bg-red-500">
+        <div className="flex h-full w-[43%] flex-col justify-center gap-3 bg-white p-32">
+          <div className="space-y-2 text-start">
             <h2 className="text-2xl font-semibold">Welcome back</h2>
           </div>
           <div className="text-[#666C7A]">
@@ -124,35 +124,35 @@ function LoginPage() {
           </div>
 
           <Input
-            className="bg-[#EFF3F6] border-none rounded-lg h-10 w-full px-4"
+            className="h-10 w-full rounded-lg border-none bg-[#EFF3F6] px-4"
             type="text"
             placeholder="Email or Username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
           <Input
-            className="bg-[#EFF3F6] border-none rounded-lg h-10 w-full px-4"
+            className="h-10 w-full rounded-lg border-none bg-[#EFF3F6] px-4"
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
           <Button
-            className="h-10 w-full bg-[#1E1F28] rounded-lg text-white text-lg"
+            className="h-10 w-full rounded-lg bg-[#1E1F28] text-lg text-white"
             onClick={handleLogin}
           >
             Login
           </Button>
         </div>
 
-        <div className="flex justify-end items-end w-[57%] h-full bg-gradient-to-t to-[#EDF2FD] from-[#FAF0EA]">
+        <div className="flex h-full w-[57%] items-end justify-end bg-gradient-to-t from-[#FAF0EA] to-[#EDF2FD]">
           <Image
             src={LandingPageImage}
             alt="landing page image"
             layout="intrinsic"
             width={800}
             height={0}
-            className="w-5/6 h-auto"
+            className="h-auto w-5/6"
           />
         </div>
       </div>

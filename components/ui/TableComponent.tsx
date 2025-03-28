@@ -51,16 +51,16 @@ const TableComponent = ({
 
   if (!hasValidRole) {
     return (
-      <div className="text-center py-4 text-gray-500">
+      <div className="py-4 text-center text-gray-500">
         You do not have the necessary permissions to view this data.
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex-grow h-full w-full overflow-y-auto overflow-x-auto overflow-x:visible custom-scrollbar">
-        <div className="h-full w-full min-h-full min-w-full">
+    <div className="flex h-full w-full flex-col">
+      <div className="overflow-x:visible custom-scrollbar h-full w-full flex-grow overflow-x-auto overflow-y-auto">
+        <div className="h-full min-h-full w-full min-w-full">
           <table className="w-full border-collapse border border-gray-200">
             <thead className="bg-gray-100">
               <tr>
@@ -157,14 +157,13 @@ const TableComponent = ({
                           {/* Select body */}
                           {adminTable && (
                             <td
-                              className={`px-4 py-2 w-10 text-center sticky z-10
-                                                                ${
-                                                                  hasIssue
-                                                                    ? "bg-red-50"
-                                                                    : isSelected
-                                                                      ? "bg-gray-100"
-                                                                      : "bg-white group-hover:bg-gray-50"
-                                                                }`}
+                              className={`sticky z-10 w-10 px-4 py-2 text-center ${
+                                hasIssue
+                                  ? "bg-red-50"
+                                  : isSelected
+                                    ? "bg-gray-100"
+                                    : "bg-white group-hover:bg-gray-50"
+                              }`}
                               style={{
                                 left: `${leftOffset}px`,
                                 boxShadow: "inset 0 0 0 0.5px #e5e7eb",
@@ -172,7 +171,7 @@ const TableComponent = ({
                               }}
                             >
                               <span
-                                className="absolute top-0 -left-[1px] h-full w-[1px] bg-gray-200"
+                                className="absolute -left-[1px] top-0 h-full w-[1px] bg-gray-200"
                                 aria-hidden="true"
                               />
 
@@ -193,7 +192,7 @@ const TableComponent = ({
                               return (
                                 <td
                                   key={key}
-                                  className={`px-4 py-2 sticky z-10 ${hasIssue ? "bg-red-50" : isSelected ? "bg-gray-100" : "bg-white group-hover:bg-gray-50"}`}
+                                  className={`sticky z-10 px-4 py-2 ${hasIssue ? "bg-red-50" : isSelected ? "bg-gray-100" : "bg-white group-hover:bg-gray-50"}`}
                                   style={{
                                     left: `${leftOffset}px`,
                                     boxShadow: "inset 0 0 0 0.5px #e5e7eb",
@@ -228,25 +227,24 @@ const TableComponent = ({
                                 outline: "none",
                               }}
                             >
-                              <div className="w-12 h-12 overflow-hidden rounded-full border border-gray-300">
+                              <div className="h-12 w-12 overflow-hidden rounded-full border border-gray-300">
                                 <img
                                   src={item[columnName] || UserIcon.src}
                                   alt=""
-                                  className="w-full h-full object-cover"
+                                  className="h-full w-full object-cover"
                                 />
                               </div>
                             </td>
                           ) : (
                             <td
                               key={columnName}
-                              className={` px-4 py-2
-                                                            ${
-                                                              hasIssue
-                                                                ? "bg-red-50"
-                                                                : isSelected
-                                                                  ? "bg-gray-100"
-                                                                  : "bg-white group-hover:bg-gray-50"
-                                                            }`}
+                              className={`px-4 py-2 ${
+                                hasIssue
+                                  ? "bg-red-50"
+                                  : isSelected
+                                    ? "bg-gray-100"
+                                    : "bg-white group-hover:bg-gray-50"
+                              }`}
                               style={{
                                 boxShadow: "inset 0 0 0 0.5px #e5e7eb",
                                 outline: "none",
@@ -275,7 +273,7 @@ const TableComponent = ({
                     colSpan={
                       entries.length > 0 ? Object.keys(entries[0]).length : 1
                     }
-                    className="text-center py-4 text-gray-500"
+                    className="py-4 text-center text-gray-500"
                   >
                     No results found
                   </td>

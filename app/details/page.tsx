@@ -134,13 +134,13 @@ function ShowDetailsComponent() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="p-4 flex justify-between items-center">
+    <div className="flex min-h-screen flex-col bg-white">
+      <header className="flex items-center justify-between p-4">
         <Company />
       </header>
       <main className="flex flex-row p-4 pt-10">
         <Sidebar />
-        <div className="flex-1 p-8 flex flex-col justify-center items-center">
+        <div className="flex flex-1 flex-col items-center justify-center p-8">
           <div className="flex flex-row space-x-2">
             <Button
               type="button"
@@ -151,14 +151,14 @@ function ShowDetailsComponent() {
             </Button>
           </div>
           <form className="w-full max-w-md space-y-4">
-            <div className="flex flex-row space-x-2 w-[600px] justify-center">
+            <div className="flex w-[600px] flex-row justify-center space-x-2">
               {current_row && current_row.photo_link ? (
-                <div className="flex flex-col gap-2 w-full">
+                <div className="flex w-full flex-col gap-2">
                   <h3 className="text-lg font-semibold">Photo</h3>
                   <img
                     src={current_row.photo_link || defaultPictureUrl}
                     alt="User"
-                    className="w-full h-auto"
+                    className="h-auto w-full"
                   />
                 </div>
               ) : null}
@@ -188,7 +188,7 @@ function ShowDetailsComponent() {
                       >
                         {columnDisplayNames[key] || key}
                       </label>
-                      <div className="mt-1 bg-gray-100 text-gray-700 p-2 rounded">
+                      <div className="mt-1 rounded bg-gray-100 p-2 text-gray-700">
                         {displayValue}
                       </div>
                     </div>

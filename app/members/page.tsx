@@ -130,25 +130,25 @@ export default function Search() {
   }, [filteredEntries]);
 
   return (
-    <div className="w-full h-screen flex flex-col">
+    <div className="flex h-screen w-full flex-col">
       {/* Nav Bar */}
       <NavBar />
 
-      <div className="flex-grow flex flex-col w-full overflow-y-auto">
+      <div className="flex w-full flex-grow flex-col overflow-y-auto">
         {roles === null ? (
           <div>Loading...</div>
         ) : (
-          <div className="w-full h-full flex flex-col items-center">
-            <div className="w-5/6 h-full flex flex-col gap-3">
+          <div className="flex h-full w-full flex-col items-center">
+            <div className="flex h-full w-5/6 flex-col gap-3">
               <h1 className="text-3xl font-semibold">Members</h1>
               <p className="text-base text-gray-600">
                 Connect with Omnilore Members
               </p>
-              <div className="relative w-full mt-4">
+              <div className="relative mt-4 w-full">
                 <img
                   src="/search-icon.svg"
                   alt="Search Icon"
-                  className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5"
+                  className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 transform"
                 />
 
                 <input
@@ -156,10 +156,10 @@ export default function Search() {
                   placeholder="Search by name or nickname..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full pr-2 pl-12 py-4 border border-gray-300 rounded-md text-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-300 focus:outline-none"
+                  className="w-full rounded-md border border-gray-300 py-4 pl-12 pr-2 text-gray-700 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-300"
                 />
               </div>
-              <div className="flex-grow w-full overflow-y-auto mb-4">
+              <div className="mb-4 w-full flex-grow overflow-y-auto">
                 <TableComponent
                   entries={formattedData}
                   roles={roles}

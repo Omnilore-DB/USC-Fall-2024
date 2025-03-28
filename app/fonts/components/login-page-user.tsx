@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 
 export function LoginPage() {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="flex min-h-screen flex-col bg-white">
       <header className="p-4">
         <h1 className="text-2xl font-bold text-blue-600">Omnilore</h1>
       </header>
-      <main className="flex-grow flex flex-col md:flex-row items-center justify-center p-4">
+      <main className="flex flex-grow flex-col items-center justify-center p-4 md:flex-row">
         <div className="w-full max-w-md space-y-8 md:pr-8">
-          <div className="text-center space-y-2">
+          <div className="space-y-2 text-center">
             <h2 className="text-3xl font-semibold">
               Welcome back General Member!
             </h2>
@@ -28,10 +28,10 @@ export function LoginPage() {
               </label>
               <Input id="password" type="password" className="mt-1" />
             </div>
-            <Button className="w-full text-lg py-6">Log In</Button>
+            <Button className="w-full py-6 text-lg">Log In</Button>
           </div>
           <div className="text-center">
-            <span className="px-2 bg-white text-sm text-gray-500">OR</span>
+            <span className="bg-white px-2 text-sm text-gray-500">OR</span>
           </div>
           <Button variant="outline" className="w-full">
             I am an admin member

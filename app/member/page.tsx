@@ -16,13 +16,13 @@ export default function MemberSearch() {
   const tableTypes = ["Member"];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="p-4 flex justify-between items-center">
+    <div className="flex min-h-screen flex-col bg-white">
+      <header className="flex items-center justify-between p-4">
         <Company />
       </header>
       <main className="flex flex-row p-4 pt-10">
         <Sidebar />
-        <div className="flex flex-col md:flex-row items-center space-x-10 w-full justify-center">
+        <div className="flex w-full flex-col items-center justify-center space-x-10 md:flex-row">
           <div className="md:self-start">
             <Select>
               <SelectTrigger className="w-[180px]">
@@ -38,8 +38,8 @@ export default function MemberSearch() {
             </Select>
           </div>
           <div className="w-1/2 space-y-8 pt-3">
-            <div className="flex items-center space-x-4 flex-row justify-center">
-              <h2 className="text-3xl font-semibold text-center">
+            <div className="flex flex-row items-center justify-center space-x-4">
+              <h2 className="text-center text-3xl font-semibold">
                 Search Member
               </h2>
             </div>
@@ -86,7 +86,7 @@ export default function MemberSearch() {
                   className="mt-1"
                 />
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+              <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
                 Search
               </Button>
             </div>

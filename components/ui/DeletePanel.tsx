@@ -32,19 +32,19 @@ export default function DeletePanel({
     <>
       {isOpen && (
         <div
-          className="fixed top-0 left-0 bottom-0 w-full bg-white bg-opacity-50 transition-opacity z-40"
+          className="fixed bottom-0 left-0 top-0 z-40 w-full bg-white bg-opacity-50 transition-opacity"
           onClick={onClose}
         ></div>
       )}
       <div
-        className={`border rounded-tl-xl fixed bottom-0 right-0 h-[90%] w-1/3 bg-white shadow-lg z-50 transform ${
+        className={`fixed bottom-0 right-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${
           isOpen ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-250`}
+        } duration-250 transition-transform`}
       >
-        <div className="flex flex-col h-full">
-          <div className="p-4 flex flex-col border-b">
+        <div className="flex h-full flex-col">
+          <div className="flex flex-col border-b p-4">
             <div className="flex justify-between">
-              <div className="inline-block max-w-fit text-medium px-4 py-1 bg-[#FFCFCF] rounded-3xl italic">
+              <div className="text-medium inline-block max-w-fit rounded-3xl bg-[#FFCFCF] px-4 py-1 italic">
                 <span className="font-semibold">deleting </span>
                 <span className="font-light">row in </span>
                 <span className="font-semibold">{selectedTable}</span>
@@ -59,23 +59,23 @@ export default function DeletePanel({
           </div>
           <div
             ref={scrollContainerRef}
-            className="flex flex-col w-full h-full gap-4 overflow-y-auto p-8 "
+            className="flex h-full w-full flex-col gap-4 overflow-y-auto p-8"
           >
             <p>Are you sure you want to delete the following row?</p>
-            <div className="bg-gray-100 p-2 rounded mt-2 overflow-auto h-2/3 custom-scrollbar">
+            <div className="custom-scrollbar mt-2 h-2/3 overflow-auto rounded bg-gray-100 p-2">
               <pre className="whitespace-pre-wrap break-words">
                 {JSON.stringify(selectedRow, null, 2)}
               </pre>
             </div>
-            <div className="w-full flex justify-start gap-2">
+            <div className="flex w-full justify-start gap-2">
               <button
-                className="inline-block max-w-fit max-h-fit text-medium rounded-lg px-3 py-1 bg-gray-100"
+                className="text-medium inline-block max-h-fit max-w-fit rounded-lg bg-gray-100 px-3 py-1"
                 onClick={onClose}
               >
                 Cancel
               </button>
               <button
-                className="inline-block max-w-fit max-h-fit text-medium font-semibold rounded-lg px-3 py-1 bg-[#FFCFCF]"
+                className="text-medium inline-block max-h-fit max-w-fit rounded-lg bg-[#FFCFCF] px-3 py-1 font-semibold"
                 onClick={onDelete}
               >
                 Delete

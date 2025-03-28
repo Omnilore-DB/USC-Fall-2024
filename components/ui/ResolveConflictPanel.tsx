@@ -107,20 +107,20 @@ export default function ResolveConflictPanel({
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-white bg-opacity-50 transition-opacity z-40"
+          className="fixed inset-0 z-40 bg-white bg-opacity-50 transition-opacity"
           onClick={onClose}
         ></div>
       )}
 
       <div
-        className={`border rounded-tl-xl fixed bottom-0 right-0 h-[90%] w-1/3 bg-white shadow-lg z-50 transform ${
+        className={`fixed bottom-0 right-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${
           isOpen ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-250`}
+        } duration-250 transition-transform`}
       >
-        <div className="flex flex-col h-full">
-          <div className="p-4 flex flex-col border-b">
+        <div className="flex h-full flex-col">
+          <div className="flex flex-col border-b p-4">
             <div className="flex justify-between">
-              <div className="inline-block max-w-fit text-medium px-4 py-1 bg-[#E5E7EB] rounded-3xl italic">
+              <div className="text-medium inline-block max-w-fit rounded-3xl bg-[#E5E7EB] px-4 py-1 italic">
                 <span className="font-semibold">resolving </span>
                 <span className="font-light">conflict in </span>
                 <span className="font-semibold">members</span>
@@ -136,7 +136,7 @@ export default function ResolveConflictPanel({
 
           <div
             ref={scrollContainerRef}
-            className="flex flex-col w-full h-full gap-8 overflow-y-auto overflow-hidden custom-scrollbar p-8"
+            className="custom-scrollbar flex h-full w-full flex-col gap-8 overflow-hidden overflow-y-auto p-8"
           >
             {!mergeView ? (
               <>
@@ -148,36 +148,36 @@ export default function ResolveConflictPanel({
                   const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
 
                   return (
-                    <div key={key} className={`p-3 rounded ${bgColor}`}>
-                      <label className="block font-semibold capitalize mb-2">
+                    <div key={key} className={`rounded p-3 ${bgColor}`}>
+                      <label className="mb-2 block font-semibold capitalize">
                         {key}
                       </label>
                       <div className="grid grid-cols-2 gap-2">
-                        <div className="border rounded p-1 bg-white">
+                        <div className="rounded border bg-white p-1">
                           {val1 ?? "—"}
                         </div>
-                        <div className="border rounded p-1 bg-white">
+                        <div className="rounded border bg-white p-1">
                           {val2 ?? "—"}
                         </div>
                       </div>
                     </div>
                   );
                 })}
-                <div className="w-full flex justify-start gap-2">
+                <div className="flex w-full justify-start gap-2">
                   <button
-                    className="inline-block max-w-fit max-h-fit text-medium rounded-lg px-3 py-1 bg-gray-100 items-center justify-center"
+                    className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
                     onClick={onClose}
                   >
                     Cancel
                   </button>
                   <button
-                    className="inline-block max-w-fit max-h-fit text-medium font-semibold rounded-lg px-3 py-1 bg-[#C9FFAE] items-center justify-center"
+                    className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-[#C9FFAE] px-3 py-1 font-semibold"
                     onClick={() => setMergeView(true)}
                   >
                     Merge Members
                   </button>
                   <button
-                    className="inline-block max-w-fit max-h-fit text-medium font-semibold rounded-lg px-3 py-1 bg-red-200 items-center justify-center"
+                    className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-red-200 px-3 py-1 font-semibold"
                     onClick={() => {
                       console.log("Members marked as separate");
                       alert("Members marked as separate, add backend logic");
@@ -202,10 +202,10 @@ export default function ResolveConflictPanel({
                   const bgColor = isResolved ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
 
                   return (
-                    <div key={key} className={`p-3 rounded ${bgColor}`}>
+                    <div key={key} className={`rounded p-3 ${bgColor}`}>
                       <details open={isOpenField}>
                         <summary
-                          className="cursor-pointer mb-2 flex justify-between items-center gap-2"
+                          className="mb-2 flex cursor-pointer items-center justify-between gap-2"
                           onClick={(e) => {
                             e.preventDefault();
                             toggleFieldOpen(key);
@@ -216,7 +216,7 @@ export default function ResolveConflictPanel({
                               {key}:
                             </span>
                             {!isOpenField && (
-                              <span className="text-sm text-gray-600 italic truncate max-w-[200px]">
+                              <span className="max-w-[200px] truncate text-sm italic text-gray-600">
                                 {resolved || "—"}
                               </span>
                             )}
@@ -226,19 +226,19 @@ export default function ResolveConflictPanel({
 
                         <div className="grid grid-cols-3 gap-2">
                           <button
-                            className={`border rounded p-1 ${resolved === String(val1) ? "bg-blue-100" : "bg-white"}`}
+                            className={`rounded border p-1 ${resolved === String(val1) ? "bg-blue-100" : "bg-white"}`}
                             onClick={() => handleSelection(key, String(val1))}
                           >
                             {val1 ?? "—"}
                           </button>
                           <button
-                            className={`border rounded p-1 ${resolved === String(val2) ? "bg-blue-100" : "bg-white"}`}
+                            className={`rounded border p-1 ${resolved === String(val2) ? "bg-blue-100" : "bg-white"}`}
                             onClick={() => handleSelection(key, String(val2))}
                           >
                             {val2 ?? "—"}
                           </button>
                           <input
-                            className="border rounded p-1 w-full"
+                            className="w-full rounded border p-1"
                             placeholder="Custom value"
                             value={
                               resolvedFields[key] &&
@@ -263,15 +263,15 @@ export default function ResolveConflictPanel({
                   );
                 })}
 
-                <div className="w-full flex justify-start gap-2">
+                <div className="flex w-full justify-start gap-2">
                   <button
-                    className="inline-block max-w-fit max-h-fit text-medium rounded-lg px-3 py-1 bg-gray-100 items-center justify-center"
+                    className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
                     onClick={onClose}
                   >
                     Cancel
                   </button>
                   <button
-                    className="inline-block max-w-fit max-h-fit text-medium font-semibold rounded-lg px-3 py-1 bg-[#E5E7EB] items-center justify-center"
+                    className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-[#E5E7EB] px-3 py-1 font-semibold"
                     onClick={() => {
                       console.log("Resolved Data:", resolvedValues);
                       alert("Merged Members, add backend logic");

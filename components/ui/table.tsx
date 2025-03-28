@@ -10,7 +10,7 @@ const Table = React.forwardRef<
     <table
       ref={ref}
       className={cn(
-        "w-full table-autocaption-bottom text-sm min-w-full",
+        "table-autocaption-bottom w-full min-w-full text-sm",
         className,
       )}
       {...props}
@@ -25,7 +25,7 @@ const TableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn("[&_tr]:border-b sticky top-0 z-10 bg-white", className)}
+    className={cn("sticky top-0 z-10 bg-white [&_tr]:border-b", className)}
     {...props}
   />
 ));

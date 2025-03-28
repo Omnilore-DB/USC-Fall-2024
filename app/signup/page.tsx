@@ -85,16 +85,16 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="flex min-h-screen flex-col bg-white">
       <header className="p-4">
         <Company />
       </header>
       {showAlert && (
         <AlertBox message={alertMessage} onClose={() => setShowAlert(false)} />
       )}
-      <main className="flex-grow flex flex-col md:flex-row justify-center p-4 pt-10">
+      <main className="flex flex-grow flex-col justify-center p-4 pt-10 md:flex-row">
         <div className="w-full max-w-md space-y-8 md:pr-8">
-          <div className="text-center space-y-2">
+          <div className="space-y-2 text-center">
             <h2 className="text-3xl font-semibold">Create your account</h2>
             <p className="text-gray-600">
               Input your credentials to create your account
@@ -117,7 +117,7 @@ export default function SignUpPage() {
                 onChange={handleEmailChange} // Handle email change
               />
               {emailError && (
-                <div className="text-red-500 text-sm">{emailError}</div>
+                <div className="text-sm text-red-500">{emailError}</div>
               )}
             </div>
             <div>
@@ -136,7 +136,7 @@ export default function SignUpPage() {
                 onChange={handlePasswordChange} // Handle password change
               />
               {passwordError && (
-                <div className="text-red-500 text-sm">{passwordError}</div>
+                <div className="text-sm text-red-500">{passwordError}</div>
               )}
             </div>
             <div>
@@ -155,33 +155,33 @@ export default function SignUpPage() {
                 onChange={handleConfirmPasswordChange} // Handle confirm password change
               />
               {confirmPasswordError && (
-                <div className="text-red-500 text-sm">
+                <div className="text-sm text-red-500">
                   {confirmPasswordError}
                 </div>
               )}
             </div>
             <Button
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full bg-blue-600 text-white hover:bg-blue-700"
               onClick={handleSignUp} // Handle sign-up click
             >
               Sign Up
             </Button>
           </div>
           <div className="text-center">
-            <span className="px-2 bg-white text-sm text-gray-500">OR</span>
+            <span className="bg-white px-2 text-sm text-gray-500">OR</span>
           </div>
           <Button
             variant="outline"
-            className="w-full border-gray-100 text-gray-600 hover:bg-gray-300 bg-gray-100"
+            className="w-full border-gray-100 bg-gray-100 text-gray-600 hover:bg-gray-300"
             onClick={redirectToAdminLogin}
           >
             Cancel
           </Button>
         </div>
-        <div className="flex justify-center mt-4 ml-10">
+        <div className="ml-10 mt-4 flex justify-center">
           {" "}
           {/* New div for logo */}
-          <img src={Logo.src} className="w-64 h-fit" />
+          <img src={Logo.src} className="h-fit w-64" />
         </div>
       </main>
     </div>

@@ -54,17 +54,17 @@ export function Sidebar() {
 
   return (
     <aside>
-      <div className="p-5 bg-white">
-        <nav className="space-y-5 flex flex-col h-full">
+      <div className="bg-white p-5">
+        <nav className="flex h-full flex-col space-y-5">
           <Link
             href="/search"
-            className="block text-gray-600 hover:text-blue-600 transition-colors"
+            className="block text-gray-600 transition-colors hover:text-blue-600"
           >
             Search
           </Link>
           <Link
             href="/view"
-            className="block text-gray-600 hover:text-blue-600 transition-colors"
+            className="block text-gray-600 transition-colors hover:text-blue-600"
           >
             View
           </Link>
@@ -73,14 +73,14 @@ export function Sidebar() {
             <>
               <Link
                 href="/insert"
-                className="block text-gray-600 hover:text-blue-600 transition-colors"
+                className="block text-gray-600 transition-colors hover:text-blue-600"
               >
                 Add
               </Link>
 
               <Link
                 href="/reports"
-                className="block text-gray-600 hover:text-blue-600 transition-colors"
+                className="block text-gray-600 transition-colors hover:text-blue-600"
               >
                 Reports
               </Link>

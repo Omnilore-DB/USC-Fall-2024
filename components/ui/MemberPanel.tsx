@@ -36,10 +36,10 @@ export default function MemberPanel({
       <span className="font-semibold">{label}:</span>
       <span>{value}</span>
       <button
-        className="text-gray-300 hover:text-gray-500 mt-1"
+        className="mt-1 text-gray-300 hover:text-gray-500"
         onClick={() => copyToClipboard(value)}
       >
-        <Copy className="w-4 h-4" />
+        <Copy className="h-4 w-4" />
       </button>
     </div>
   );
@@ -48,34 +48,34 @@ export default function MemberPanel({
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-white bg-opacity-50 z-40"
+          className="fixed inset-0 z-40 bg-white bg-opacity-50"
           onClick={onClose}
         />
       )}
 
       <div
-        className={`border rounded-tl-xl fixed bottom-0 right-0 h-[90%] w-1/4 bg-white shadow-lg z-50 transform ${isOpen ? "translate-x-0" : "translate-x-full"} transition-transform duration-250`}
+        className={`fixed bottom-0 right-0 z-50 h-[90%] w-1/4 transform rounded-tl-xl border bg-white shadow-lg ${isOpen ? "translate-x-0" : "translate-x-full"} duration-250 transition-transform`}
       >
-        <div className="flex flex-col h-full overflow-hidden">
-          <div className="flex justify-between items-center px-6 py-4 border-b">
+        <div className="flex h-full flex-col overflow-hidden">
+          <div className="flex items-center justify-between border-b px-6 py-4">
             <h2 className="text-xl font-semibold">Member Details</h2>
-            <button className="text-[#616161] text-xl" onClick={onClose}>
+            <button className="text-xl text-[#616161]" onClick={onClose}>
               ✖
             </button>
           </div>
 
           <div
             ref={scrollContainerRef}
-            className="overflow-y-auto px-6 py-8 flex-grow custom-scrollbar"
+            className="custom-scrollbar flex-grow overflow-y-auto px-6 py-8"
           >
             {selectedRow ? (
-              <div className="space-y-4 text-medium text-[#616161]">
+              <div className="text-medium space-y-4 text-[#616161]">
                 {selectedRow?.Photo && (
                   <div className="mb-4 flex justify-center">
                     <img
                       src={selectedRow.Photo}
                       alt="Member Photo"
-                      className="rounded-full w-24 h-24 object-cover shadow"
+                      className="h-24 w-24 rounded-full object-cover shadow"
                     />
                   </div>
                 )}
@@ -94,7 +94,7 @@ export default function MemberPanel({
 
           <div className="flex justify-end gap-2 border-t p-4">
             <button
-              className="px-4 py-2 bg-gray-200 rounded-lg"
+              className="rounded-lg bg-gray-200 px-4 py-2"
               onClick={onClose}
             >
               Close
