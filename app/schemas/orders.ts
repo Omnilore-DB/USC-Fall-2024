@@ -10,14 +10,25 @@ export const ordersViews: View[] = [
       type: "composite",
       columns: {
         created_at: { type: "basic", name: "timestamp", nullable: false },
-        sqsp_transaction_id: { type: "basic", name: "varchar", nullable: false },
+        sqsp_transaction_id: {
+          type: "basic",
+          name: "varchar",
+          nullable: false,
+        },
         user_emails: { type: "basic", name: "_varchar", nullable: false },
         amount: { type: "basic", name: "double precision", nullable: false },
         date: { type: "basic", name: "timestamp", nullable: false },
         skus: { type: "basic", name: "_varchar", nullable: false },
-        payment_platform: { type: "enum", values: ["STRIPE", "PAYPAL", "MAIL"]},
+        payment_platform: {
+          type: "enum",
+          values: ["STRIPE", "PAYPAL", "MAIL"],
+        },
         fee: { type: "basic", name: "double precision", nullable: false },
-        external_transaction_id: { type: "basic", name: "varchar", nullable: false },
+        external_transaction_id: {
+          type: "basic",
+          name: "varchar",
+          nullable: false,
+        },
         user_names: { type: "basic", name: "_varchar", nullable: false },
         user_amounts: { type: "basic", name: "_varchar", nullable: false },
         member_pid: { type: "basic", name: "_int8", nullable: false },
@@ -28,9 +39,11 @@ export const ordersViews: View[] = [
       console.log("Querying orders table...");
       const { data, error } = await supabase
         .from("orders")
-        .select("created_at, sqsp_transaction_id, user_names, user_emails, amount, date, skus, payment_platform, fee, external_transaction_id, user_amounts, member_pid, issues")
+        .select(
+          "created_at, sqsp_transaction_id, user_names, user_emails, amount, date, skus, payment_platform, fee, external_transaction_id, user_amounts, member_pid, issues",
+        )
         .order("sqsp_transaction_id", { ascending: true });
-      
+
       if (error) {
         console.error("Supabase query error:", error);
         throw error;
@@ -58,7 +71,7 @@ export const ordersViews: View[] = [
         member_pid: item.member_pid.join(", "),
         issues: item.issues.join(", "),
       }));
-    
+
       return transformedData;
     },
     upsert_function: async (value: any): Promise<any> => {
@@ -78,7 +91,9 @@ export const ordersViews: View[] = [
         issues: [value.issues],
       };
 
-      const { data, error } = await supabase.from("orders").upsert(upsertData, { onConflict: "sqsp_transaction_id" });
+      const { data, error } = await supabase
+        .from("orders")
+        .upsert(upsertData, { onConflict: "sqsp_transaction_id" });
       if (error) throw error;
       return data;
     },

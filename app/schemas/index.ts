@@ -38,5 +38,5 @@ export const allViewsByNames = Object.values(allViews)
       ...acc,
       [view.name]: view,
     }),
-    {} as Record<string, View>
+    {} as Record<string, View>,
   );

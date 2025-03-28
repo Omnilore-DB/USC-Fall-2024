@@ -118,7 +118,7 @@ export default function MemberSearchComponent() {
   };
 
   const [membersMapping, setMembersMapping] = useState<Record<number, string>>(
-    {}
+    {},
   );
   const [committeesMapping, setCommitteesMapping] = useState<
     Record<number, string>
@@ -128,7 +128,7 @@ export default function MemberSearchComponent() {
     Record<number, string>
   >({});
   const [sdgNameMapping, setSdgNameMapping] = useState<Record<number, string>>(
-    {}
+    {},
   );
 
   const columnDisplayNames: Record<string, string> = {
@@ -152,7 +152,7 @@ export default function MemberSearchComponent() {
       (data || []).map((member) => [
         member.pid,
         `${member.first_name} ${member.last_name}`,
-      ])
+      ]),
     );
     setMembersMapping(mapping);
   };
@@ -167,7 +167,10 @@ export default function MemberSearchComponent() {
       return;
     }
     const mapping = Object.fromEntries(
-      (data || []).map((committee) => [committee.pid, committee.committee_name])
+      (data || []).map((committee) => [
+        committee.pid,
+        committee.committee_name,
+      ]),
     );
     setCommitteesMapping(mapping);
   };
@@ -183,7 +186,7 @@ export default function MemberSearchComponent() {
     }
 
     const mapping = Object.fromEntries(
-      (data || []).map((item) => [item.pid, item.leadership_position])
+      (data || []).map((item) => [item.pid, item.leadership_position]),
     );
 
     setLeadershipPositionMapping(mapping);
@@ -198,7 +201,7 @@ export default function MemberSearchComponent() {
     }
 
     const mapping = Object.fromEntries(
-      (data || []).map((item) => [item.pid, item.sdg])
+      (data || []).map((item) => [item.pid, item.sdg]),
     );
 
     setSdgNameMapping(mapping);
@@ -259,7 +262,7 @@ export default function MemberSearchComponent() {
                     selectedMemberId,
                     entries,
                     selectedView,
-                    router
+                    router,
                   )
                 }
               >
@@ -289,7 +292,7 @@ export default function MemberSearchComponent() {
                         >
                           {columnDisplayNames[name] || name}
                         </TableHead>
-                      )
+                      ),
                     )}
                 </TableRow>
               </TableHeader>
@@ -322,20 +325,21 @@ export default function MemberSearchComponent() {
                             membersMapping[entry[name]]
                               ? `${entry[name]} ${membersMapping[entry[name]]}`
                               : name === "committee_id" &&
-                                committeesMapping[entry[name]]
-                              ? `${entry[name]} ${
                                   committeesMapping[entry[name]]
-                                }`
-                              : name === "leadership_position_id" &&
-                                leadershipPositionMapping[entry[name]]
-                              ? `${entry[name]} ${
-                                  leadershipPositionMapping[entry[name]]
-                                }`
-                              : name === "sdg_id" && sdgNameMapping[entry[name]]
-                              ? `${entry[name]} ${sdgNameMapping[entry[name]]}`
-                              : entry[name]}
+                                ? `${entry[name]} ${
+                                    committeesMapping[entry[name]]
+                                  }`
+                                : name === "leadership_position_id" &&
+                                    leadershipPositionMapping[entry[name]]
+                                  ? `${entry[name]} ${
+                                      leadershipPositionMapping[entry[name]]
+                                    }`
+                                  : name === "sdg_id" &&
+                                      sdgNameMapping[entry[name]]
+                                    ? `${entry[name]} ${sdgNameMapping[entry[name]]}`
+                                    : entry[name]}
                           </TableCell>
-                        )
+                        ),
                       )}
                   </TableRow>
                 ))}

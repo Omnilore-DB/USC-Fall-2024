@@ -3,7 +3,7 @@
  * @type {import("prettier").Config}
  */
 const config = {
-    // use default config
+  // use default config
 };
 
 export default config;

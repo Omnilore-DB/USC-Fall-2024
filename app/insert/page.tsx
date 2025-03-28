@@ -192,7 +192,7 @@ function InsertComponent() {
 
       // Transform data into a Map
       const descriptionToSKU = new Map(
-        data.map((item) => [item.description, item.sku])
+        data.map((item) => [item.description, item.sku]),
       );
 
       setOrderSKUDescriptionOptions(new Map(descriptionToSKU));
@@ -204,7 +204,6 @@ function InsertComponent() {
     fetchMembers();
     fetchSDG();
   }, []);
-
 
   useEffect(() => {
     const setup = async () => {
@@ -254,7 +253,7 @@ function InsertComponent() {
     try {
       console.log("Inserting data:", formData);
       await selectedView.upsert_function!(formData);
-      
+
       const data = await selectedView.query_function();
       // show a message to the user
       toast.success("Data inserted successfully");
@@ -328,7 +327,7 @@ function InsertComponent() {
                                     >
                                       {description}
                                     </SelectItem>
-                                  )
+                                  ),
                                 )}
                               </SelectContent>
                             </Select>
@@ -337,7 +336,7 @@ function InsertComponent() {
                               onValueChange={(newValue) =>
                                 handleInputChange(
                                   colName,
-                                  newValue === "true" ? 1 : 0
+                                  newValue === "true" ? 1 : 0,
                                 )
                               }
                               value={value === 1 ? "true" : "false"}
@@ -355,7 +354,7 @@ function InsertComponent() {
                               onValueChange={(newValue) =>
                                 handleInputChange(
                                   colName,
-                                  parseInt(newValue, 10)
+                                  parseInt(newValue, 10),
                                 )
                               }
                               value={value ? value.toString() : ""}
@@ -372,7 +371,7 @@ function InsertComponent() {
                                     >
                                       {`${pid}  ${committeeName}`}
                                     </SelectItem>
-                                  )
+                                  ),
                                 )}
                               </SelectContent>
                             </Select>
@@ -382,7 +381,7 @@ function InsertComponent() {
                               onValueChange={(newValue) =>
                                 handleInputChange(
                                   colName,
-                                  parseInt(newValue, 10)
+                                  parseInt(newValue, 10),
                                 )
                               }
                               value={value ? value.toString() : ""}
@@ -399,7 +398,7 @@ function InsertComponent() {
                                     >
                                       {leadershipPosition}
                                     </SelectItem>
-                                  )
+                                  ),
                                 )}
                               </SelectContent>
                             </Select>
@@ -408,7 +407,7 @@ function InsertComponent() {
                               onValueChange={(newValue) =>
                                 handleInputChange(
                                   colName,
-                                  parseInt(newValue, 10)
+                                  parseInt(newValue, 10),
                                 )
                               }
                               value={value ? value.toString() : ""}
@@ -432,7 +431,7 @@ function InsertComponent() {
                                 (newValue) =>
                                   handleInputChange(
                                     colName,
-                                    parseInt(newValue, 10)
+                                    parseInt(newValue, 10),
                                   ) // Store only the pid
                               }
                               value={value ? value.toString() : ""}
@@ -486,13 +485,12 @@ function InsertComponent() {
                                     >
                                       {description}
                                     </SelectItem>
-                                  )
+                                  ),
                                 )}
                               </SelectContent>
                             </Select>
-                          ) : (colName === "SKUDescription" &&
-                              selectedView.name == "Orders")
-                             ? (
+                          ) : colName === "SKUDescription" &&
+                            selectedView.name == "Orders" ? (
                             // Dropdown for SKUDescription
                             <Select
                               onValueChange={(newValue) =>
@@ -505,7 +503,7 @@ function InsertComponent() {
                               </SelectTrigger>
                               <SelectContent>
                                 {Array.from(
-                                  OrderSKUDescriptionOptions.entries()
+                                  OrderSKUDescriptionOptions.entries(),
                                 ).map(([description, sku]) => (
                                   <SelectItem key={description} value={sku}>
                                     {description}
@@ -513,8 +511,8 @@ function InsertComponent() {
                                 ))}
                               </SelectContent>
                             </Select>
-                          ): (colName === "forum_name" &&
-                            selectedView.name == "Forums") ? (
+                          ) : colName === "forum_name" &&
+                            selectedView.name == "Forums" ? (
                             // Assuming you have access to `Members` data with PID, FirstName, and LastName
                             <Select
                               onValueChange={(newValue) =>
@@ -527,9 +525,12 @@ function InsertComponent() {
                               </SelectTrigger>
                               <SelectContent>
                                 {Array.from(
-                                  OrderSKUDescriptionOptions.entries()
+                                  OrderSKUDescriptionOptions.entries(),
                                 ).map(([description, _]) => (
-                                  <SelectItem key={description} value={description}>
+                                  <SelectItem
+                                    key={description}
+                                    value={description}
+                                  >
                                     {description}
                                   </SelectItem>
                                 ))}
@@ -556,7 +557,7 @@ function InsertComponent() {
                           )}
                         </div>
                       );
-                    }
+                    },
                   )}
                 </form>
                 <div className="flex flex-row justify-center space-x-4">

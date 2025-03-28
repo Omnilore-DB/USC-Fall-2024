@@ -67,7 +67,7 @@ const FORM_DATA_MAP = new Map(
       column: "emergency_contact_phone",
       processor: phone,
     },
-  } as const satisfies FormDataMap)
+  } as const satisfies FormDataMap),
 );
 
 type ProcessedFormData = {

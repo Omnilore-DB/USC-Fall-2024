@@ -21,10 +21,10 @@ function ShowDetailsComponent() {
   const searchParams = useSearchParams();
   const row = searchParams.get("row");
   const [current_row, setCurrentRow] = useState<Record<string, any> | null>(
-    row ? JSON.parse(row) : null
+    row ? JSON.parse(row) : null,
   );
   const [membersMapping, setMembersMapping] = useState<Record<number, string>>(
-    {}
+    {},
   );
   const [committeesMapping, setCommitteesMapping] = useState<
     Record<number, string>
@@ -34,7 +34,7 @@ function ShowDetailsComponent() {
     Record<number, string>
   >({});
   const [sdgNameMapping, setSdgNameMapping] = useState<Record<number, string>>(
-    {}
+    {},
   );
 
   console.log(current_row);
@@ -68,7 +68,7 @@ function ShowDetailsComponent() {
       (data || []).map((member) => [
         member.pid,
         `${member.first_name} ${member.last_name}`,
-      ])
+      ]),
     );
     console.log("member", mapping);
     setMembersMapping(mapping);
@@ -84,7 +84,10 @@ function ShowDetailsComponent() {
       return;
     }
     const mapping = Object.fromEntries(
-      (data || []).map((committee) => [committee.pid, committee.committee_name])
+      (data || []).map((committee) => [
+        committee.pid,
+        committee.committee_name,
+      ]),
     );
     setCommitteesMapping(mapping);
   };
@@ -100,7 +103,7 @@ function ShowDetailsComponent() {
     }
 
     const mapping = Object.fromEntries(
-      (data || []).map((item) => [item.pid, item.leadership_position])
+      (data || []).map((item) => [item.pid, item.leadership_position]),
     );
 
     setLeadershipPositionMapping(mapping);
@@ -115,7 +118,7 @@ function ShowDetailsComponent() {
     }
 
     const mapping = Object.fromEntries(
-      (data || []).map((item) => [item.pid, item.sdg])
+      (data || []).map((item) => [item.pid, item.sdg]),
     );
     console.log("sdg", mapping);
 
@@ -169,13 +172,13 @@ function ShowDetailsComponent() {
                     membersMapping[value]
                       ? `${value} ${membersMapping[value]}`
                       : key === "committee_id" && committeesMapping[value]
-                      ? `${value} ${committeesMapping[value]}`
-                      : key === "leadership_position_id" &&
-                        leadershipPositionMapping[value]
-                      ? `${value} ${leadershipPositionMapping[value]}`
-                      : key === "sdg_id" && sdgNameMapping[value]
-                      ? `${value} ${sdgNameMapping[value]}`
-                      : value;
+                        ? `${value} ${committeesMapping[value]}`
+                        : key === "leadership_position_id" &&
+                            leadershipPositionMapping[value]
+                          ? `${value} ${leadershipPositionMapping[value]}`
+                          : key === "sdg_id" && sdgNameMapping[value]
+                            ? `${value} ${sdgNameMapping[value]}`
+                            : value;
 
                   return (
                     <div key={key} className="flex flex-col">

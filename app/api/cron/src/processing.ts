@@ -57,27 +57,27 @@ export const convert = {
   },
 
   transactions: async (
-    ts: SquarespaceTransactionDocument[]
+    ts: SquarespaceTransactionDocument[],
   ): Promise<SupabaseTransactionInsert[]> => {
     // Process transactions in batches of 5 with a delay of 1 second between batches
     // Squarespace API has a rate limit of 300 requests per minute
     return batchWithDelay(
       ts,
-      t =>
+      (t) =>
         t.salesOrderId
           ? convert.transaction.order(t)
           : convert.transaction.donation(t),
-      { batchSize: 5, delayMs: 1000 }
+      { batchSize: 5, delayMs: 1000 },
     );
   },
 
   transaction: {
     order: async (
-      t: SquarespaceTransactionDocument
+      t: SquarespaceTransactionDocument,
     ): Promise<SupabaseTransactionInsert> => {
       if (!t.salesOrderId) {
         throw new Error(
-          `Transaction has no order ID but must if you want to process as an order. Transactions with no order ID are donations. Transaction ID: ${t.id}`
+          `Transaction has no order ID but must if you want to process as an order. Transactions with no order ID are donations. Transaction ID: ${t.id}`,
         );
       }
 
@@ -103,7 +103,7 @@ export const convert = {
         order.issues.push(
           error.with({
             transaction_id: t.id,
-          })
+          }),
         );
 
         return order;
@@ -111,7 +111,7 @@ export const convert = {
 
       data.lineItems.forEach((p, idx) => {
         const form_data: [string, string][] = (p.customizations ?? []).map(
-          obj => [obj.label, obj.value]
+          (obj) => [obj.label, obj.value],
         );
 
         order.raw_form_data.push(Object.fromEntries(form_data));
@@ -153,11 +153,11 @@ export const convert = {
     },
 
     donation: async (
-      t: SquarespaceTransactionDocument
+      t: SquarespaceTransactionDocument,
     ): Promise<SupabaseTransactionInsert> => {
       if (t.salesOrderId) {
         throw new Error(
-          `Transaction has order ID but must NOT if you want to process as a donation. Transactions with order ID are orders. Transaction ID: ${t.id}`
+          `Transaction has order ID but must NOT if you want to process as a donation. Transactions with order ID are orders. Transaction ID: ${t.id}`,
         );
       }
 
@@ -183,7 +183,7 @@ export const convert = {
         donation.issues.push(
           error.with({
             transaction_id: t.id,
-          })
+          }),
         );
 
         return donation;

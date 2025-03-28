@@ -1,7 +1,7 @@
 import type { Issue, IssueCode } from "./types";
 
 export const wait = (ms: number) =>
-  new Promise(resolve => setTimeout(resolve, ms));
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Process a batch of items with a specified processor function and batch size
@@ -14,14 +14,14 @@ export const wait = (ms: number) =>
 export async function batchWithDelay<T, R>(
   items: T[],
   processorFn: (item: T) => Promise<R>,
-  { batchSize, delayMs }: { batchSize: number; delayMs: number }
+  { batchSize, delayMs }: { batchSize: number; delayMs: number },
 ): Promise<R[]> {
   const results: R[] = [];
 
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
     const processedBatch = await Promise.all(
-      batch.map(item => processorFn(item))
+      batch.map((item) => processorFn(item)),
     );
     results.push(...processedBatch);
 
@@ -40,7 +40,7 @@ export async function batchWithDelay<T, R>(
  * Otherwise, it returns the Response from the function.
  */
 export async function apiResponse(
-  fn: () => Promise<Response> | Response
+  fn: () => Promise<Response> | Response,
 ): Promise<Response> {
   try {
     return await fn();
@@ -50,7 +50,7 @@ export async function apiResponse(
       {
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

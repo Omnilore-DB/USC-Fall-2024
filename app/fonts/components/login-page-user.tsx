@@ -1,6 +1,6 @@
-'use client'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+"use client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function LoginPage() {
   return (
@@ -11,12 +11,19 @@ export function LoginPage() {
       <main className="flex-grow flex flex-col md:flex-row items-center justify-center p-4">
         <div className="w-full max-w-md space-y-8 md:pr-8">
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-semibold">Welcome back General Member!</h2>
-            <p className="text-gray-600">Enter your Credentials to access your account</p>
+            <h2 className="text-3xl font-semibold">
+              Welcome back General Member!
+            </h2>
+            <p className="text-gray-600">
+              Enter your Credentials to access your account
+            </p>
           </div>
           <div className="space-y-4">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <Input id="password" type="password" className="mt-1" />
@@ -54,5 +61,5 @@ export function LoginPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

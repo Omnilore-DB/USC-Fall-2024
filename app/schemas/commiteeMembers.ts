@@ -23,7 +23,7 @@ export const committeeMembersViews: View[] = [
       const { data, error } = await supabase
         .from("committee_members")
         .select(
-          "pid, committee_id, member_id, position, active, start_date, end_date, notes"
+          "pid, committee_id, member_id, position, active, start_date, end_date, notes",
         )
         .order("pid", { ascending: true });
       if (error) throw error;

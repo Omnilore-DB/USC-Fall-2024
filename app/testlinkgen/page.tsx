@@ -21,7 +21,11 @@ const TestPage: React.FC = () => {
   return (
     <div>
       <h2>Test Authentication Link</h2>
-      {authLink ? <a href={authLink}>{authLink}</a> : <p>⏳ Generating link...</p>}
+      {authLink ? (
+        <a href={authLink}>{authLink}</a>
+      ) : (
+        <p>⏳ Generating link...</p>
+      )}
     </div>
   );
 };

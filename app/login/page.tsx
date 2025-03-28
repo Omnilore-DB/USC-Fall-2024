@@ -102,7 +102,7 @@ function LoginPage() {
       }
     } catch (error) {
       setAlertMessage(
-        (error as Error).message || "Login failed. Please try again."
+        (error as Error).message || "Login failed. Please try again.",
       );
       setShowAlert(true);
     }
@@ -128,14 +128,14 @@ function LoginPage() {
             type="text"
             placeholder="Email or Username"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <Input
             className="bg-[#EFF3F6] border-none rounded-lg h-10 w-full px-4"
             type="password"
             placeholder="Password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
           />
           <Button
             className="h-10 w-full bg-[#1E1F28] rounded-lg text-white text-lg"

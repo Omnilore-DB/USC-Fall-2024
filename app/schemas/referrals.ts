@@ -22,7 +22,7 @@ export const referralViews: View[] = [
       const { data, error } = await supabase
         .from("prospects")
         .select(
-          "pid, referred_by_phone, referred_by_member_id, prospect_name, prospect_phone, date, notes"
+          "pid, referred_by_phone, referred_by_member_id, prospect_name, prospect_phone, date, notes",
         )
         .order("pid", { ascending: true });
       if (error) throw error;
