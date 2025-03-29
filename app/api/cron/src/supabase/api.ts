@@ -280,18 +280,20 @@ export const perform = {
     return true;
   },
 
-  remap_member_foreign_keys: async (
+  resolve_member_conflict_merge: async (
     prev_member_id: number,
     updated_member_id: number,
+    merged_member: SupabaseMemberUpdate,
   ) => {
-    const { error } = await supabase.rpc("remap_member_fk", {
-      old_member_id: prev_member_id,
-      new_member_id: updated_member_id,
+    const { error } = await supabase.rpc("resolve_member_conflict_merge", {
+      p_first_member_id: prev_member_id,
+      p_second_member_id: updated_member_id,
+      p_merged_member: merged_member,
     });
 
     if (error)
       throw new Error(
-        `Failed to remap member foreign keys. ${error.hint}. ${error.message}`,
+        `Failed to resolve member conflict in merge. ${error.hint ? error.hint + ". " : ""}${error.message ? error.message : ""}`,
       );
   },
 };

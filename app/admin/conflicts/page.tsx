@@ -49,6 +49,16 @@ export default function ConflictsPage() {
     }
   };
 
+  const fetchEntries = async () => {
+    try {
+      const { data, primaryKeys } = await queryTableWithPrimaryKey(tableName);
+      setEntries(data);
+      setPrimaryKeys(primaryKeys ?? []);
+    } catch (error: any) {
+      console.error(`Failed to fetch ${tableName}`, error);
+    }
+  };
+
   useEffect(() => {
     const setup = async () => {
       const userRoles = await getRoles();
@@ -67,19 +77,6 @@ export default function ConflictsPage() {
     };
 
     setup().catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    const fetchEntries = async () => {
-      try {
-        const { data, primaryKeys } = await queryTableWithPrimaryKey(tableName);
-        setEntries(data);
-        setPrimaryKeys(primaryKeys ?? []);
-      } catch (error: any) {
-        console.error(`Failed to fetch ${tableName}`, error);
-      }
-    };
-
     fetchEntries();
   }, []);
 
@@ -112,6 +109,7 @@ export default function ConflictsPage() {
                 onClose={() => setIsPanelOpen(false)}
                 firstMemberId={selectedRow.first_member_id}
                 secondMemberId={selectedRow.second_member_id}
+                refresh={fetchEntries}
               />
             )}
           </div>

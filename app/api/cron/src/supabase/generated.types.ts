@@ -1358,13 +1358,6 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "member_to_transactions_member_id_fkey";
-            columns: ["member_id"];
-            isOneToOne: false;
-            referencedRelation: "members";
-            referencedColumns: ["id"];
-          },
-          {
             foreignKeyName: "member_to_transactions_sku_fkey";
             columns: ["sku"];
             isOneToOne: false;
@@ -1376,6 +1369,13 @@ export type Database = {
             columns: ["transaction_id"];
             isOneToOne: false;
             referencedRelation: "transactions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "members_to_transactions_member_id_fkey";
+            columns: ["member_id"];
+            isOneToOne: false;
+            referencedRelation: "members";
             referencedColumns: ["id"];
           },
         ];
@@ -2238,6 +2238,14 @@ export type Database = {
         Args: {
           old_member_id: number;
           new_member_id: number;
+        };
+        Returns: undefined;
+      };
+      resolve_member_conflict_merge: {
+        Args: {
+          p_first_member_id: number;
+          p_second_member_id: number;
+          p_merged_member: Json;
         };
         Returns: undefined;
       };

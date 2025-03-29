@@ -2,12 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getRowById } from "@/app/supabase";
+import {
+  resolve_member_conflict_merge,
+  resolve_member_conflict_different_members,
+} from "@/app/api/cron/src/supabase/resolve-conflicts";
+import { toast } from "sonner";
 
 interface ResolveConflictPanelProps {
   isOpen: boolean;
   onClose: () => void;
   firstMemberId: number;
   secondMemberId: number;
+  refresh: () => void;
 }
 
 export default function ResolveConflictPanel({
@@ -15,6 +21,7 @@ export default function ResolveConflictPanel({
   onClose,
   firstMemberId,
   secondMemberId,
+  refresh,
 }: ResolveConflictPanelProps) {
   const [member1, setMember1] = useState<Record<string, any> | null>(null);
   const [member2, setMember2] = useState<Record<string, any> | null>(null);
@@ -272,10 +279,53 @@ export default function ResolveConflictPanel({
                   </button>
                   <button
                     className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-[#E5E7EB] px-3 py-1 font-semibold"
-                    onClick={() => {
+                    onClick={async () => {
+                      if (
+                        Object.entries(resolvedFields).some(
+                          ([k, v]) =>
+                            v === false &&
+                            k !== "id" &&
+                            k !== "created_at" &&
+                            k !== "updated_at",
+                        )
+                      ) {
+                        toast.error("Please resolve all conflicts.", {
+                          description: `
+                          Still missing ${Object.entries(resolvedFields)
+                            .filter(
+                              ([k, v]) =>
+                                v === false &&
+                                k !== "id" &&
+                                k !== "created_at" &&
+                                k !== "updated_at",
+                            )
+                            .map(([k]) => k)
+                            .join(", ")}`,
+                        });
+                        return;
+                      }
+
                       console.log("Resolved Data:", resolvedValues);
-                      alert("Merged Members, add backend logic");
-                      onClose();
+                      const toAwait = resolve_member_conflict_merge(
+                        firstMemberId,
+                        secondMemberId,
+                        resolvedValues,
+                      );
+
+                      toast.promise(
+                        toAwait.then(() => {
+                          onClose();
+                          refresh();
+                        }),
+                        {
+                          loading: "Resolving...",
+                          success: "Member conflict resolved!",
+                          error: (error) => {
+                            console.error(error);
+                            return `Error resolving member conflict. ${error.message}`;
+                          },
+                        },
+                      );
                     }}
                   >
                     Merge
