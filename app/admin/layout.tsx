@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Logo from "@/components/assets/logo.png";
+import { useLoginRedirect } from "@/hooks/use-login-redirect";
 import React from "react";
 
 export default function AdminLayout({
@@ -9,6 +10,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  useLoginRedirect();
   return (
     <div className="flex h-screen w-full flex-col bg-gray-100">
       <div className="flex w-full flex-grow flex-row items-center justify-center overflow-y-auto">
@@ -30,7 +32,7 @@ export default function AdminLayout({
           </div>
 
           {/* Page content */}
-          <div className="flex h-full w-5/6 flex-col items-center">
+          <div className="flex h-full w-5/6 flex-col overflow-scroll rounded-xl bg-white">
             {children}
           </div>
         </div>

@@ -21,6 +21,7 @@ interface TableColumn {
 
 export async function getRoles() {
   const { error, data } = await supabase.rpc("get_current_user_roles");
+  console.log("data", data);
   if (error) {
     return null;
   }
