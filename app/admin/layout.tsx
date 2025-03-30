@@ -1,14 +1,19 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect } from "react";
 import Logo from "@/components/assets/logo.png";
-import React from "react";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children,} : { children: React.ReactNode; }) 
+{
+  const router = useRouter();
+
+  useEffect(() => {
+    router.prefetch('/admin/tables');
+    router.prefetch('/admin/reports');
+    router.prefetch('/admin/conflicts');
+  }, [router]);
+
   return (
     <div className="flex h-screen w-full flex-col bg-gray-100">
       <div className="flex w-full flex-grow flex-row items-center justify-center overflow-y-auto">
@@ -63,9 +68,8 @@ const TableButton = () => {
   return (
     <button
       onClick={() => router.push("/admin/tables")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
-        isActive ? "bg-[#F6F6F6]" : "bg-white"
-      } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
+        } hover:bg-[#F6F6F6]`}
     >
       <TableIcon />
       <span
@@ -101,9 +105,8 @@ const ReportsButton = () => {
   return (
     <button
       onClick={() => router.push("/admin/reports")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
-        isActive ? "bg-[#F6F6F6]" : "bg-white"
-      } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
+        } hover:bg-[#F6F6F6]`}
     >
       <ReportsIcon />
       <span
@@ -159,9 +162,8 @@ const ConflictsButton = () => {
   return (
     <button
       onClick={() => router.push("/admin/conflicts")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
-        isActive ? "bg-[#F6F6F6]" : "bg-white"
-      } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
+        } hover:bg-[#F6F6F6]`}
     >
       <ConflictsIcon />
       <span

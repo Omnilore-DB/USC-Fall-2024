@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { getRoles, getPermissions, Permission } from "@/app/supabase";
-import { ActionButton } from "@/components/ui/actionButton";
+import { ActionButton } from "@/components/ui/ActionButton";
 import TableComponent from "@/components/ui/TableComponent";
-import TableSelectDropdown from "@/components/ui/TableSelectDropdown";
+import SelectDropdown from "@/components/ui/SelectDropdown";
 import SearchInput from "@/components/ui/SearchInput";
 import { queryTableWithPrimaryKey } from "@/app/queryFunctions";
 import ActionPanel from "@/components/ui/ActionPanel";
 import DeletePanel from "@/components/ui/DeletePanel";
+import { MoonLoader } from "react-spinners";
 
-export default function Search() {
+export default function Table() {
   const [query, setQuery] = useState("");
   const [roles, setRoles] = useState<string[]>([]);
   const [entries, setEntries] = useState<Record<string, any>[]>([]);
@@ -26,6 +27,8 @@ export default function Search() {
   const [primaryKeys, setPrimaryKeys] = useState<string[] | null>(null);
   const [isEntryPanelOpen, setIsEntryPanelOpen] = useState(false);
   const [isDeletePanelOpen, setIsDeletePanelOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
 
   const filteredEntries = useMemo(() => {
     const keywords = query.toLowerCase().split(" ").filter(Boolean);
@@ -41,72 +44,64 @@ export default function Search() {
 
   useEffect(() => {
     const setup = async () => {
-      const userRoles = await getRoles();
-      if (!userRoles) {
-        console.error("Failed to fetch roles");
-        return;
+      try {
+        setIsLoading(true);
+        const userRoles = await getRoles();
+        if (!userRoles) {
+          console.error("Failed to fetch roles");
+          return;
+        }
+        setRoles(userRoles);
+  
+        const allPermissions: Record<string, Permission[]> = {};
+        const viewTables = new Set<string>();
+  
+        for (const role of userRoles) {
+          const rolePermissions = await getPermissions(role);
+          allPermissions[role] = rolePermissions;
+  
+          rolePermissions.forEach((permission) => {
+            if (permission.can_read) {
+              viewTables.add(permission.table_name);
+            }
+          });
+        }
+  
+        const tablesArray = Array.from(viewTables);
+        setPermissions(allPermissions);
+        setTables(tablesArray);
+  
+        // Set the first table and trigger data fetching
+        if (tablesArray.length > 0) {
+          setSelectedTable(tablesArray[0]);
+        }
+      } catch (error) {
+        console.error("Error during setup", error);
+      } finally {
+        setIsLoading(false);
       }
-      setRoles(userRoles);
-
-      const allPermissions: Record<string, Permission[]> = {};
-      const viewTables = new Set<string>();
-      const addTables = new Set<string>();
-      const editTables = new Set<string>();
-      const deleteTables = new Set<string>();
-
-      for (const role of userRoles) {
-        const rolePermissions = await getPermissions(role);
-        allPermissions[role] = rolePermissions;
-
-        rolePermissions.forEach((permission) => {
-          if (permission.can_create) {
-            addTables.add(permission.table_name);
-          }
-          if (permission.can_read) {
-            viewTables.add(permission.table_name);
-          }
-          if (permission.can_write) {
-            editTables.add(permission.table_name);
-          }
-          if (permission.can_delete) {
-            deleteTables.add(permission.table_name);
-          }
-        });
-      }
-
-      const tablesArray = Array.from(viewTables);
-      setPermissions(allPermissions);
-      setTables(tablesArray);
-      setSelectedTable(tablesArray[0] || null);
     };
-
+  
     setup().catch(console.error);
   }, []);
-
+  
+  
   useEffect(() => {
     const fetchEntries = async () => {
       if (!selectedTable) return;
       try {
-        const { data, primaryKeys } =
-          await queryTableWithPrimaryKey(selectedTable);
+        const { data, primaryKeys } = await queryTableWithPrimaryKey(selectedTable);
         setEntries(data);
         setPrimaryKeys(primaryKeys ?? "");
-      } catch (error: any) {
-        console.error(
-          `Failed to fetch data and primary key for table ${selectedTable}`,
-          error,
-        );
-        if (error?.message) {
-          console.error("Error message:", error.message);
-        }
-        if (error?.status) {
-          console.error("HTTP Status:", error.status);
-        }
-      }
+      } catch (error) {
+        console.error(`Failed to fetch data for table ${selectedTable}`, error);
+      } 
     };
-
+  
     fetchEntries();
   }, [selectedTable]);
+  
+  
 
   const hasPermission = (action: keyof Permission) => {
     if (!selectedTable) return false;
@@ -149,6 +144,10 @@ export default function Search() {
       <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
         {roles === null ? (
           <div>Don't have the necessary permission</div>
+        ) : isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <MoonLoader />
+          </div>
         ) : (
           <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
             <div className="flex h-full w-full flex-col items-center">
@@ -156,10 +155,10 @@ export default function Search() {
                 {/* Select and add, delete, and edit buttons */}
                 <div className="flex justify-between">
                   <div className="w-1/5">
-                    <TableSelectDropdown
-                      tables={tables}
-                      selectedTable={selectedTable}
-                      setSelectedTable={(table) => {
+                    <SelectDropdown
+                      options={tables}
+                      selectedOption={selectedTable}
+                      setSelectedOption={(table) => {
                         setSelectedTable(table);
                       }}
                     />
@@ -193,16 +192,19 @@ export default function Search() {
                 {primaryKeys && (
                   <div className="w-full flex-grow overflow-y-auto">
                     <TableComponent
-                      entries={filteredEntries}
-                      roles={roles}
-                      selectedRow={selectedRow}
-                      handleRowSelection={(row) => setSelectedRow(row)}
-                      primaryKeys={primaryKeys}
-                      adminTable={true}
-                      showImages={false}
-                    />
+                        entries={filteredEntries}
+                        roles={roles}
+                        selectedRow={selectedRow}
+                        handleRowSelection={(row) => setSelectedRow(row)}
+                        primaryKeys={primaryKeys}
+                        adminTable={true}
+                        showImages={false}
+                      />
                   </div>
                 )}
+
+
+
               </div>
 
               {/* Add and Edit Panel */}

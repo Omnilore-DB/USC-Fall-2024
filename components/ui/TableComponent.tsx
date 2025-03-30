@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import UserIcon from "@/components/assets/user-icon.png";
+import { MoonLoader } from "react-spinners";
 
 interface TableComponentProps {
   entries: Record<string, any>[];
@@ -27,13 +28,9 @@ const TableComponent = ({
   > | null>(selectedRow);
   const [columnWidths, setColumnWidths] = useState<number[]>([]);
   const headerRefs = useRef<(HTMLTableCellElement | null)[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    if (headerRefs.current.length > 0) {
-      const newWidths = headerRefs.current.map((th) => th?.offsetWidth || 50);
-      setColumnWidths(newWidths);
-    }
-  }, [entries, primaryKeys]);
+
 
   const handleRowClick = (row: Record<string, any>) => {
     if (localSelectedRow !== row) {
@@ -42,10 +39,23 @@ const TableComponent = ({
     }
   };
 
+  
   useEffect(() => {
-    console.log("UPDATED ROW OBJECT: ", localSelectedRow);
-  }, [localSelectedRow]);
+    setIsLoading(true); // Start loading when entries change
+    if (headerRefs.current.length > 0) {
+      const newWidths = headerRefs.current.map((th) => th?.offsetWidth || 50);
+      setColumnWidths(newWidths);
+    }
 
+    // Simulate a small delay to allow for proper rendering
+    const timer = setTimeout(() => {
+      setIsLoading(false); // End loading after rendering
+    }, 200); // Adjust delay as needed
+
+    return () => clearTimeout(timer);
+  }, [entries, primaryKeys]);
+
+  
   const validRoles = ["admin", "registrar", "member", "treasurer"];
   const hasValidRole = roles.some((role) => validRoles.includes(role));
 
@@ -59,6 +69,12 @@ const TableComponent = ({
 
   return (
     <div className="flex h-full w-full flex-col">
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <MoonLoader />
+        </div>
+      ) : (
+
       <div className="overflow-x:visible custom-scrollbar h-full w-full flex-grow overflow-x-auto overflow-y-auto">
         <div className="h-full min-h-full w-full min-w-full">
           <table className="w-full border-collapse border border-gray-200">
@@ -283,6 +299,7 @@ const TableComponent = ({
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 };
