@@ -21,15 +21,16 @@ export default function Reports() {
   const [permissions, setPermissions] = useState<Record<string, Permission[]>>(
     {},
   );
-  const reportTypes = ["Financial", "Member", "Type"];
 
-  const typeTOTableName: Record<string, string> = {
+  const typeTOTableName = {
     Financial: "transactions",
     Member: "members",
     Type: "members",
-  };
+  } as const;
 
-  const [selectedReportType, setSelectedReportType] = useState<string | null>(null);
+  const [selectedReportType, setSelectedReportType] = useState<
+    keyof typeof typeTOTableName | null
+  >(null);
 
   const [primaryKeys, setPrimaryKeys] = useState<string[] | null>(null);
 
@@ -88,8 +89,6 @@ export default function Reports() {
     fetchEntries();
   }, [selectedReportType]);
 
-  
-  
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
       <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
@@ -103,15 +102,16 @@ export default function Reports() {
                 <div className="flex justify-between">
                   <div className="w-1/5">
                     <SelectDropdown
-                      options={reportTypes}
+                      options={Object.keys(typeTOTableName)}
                       selectedOption={selectedReportType}
                       setSelectedOption={(option) => {
-                        setSelectedReportType(option);
+                        setSelectedReportType(
+                          option as keyof typeof typeTOTableName,
+                        );
                       }}
                     />
                   </div>
                 </div>
-
 
                 {/* Table Component */}
                 {primaryKeys && (
@@ -128,7 +128,6 @@ export default function Reports() {
                   </div>
                 )}
               </div>
-
             </div>
           </div>
         )}

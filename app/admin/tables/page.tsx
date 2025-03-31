@@ -10,6 +10,7 @@ import { queryTableWithPrimaryKey } from "@/app/queryFunctions";
 import ActionPanel from "@/components/ui/ActionPanel";
 import DeletePanel from "@/components/ui/DeletePanel";
 import { MoonLoader } from "react-spinners";
+import type { Database } from "@/app/api/cron/src/supabase/types";
 
 export default function Table() {
   const [query, setQuery] = useState("");
@@ -23,12 +24,13 @@ export default function Table() {
     {},
   );
   const [tables, setTables] = useState<string[]>([]);
-  const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const [selectedTable, setSelectedTable] = useState<
+    keyof Database["public"]["Tables"] | null
+  >(null);
   const [primaryKeys, setPrimaryKeys] = useState<string[] | null>(null);
   const [isEntryPanelOpen, setIsEntryPanelOpen] = useState(false);
   const [isDeletePanelOpen, setIsDeletePanelOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
 
   const filteredEntries = useMemo(() => {
     const keywords = query.toLowerCase().split(" ").filter(Boolean);
@@ -52,28 +54,30 @@ export default function Table() {
           return;
         }
         setRoles(userRoles);
-  
+
         const allPermissions: Record<string, Permission[]> = {};
         const viewTables = new Set<string>();
-  
+
         for (const role of userRoles) {
           const rolePermissions = await getPermissions(role);
           allPermissions[role] = rolePermissions;
-  
+
           rolePermissions.forEach((permission) => {
             if (permission.can_read) {
               viewTables.add(permission.table_name);
             }
           });
         }
-  
+
         const tablesArray = Array.from(viewTables);
         setPermissions(allPermissions);
         setTables(tablesArray);
-  
+
         // Set the first table and trigger data fetching
         if (tablesArray.length > 0) {
-          setSelectedTable(tablesArray[0]);
+          setSelectedTable(
+            tablesArray[0] as keyof Database["public"]["Tables"],
+          );
         }
       } catch (error) {
         console.error("Error during setup", error);
@@ -81,27 +85,25 @@ export default function Table() {
         setIsLoading(false);
       }
     };
-  
+
     setup().catch(console.error);
   }, []);
-  
-  
+
   useEffect(() => {
     const fetchEntries = async () => {
       if (!selectedTable) return;
       try {
-        const { data, primaryKeys } = await queryTableWithPrimaryKey(selectedTable);
+        const { data, primaryKeys } =
+          await queryTableWithPrimaryKey(selectedTable);
         setEntries(data);
         setPrimaryKeys(primaryKeys ?? "");
       } catch (error) {
         console.error(`Failed to fetch data for table ${selectedTable}`, error);
-      } 
+      }
     };
-  
+
     fetchEntries();
   }, [selectedTable]);
-  
-  
 
   const hasPermission = (action: keyof Permission) => {
     if (!selectedTable) return false;
@@ -145,7 +147,7 @@ export default function Table() {
         {roles === null ? (
           <div>Don't have the necessary permission</div>
         ) : isLoading ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex h-full items-center justify-center">
             <MoonLoader />
           </div>
         ) : (
@@ -159,7 +161,9 @@ export default function Table() {
                       options={tables}
                       selectedOption={selectedTable}
                       setSelectedOption={(table) => {
-                        setSelectedTable(table);
+                        setSelectedTable(
+                          table as keyof Database["public"]["Tables"],
+                        );
                       }}
                     />
                   </div>
@@ -192,19 +196,16 @@ export default function Table() {
                 {primaryKeys && (
                   <div className="w-full flex-grow overflow-y-auto">
                     <TableComponent
-                        entries={filteredEntries}
-                        roles={roles}
-                        selectedRow={selectedRow}
-                        handleRowSelection={(row) => setSelectedRow(row)}
-                        primaryKeys={primaryKeys}
-                        adminTable={true}
-                        showImages={false}
-                      />
+                      entries={filteredEntries}
+                      roles={roles}
+                      selectedRow={selectedRow}
+                      handleRowSelection={(row) => setSelectedRow(row)}
+                      primaryKeys={primaryKeys}
+                      adminTable={true}
+                      showImages={false}
+                    />
                   </div>
                 )}
-
-
-
               </div>
 
               {/* Add and Edit Panel */}
