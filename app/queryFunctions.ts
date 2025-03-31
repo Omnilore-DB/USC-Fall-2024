@@ -1,7 +1,8 @@
 import { supabase } from "@/app/supabase";
+import { Database } from "./api/cron/src/supabase/types";
 
 export const queryTableWithPrimaryKey = async (
-  table: string,
+  table: keyof Database["public"]["Tables"],
 ): Promise<{ data: any[]; primaryKeys: string[] }> => {
   console.log(`Querying table: ${table}`);
 
@@ -38,7 +39,7 @@ export const queryTableWithPrimaryKey = async (
 };
 
 export const queryTableWithFields = async (
-  table: string,
+  table: keyof Database["public"]["Tables"],
   schema: Record<string, any>,
 ): Promise<{ data: Record<string, any>[]; primaryKey: string | null }> => {
   try {

@@ -53,7 +53,9 @@ export const getPermissions = async (role: string): Promise<Permission[]> => {
   return data as Permission[];
 };
 
-export const getDataForTable = async (table: string) => {
+export const getDataForTable = async (
+  table: keyof Database["public"]["Tables"],
+) => {
   try {
     const { data, error } = await supabase.from(table).select("*");
 
@@ -171,7 +173,7 @@ export const getTableSchema = async (table: string) => {
 };
 
 export const upsertTableEntry = async (
-  table: string,
+  table: keyof Database["public"]["Tables"],
   data: Record<string, any>,
 ) => {
   try {
@@ -190,7 +192,10 @@ export const upsertTableEntry = async (
   }
 };
 
-export const getRowById = async (table: string, id: number) => {
+export const getRowById = async (
+  table: keyof Database["public"]["Tables"],
+  id: number,
+) => {
   try {
     const { data, error } = await supabase
       .from(table)

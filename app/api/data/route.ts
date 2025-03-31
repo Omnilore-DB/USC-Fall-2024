@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const data = await getDataForTable(table);
+    const data = await getDataForTable(table as any);
     return NextResponse.json(data ?? []);
   } catch (error) {
     console.error(`Failed to fetch data for table ${table}:`, error);

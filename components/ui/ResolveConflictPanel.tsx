@@ -53,9 +53,10 @@ export default function ResolveConflictPanel({
       const defaultResolvedFields: Record<string, boolean> = {};
       const defaultOpenFields: Record<string, boolean> = {};
 
-      Object.keys(data1 || {}).forEach((key) => {
-        const val1 = data1[key];
-        const val2 = data2[key];
+      if (!data1 || !data2) return;
+
+      Object.entries(data1).forEach(([key, val1]) => {
+        const val2 = data2[key as keyof typeof data2];
         const bothEmpty = (!val1 && !val2) || (val1 === "" && val2 === "");
 
         const isResolved = val1 === val2 || bothEmpty;

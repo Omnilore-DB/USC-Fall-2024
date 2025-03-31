@@ -8,11 +8,11 @@ import { saveAs } from "file-saver";
 const SGQSPDonationsReport = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [donationsData, setDonationsData] = useState([]);
+  const [donationsData, setDonationsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Helper function to format the date to "YYYY-MM"
-  const formatDateToYearMonth = (dateString) => {
+  const formatDateToYearMonth = (dateString: string) => {
     if (!dateString) return ""; // Return empty if date is missing
     const date = new Date(dateString);
     const year = date.getFullYear();
@@ -21,7 +21,7 @@ const SGQSPDonationsReport = () => {
   };
 
   // Helper function to extract the Date part "YYYY-MM-DD"
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return ""; // Return empty if date is missing
     const date = new Date(dateString);
     return date.toISOString().split("T")[0]; // Extracts "YYYY-MM-DD"
@@ -63,7 +63,7 @@ const SGQSPDonationsReport = () => {
         .from("transactions")
         .select(
           `
-          sqsp_transaction_id,
+          id,
           amount,
           date,
           created_at
@@ -78,7 +78,7 @@ const SGQSPDonationsReport = () => {
       const combinedData = membersToTransactions.map((mtt) => {
         const member = members.find((m) => m.id === mtt.member_id);
         const transaction = transactions.find(
-          (t) => t.sqsp_transaction_id === mtt.transaction_id,
+          (t) => t.id === mtt.transaction_id,
         );
 
         // Split street_address into address1 and address2 (address2 for Apt/unit)
@@ -174,7 +174,7 @@ const SGQSPDonationsReport = () => {
   );
 };
 
-const DonationsTable = ({ data }) => {
+const DonationsTable = ({ data }: { data: any[] }) => {
   return (
     <div style={tableContainerStyle}>
       <table style={tableStyle}>
@@ -221,7 +221,7 @@ const DonationsTable = ({ data }) => {
   );
 };
 
-const formatCurrency = (value) => {
+const formatCurrency = (value: any) => {
   if (typeof value !== "number" || isNaN(value)) {
     return "$0.00";
   }
@@ -251,18 +251,18 @@ const tableStyle = {
   width: "100%",
   borderCollapse: "collapse",
   border: "1px solid #ddd",
-};
+} satisfies React.CSSProperties;
 const thStyle = {
   border: "1px solid #ddd",
   padding: "10px",
   backgroundColor: "#f2f2f2",
   fontWeight: "bold",
   textAlign: "center",
-};
+} satisfies React.CSSProperties;
 const tdStyle = {
   border: "1px solid #ddd",
   padding: "10px",
   textAlign: "center",
-};
+} satisfies React.CSSProperties;
 
 export default SGQSPDonationsReport;
