@@ -70,7 +70,7 @@ export default function ConflictsPage() {
           return;
         }
         setRoles(userRoles);
-  
+
         const allPermissions: Record<string, Permission[]> = {};
         for (const role of userRoles) {
           const rolePermissions = await getPermissions(role);
@@ -83,7 +83,7 @@ export default function ConflictsPage() {
         setIsLoading(false);
       }
     };
-  
+
     const fetchEntries = async () => {
       try {
         setIsLoading(true);
@@ -96,13 +96,10 @@ export default function ConflictsPage() {
         setIsLoading(false);
       }
     };
-  
+
     setup().catch(console.error);
     fetchEntries();
   }, []);
-  
-
-  
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
@@ -110,9 +107,9 @@ export default function ConflictsPage() {
         {roles.length === 0 ? (
           <div>Don't have the necessary permission</div>
         ) : isLoading ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex h-full items-center justify-center">
             <div className="text-lg font-bold">
-              <MoonLoader/>
+              <MoonLoader />
             </div>
           </div>
         ) : (
