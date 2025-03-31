@@ -6,6 +6,7 @@ import { queryTableWithPrimaryKey } from "@/app/queryFunctions";
 import TableComponent from "@/components/ui/TableComponent";
 import SearchInput from "@/components/ui/SearchInput";
 import ResolveConflictPanel from "@/components/ui/ResolveConflictPanel";
+import { MoonLoader } from "react-spinners";
 
 export default function ConflictsPage() {
   const [roles, setRoles] = useState<string[]>([]);
@@ -19,7 +20,7 @@ export default function ConflictsPage() {
     null,
   );
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(true);
   const tableName = "member_conflicts";
 
   const filteredEntries = useMemo(() => {
@@ -61,30 +62,59 @@ export default function ConflictsPage() {
 
   useEffect(() => {
     const setup = async () => {
-      const userRoles = await getRoles();
-      if (!userRoles) {
-        console.error("Failed to fetch roles");
-        return;
+      try {
+        setIsLoading(true);
+        const userRoles = await getRoles();
+        if (!userRoles) {
+          console.error("Failed to fetch roles");
+          return;
+        }
+        setRoles(userRoles);
+  
+        const allPermissions: Record<string, Permission[]> = {};
+        for (const role of userRoles) {
+          const rolePermissions = await getPermissions(role);
+          allPermissions[role] = rolePermissions;
+        }
+        setPermissions(allPermissions);
+      } catch (error) {
+        console.error("Error during setup", error);
+      } finally {
+        setIsLoading(false);
       }
-      setRoles(userRoles);
-
-      const allPermissions: Record<string, Permission[]> = {};
-      for (const role of userRoles) {
-        const rolePermissions = await getPermissions(role);
-        allPermissions[role] = rolePermissions;
-      }
-      setPermissions(allPermissions);
     };
-
+  
+    const fetchEntries = async () => {
+      try {
+        setIsLoading(true);
+        const { data, primaryKeys } = await queryTableWithPrimaryKey(tableName);
+        setEntries(data);
+        setPrimaryKeys(primaryKeys ?? []);
+      } catch (error) {
+        console.error(`Failed to fetch ${tableName}`, error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
     setup().catch(console.error);
     fetchEntries();
   }, []);
+  
+
+  
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
       <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
         {roles.length === 0 ? (
           <div>Don't have the necessary permission</div>
+        ) : isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-lg font-bold">
+              <MoonLoader/>
+            </div>
+          </div>
         ) : (
           <div className="flex h-full w-full flex-col items-center gap-3 px-4 pt-4">
             <SearchInput query={query} setQuery={setQuery} />

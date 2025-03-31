@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 
 const buttonStyles: Record<"add" | "delete" | "edit", { fillColor: string }> = {

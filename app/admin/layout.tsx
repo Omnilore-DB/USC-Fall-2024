@@ -1,9 +1,9 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import Logo from "@/components/assets/logo.png";
 import { useLoginRedirect } from "@/hooks/use-login-redirect";
-import React from "react";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect } from "react";
+import Logo from "@/components/assets/logo.png";
 
 export default function AdminLayout({
   children,
@@ -11,6 +11,14 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   useLoginRedirect();
+  const router = useRouter();
+
+  useEffect(() => {
+    router.prefetch("/admin/tables");
+    router.prefetch("/admin/reports");
+    router.prefetch("/admin/conflicts");
+  }, [router]);
+
   return (
     <div className="flex h-screen w-full flex-col bg-gray-100">
       <div className="flex w-full flex-grow flex-row items-center justify-center overflow-y-auto">
