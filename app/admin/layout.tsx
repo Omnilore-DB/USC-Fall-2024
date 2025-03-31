@@ -1,17 +1,22 @@
 "use client";
 
+import { useLoginRedirect } from "@/hooks/use-login-redirect";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 import Logo from "@/components/assets/logo.png";
 
-export default function AdminLayout({ children,} : { children: React.ReactNode; }) 
-{
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  useLoginRedirect();
   const router = useRouter();
 
   useEffect(() => {
-    router.prefetch('/admin/tables');
-    router.prefetch('/admin/reports');
-    router.prefetch('/admin/conflicts');
+    router.prefetch("/admin/tables");
+    router.prefetch("/admin/reports");
+    router.prefetch("/admin/conflicts");
   }, [router]);
 
   return (
@@ -35,7 +40,7 @@ export default function AdminLayout({ children,} : { children: React.ReactNode; 
           </div>
 
           {/* Page content */}
-          <div className="flex h-full w-5/6 flex-col items-center">
+          <div className="flex h-full w-5/6 flex-col overflow-scroll rounded-xl bg-white">
             {children}
           </div>
         </div>
@@ -68,8 +73,9 @@ const TableButton = () => {
   return (
     <button
       onClick={() => router.push("/admin/tables")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
-        } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+        isActive ? "bg-[#F6F6F6]" : "bg-white"
+      } hover:bg-[#F6F6F6]`}
     >
       <TableIcon />
       <span
@@ -105,8 +111,9 @@ const ReportsButton = () => {
   return (
     <button
       onClick={() => router.push("/admin/reports")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
-        } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+        isActive ? "bg-[#F6F6F6]" : "bg-white"
+      } hover:bg-[#F6F6F6]`}
     >
       <ReportsIcon />
       <span
@@ -162,8 +169,9 @@ const ConflictsButton = () => {
   return (
     <button
       onClick={() => router.push("/admin/conflicts")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
-        } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+        isActive ? "bg-[#F6F6F6]" : "bg-white"
+      } hover:bg-[#F6F6F6]`}
     >
       <ConflictsIcon />
       <span

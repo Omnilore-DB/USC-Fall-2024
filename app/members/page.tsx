@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import Logo from "@/components/assets/logo.png";
 import { getRoles } from "@/app/supabase";
 import UserIcon from "@/components/assets/user-icon.png";
@@ -9,6 +8,7 @@ import NavBar from "@/components/ui/NavBar";
 import TableComponent from "@/components/ui/TableComponent";
 import MemberPanel from "@/components/ui/MemberPanel";
 import { FormattedKeysMember } from "@/app/types";
+import { useLoginRedirect } from "@/hooks/use-login-redirect";
 
 const memberSchema = {
   id: { type: "basic", name: "int", nullable: false },
@@ -25,7 +25,7 @@ const memberSchema = {
 };
 
 export default function Search() {
-  const router = useRouter();
+  useLoginRedirect();
   const [query, setQuery] = useState("");
   const [entries, setEntries] = useState<Record<string, any>[]>([]);
   const [roles, setRoles] = useState<string[]>([]);

@@ -148,18 +148,29 @@ export const update = {
 
     for (const t of ts) {
       for (const [i, d] of t.parsed_form_data.entries()) {
-        if (sku_map.get(d.sku)?.type !== "MEMBERSHIP") {
-          continue;
-        }
-
         const { data: mem, error } = convert.member(d);
         if (error) {
           continue;
         }
 
+        if (!sku_map.get(d.sku)) {
+          const created_product = await insert.product(
+            convert.product({
+              sku: d.sku,
+              descriptor: "Unknown Product",
+              variantId:
+                "This SKU was not found in the current squarespace products nor our Supabase database, however it exists in the squarespace transactions API",
+              isUnlimited: false,
+              quantity: 0,
+            }),
+          );
+          sku_map.set(d.sku, created_product);
+        }
+
         const matches = (await get.all_members_matching(mem))
           .sort((a, b) => a.id - b.id)
           .filter((match) => perform.is_member_subset(match, mem));
+
         if (matches.length > 0) {
           await upsert.member_transaction({
             member_id: matches[0].id,
@@ -168,6 +179,10 @@ export const update = {
             amount: d.amount,
             sku: d.sku,
           });
+        }
+
+        if (sku_map.get(d.sku)?.type !== "MEMBERSHIP") {
+          continue; // because we only add new members if they purchased a membership product
         } else {
           const created_mem = await insert.member(mem);
           await upsert.member_transaction({
@@ -232,6 +247,17 @@ export const insert = {
     if (error)
       throw new Error(
         `Failed to insert new member. ${error.hint}. ${error.message}`,
+      );
+
+    return data[0];
+  },
+
+  product: async (p: SupabaseProductInsert): Promise<SupabaseProduct> => {
+    const { error, data } = await supabase.from("products").insert(p).select();
+
+    if (error)
+      throw new Error(
+        `Failed to insert new product. ${error.hint}. ${error.message}`,
       );
 
     return data[0];
