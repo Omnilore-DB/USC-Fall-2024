@@ -1,6 +1,7 @@
+import type { Database } from "./api/cron/src/supabase/types";
 import { createClient } from "@supabase/supabase-js";
 
-export const supabase = createClient(
+export const supabase = createClient<Database>(
   "https://chhlncecdckfxxdcdzvz.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNoaGxuY2VjZGNrZnh4ZGNkenZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY0NDg0MDIsImV4cCI6MjA0MjAyNDQwMn0.T2xvdaxJjyrtOX9_d2i3TqT4NnIMAvPWekwcyfQo7gI",
 );
