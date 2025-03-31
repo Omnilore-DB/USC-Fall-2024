@@ -78,7 +78,7 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
                     netStripePayout: "Net Stripe Payout",
                     totalPayout: "Total Payout",
                     crossCheck: "Cross Check Net Sales - Fees",
-                  }[field as keyof ReconciliationData]
+                  }[field]
                 }
               </td>
               {data.map((row, i) => (

@@ -32,11 +32,11 @@ export default function MiscNotesSection() {
 
         // Format the data to match the UI
         const formattedData = uniquePaymentProcessors.map((item) => ({
-          payment_platform: item.payment_platform,
-          fee: item.fee,
-          std_processing_charges: getProcessingCharges(item.payment_platform),
-          ach_charges: getAchCharges(item.payment_platform),
-          payout_freq: getPayoutFrequency(item.payment_platform),
+          payment_platform: item!.payment_platform,
+          fee: item!.fee,
+          std_processing_charges: getProcessingCharges(item!.payment_platform),
+          ach_charges: getAchCharges(item!.payment_platform),
+          payout_freq: getPayoutFrequency(item!.payment_platform),
         }));
 
         setPaymentProcessors(formattedData);

@@ -35,19 +35,25 @@ const PayoutsReport: React.FC = () => {
     setTableData(report);
   };
 
-  const generateFinancialReport = (transactions: any[]) => {
+  const generateFinancialReport = (
+    transactions: {
+      date: string;
+      amount: number;
+      payment_platform: "STRIPE" | "PAYPAL" | "MAIL";
+    }[],
+  ) => {
     const platforms = ["PAYPAL", "STRIPE"];
     const monthlySums = {
-      PAYPAL: Array(12).fill(0),
-      STRIPE: Array(12).fill(0),
+      PAYPAL: Array(12).fill(0) as number[],
+      STRIPE: Array(12).fill(0) as number[],
     };
     const payoutDates = {
-      PAYPAL: Array(12).fill(null),
-      STRIPE: Array(12).fill(null),
+      PAYPAL: Array(12).fill(null) as (Date | null)[],
+      STRIPE: Array(12).fill(null) as (Date | null)[],
     };
     const bankConfirmation = {
-      PAYPAL: Array(12).fill(false),
-      STRIPE: Array(12).fill(false),
+      PAYPAL: Array(12).fill(false) as boolean[],
+      STRIPE: Array(12).fill(false) as boolean[],
     };
 
     transactions.forEach((tx) => {
@@ -58,9 +64,11 @@ const PayoutsReport: React.FC = () => {
       if (isNaN(dt.getTime())) return;
 
       const month = dt.getMonth();
-      monthlySums[platform][month] += Number(tx.amount);
-      payoutDates[platform][month] = dt;
-      bankConfirmation[platform][month] = true;
+      monthlySums[platform as keyof typeof monthlySums][month] += Number(
+        tx.amount,
+      );
+      payoutDates[platform as keyof typeof payoutDates][month] = dt;
+      bankConfirmation[platform as keyof typeof bankConfirmation][month] = true;
     });
 
     const monthLabels = [
@@ -97,7 +105,7 @@ const PayoutsReport: React.FC = () => {
     for (let i = 0; i < 12; i++) {
       paypalDatesRow.push(
         payoutDates.PAYPAL[i]
-          ? new Date(payoutDates.PAYPAL[i]).toLocaleDateString("en-US", {
+          ? new Date(payoutDates.PAYPAL[i]!).toLocaleDateString("en-US", {
               month: "2-digit",
               day: "2-digit",
               year: "numeric",
@@ -112,7 +120,7 @@ const PayoutsReport: React.FC = () => {
 
       stripeDatesRow.push(
         payoutDates.STRIPE[i]
-          ? new Date(payoutDates.STRIPE[i]).toLocaleDateString("en-US", {
+          ? new Date(payoutDates.STRIPE[i]!).toLocaleDateString("en-US", {
               month: "2-digit",
               day: "2-digit",
               year: "numeric",

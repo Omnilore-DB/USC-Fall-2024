@@ -31,7 +31,7 @@ const TreasurerReqs = () => {
       return [label].concat(values, "$0.00");
     };
 
-    const yearRow = [""].concat(months.map(() => ["", "", ""])).concat("");
+    const yearRow = [""].concat(...months.map(() => ["", "", ""])).concat("");
     const monthHeaderRow = [""]
       .concat(months.flatMap(() => ["Gross", "Fees", "Net"]))
       .concat("YTD Total");

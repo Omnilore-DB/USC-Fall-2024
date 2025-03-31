@@ -14,11 +14,11 @@ import NotesSection from "./components/NotesSection";
 const ReceiptsReport = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [squarespaceData, setSquarespaceData] = useState([]);
-  const [paypalData, setPaypalData] = useState([]);
-  const [stripeData, setStripeData] = useState([]);
-  const [reconciliationData, setReconciliationData] = useState([]);
-  const [transactions, setTransactions] = useState([]);
+  const [squarespaceData, setSquarespaceData] = useState<any[]>([]);
+  const [paypalData, setPaypalData] = useState<any[]>([]);
+  const [stripeData, setStripeData] = useState<any[]>([]);
+  const [reconciliationData, setReconciliationData] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const displayYear = fromDate
     ? new Date(fromDate).getFullYear().toString()
