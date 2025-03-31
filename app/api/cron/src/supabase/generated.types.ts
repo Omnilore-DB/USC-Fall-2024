@@ -1837,6 +1837,7 @@ export type Database = {
           date: string;
           external_transaction_id: string | null;
           fee: number;
+          fulfillment_status: Database["public"]["Enums"]["FulfillmentStatus"];
           id: number;
           issues: Json[];
           parsed_form_data: Json[];
@@ -1854,6 +1855,7 @@ export type Database = {
           date: string;
           external_transaction_id?: string | null;
           fee: number;
+          fulfillment_status?: Database["public"]["Enums"]["FulfillmentStatus"];
           id?: number;
           issues: Json[];
           parsed_form_data: Json[];
@@ -1871,6 +1873,7 @@ export type Database = {
           date?: string;
           external_transaction_id?: string | null;
           fee?: number;
+          fulfillment_status?: Database["public"]["Enums"]["FulfillmentStatus"];
           id?: number;
           issues?: Json[];
           parsed_form_data?: Json[];
@@ -1997,6 +2000,24 @@ export type Database = {
       enqueue_ping_single_table: {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
+      };
+      fetch_sgqsp_donations: {
+        Args: {
+          from_date: string;
+          to_date: string;
+        };
+        Returns: {
+          created_at: string;
+          amount: number;
+          payment_platform: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          city: string;
+          zip_code: string;
+          state: string;
+          phone: string;
+        }[];
       };
       find_similar_members: {
         Args: {
@@ -2313,6 +2334,7 @@ export type Database = {
       };
     };
     Enums: {
+      FulfillmentStatus: "PENDING" | "FULFILLED" | "CANCELED" | "UNKNOWN";
       PaymentPlatform: "STRIPE" | "PAYPAL" | "MAIL";
       ProductType: "MEMBERSHIP" | "FORUM" | "DONATION" | "UNKNOWN";
     };

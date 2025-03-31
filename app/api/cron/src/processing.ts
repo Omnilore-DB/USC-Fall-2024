@@ -91,6 +91,7 @@ export const convert = {
           (t.payments.at(0)?.provider as SupabasePaymentPlatform) ?? "MAIL",
         external_transaction_id: t.payments.at(0)?.id,
         transaction_email: t.customerEmail,
+        fulfillment_status: "UNKNOWN",
         skus: [],
         issues: [],
         raw_form_data: [],
@@ -108,6 +109,8 @@ export const convert = {
 
         return order;
       }
+
+      order.fulfillment_status = data.fulfillmentStatus;
 
       data.lineItems.forEach((p, idx) => {
         const form_data: [string, string][] = (p.customizations ?? []).map(
@@ -171,6 +174,7 @@ export const convert = {
           (t.payments.at(0)?.provider as SupabasePaymentPlatform) ?? "MAIL",
         external_transaction_id: t.payments.at(0)?.id,
         transaction_email: t.customerEmail,
+        fulfillment_status: "FULFILLED",
         skus: ["SQDONATION"],
         issues: [],
         raw_form_data: [],
