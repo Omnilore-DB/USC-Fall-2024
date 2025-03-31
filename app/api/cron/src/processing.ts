@@ -43,7 +43,7 @@ export const convert = {
       type = "MEMBERSHIP";
 
       const _year = parseInt(memMatch[3], 10);
-      if (_year >= 25) year = `20${_year}`;
+      if (_year >= 25) year = `${_year}-${_year + 1}`;
     }
 
     return {
