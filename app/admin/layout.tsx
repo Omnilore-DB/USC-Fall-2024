@@ -2,7 +2,7 @@
 
 import { useLoginRedirect } from "@/hooks/use-login-redirect";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Logo from "@/components/assets/logo.png";
 
 export default function AdminLayout({
@@ -12,6 +12,8 @@ export default function AdminLayout({
 }) {
   useLoginRedirect();
   const router = useRouter();
+  const [activeReportTab, setActiveReportTab] = useState("");
+  const [showSubMenu, setShowSubMenu] = useState(false);
 
   useEffect(() => {
     router.prefetch("/admin/tables");
@@ -19,30 +21,63 @@ export default function AdminLayout({
     router.prefetch("/admin/conflicts");
   }, [router]);
 
+  const handleReportTabClick = (tab: string) => {
+    setActiveReportTab(tab);
+    setShowSubMenu(true);
+    router.push(`/admin/reports/${tab.toLowerCase()}`);
+  };
+
+  const handleOtherTabClick = (path: string) => {
+    setActiveReportTab("");
+    setShowSubMenu(false);
+    router.push(path);
+  };
+
+
   return (
     <div className="flex h-screen w-full flex-col bg-gray-100">
       <div className="flex w-full flex-grow flex-row items-center justify-center overflow-y-auto">
-        <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
-          {/* Sidebar */}
-          <div className="h-full w-1/6 gap-4 rounded-xl bg-white p-4">
-            <div className="flex flex-row items-center gap-3">
-              <img src={Logo.src} className="h-fit w-12" alt="Omnilore Logo" />
-              <div>
-                <div className="text-xl font-bold">Omnilore</div>
-                <div className="text-xs">Learning-in-Retirement, Inc</div>
-              </div>
+      <div className="h-full w-1/6 gap-4 rounded-xl bg-white p-4 relative">
+  <div className="flex flex-row items-center gap-3">
+    <img src={Logo.src} className="h-fit w-12" alt="Omnilore Logo" />
+    <div>
+      <div className="text-xl font-bold">Omnilore</div>
+      <div className="text-xs">Learning-in-Retirement, Inc</div>
+    </div>
+  </div>
+  <div className="mt-6 flex flex-col gap-4">
+            <div onClick={() => handleOtherTabClick("/admin/tables")}> <TableButton /> </div>
+            <div
+              onMouseEnter={() => setShowSubMenu(true)}
+              onMouseLeave={() => setShowSubMenu(activeReportTab !== "")}
+              className="relative"
+            >
+              <ReportsButton  />
+              {(showSubMenu || activeReportTab !== "") && (
+                <div className="flex flex-col gap-1 pl-6">
+                  {['Membership-ui', 'Forum-ui', 'Financial'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => handleReportTabClick(tab)}
+                      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${activeReportTab === tab ? 'bg-[#F6F6F6] text-[#000000]' : 'bg-white text-[#85849E]'} hover:bg-[#F6F6F6]`}
+                    >
+                      <span
+                        className={`group-hover:text-[#000000] ${activeReportTab === tab ? 'text-[#000000]' : 'text-[#85849E]'}`}
+                      >
+                        {tab}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="mt-6 flex flex-col gap-4">
-              <TableButton />
-              <ReportsButton />
-              <ConflictsButton />
-            </div>
-          </div>
+            <div onClick={() => handleOtherTabClick("/admin/conflicts")}> <ConflictsButton /> </div>
+  </div>
+</div>
 
-          {/* Page content */}
-          <div className="flex h-full w-5/6 flex-col overflow-auto rounded-xl bg-white">
-            {children}
-          </div>
+        {/* Page content */}
+        <div className="flex h-full w-5/6 flex-col overflow-auto rounded-xl bg-white">
+          {children}
         </div>
       </div>
     </div>
@@ -72,10 +107,8 @@ const TableButton = () => {
 
   return (
     <button
-      onClick={() => router.push("/admin/tables")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
-        isActive ? "bg-[#F6F6F6]" : "bg-white"
-      } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
+        } hover:bg-[#F6F6F6]`}
     >
       <TableIcon />
       <span
@@ -110,10 +143,8 @@ const ReportsButton = () => {
 
   return (
     <button
-      onClick={() => router.push("/admin/reports")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
-        isActive ? "bg-[#F6F6F6]" : "bg-white"
-      } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
+        } hover:bg-[#F6F6F6]`}
     >
       <ReportsIcon />
       <span
@@ -169,9 +200,8 @@ const ConflictsButton = () => {
   return (
     <button
       onClick={() => router.push("/admin/conflicts")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
-        isActive ? "bg-[#F6F6F6]" : "bg-white"
-      } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
+        } hover:bg-[#F6F6F6]`}
     >
       <ConflictsIcon />
       <span

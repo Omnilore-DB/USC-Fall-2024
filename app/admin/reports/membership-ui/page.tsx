@@ -5,23 +5,18 @@ import { getRoles } from "@/app/supabase";
 import TableComponent from "@/components/ui/TableComponent";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
-export default function ForumReports() {
+export default function MembershipReports() {
     const [roles, setRoles] = useState<string[]>([]);
     const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null);
     const [customRange, setCustomRange] = useState(false);
 
-    const sampleCalendarYears = [
-        { id: 1, year: "22-23" },
-        { id: 2, year: "23-24" },
-        { id: 3, year: "24-25" },
-        { id: 4, year: "25-26" },
+    const sampleAcademicYears = [
+        { id: 1, year: "2022" },
+        { id: 2, year: "2023" },
+        { id: 3, year: "2024" },
+        { id: 4, year: "2025" },
     ];
 
-    const sampleTrimesterOptions = [
-        { id: 1, name: "Trimester 1" },
-        { id: 2, name: "Trimester 2" },
-        { id: 3, name: "Trimester 3" },
-    ];
 
     const sampleData = [
         { id: 1, name: "John Doe", age: 30 },
@@ -32,8 +27,7 @@ export default function ForumReports() {
         { id: 6, name: "Diana Prince", age: 32 },
     ];
 
-    const [selectedSampleCalendarYear, setSelectedSampleCalendarYear] = useState<string[]>([sampleCalendarYears[sampleCalendarYears.length - 1].year]);
-    const [selectedSampleTrimesterOptions, setSelectedSampleTrimesterOptions] = useState<string[]>(sampleTrimesterOptions.map(option => option.name));
+    const [selectedSampleAcademicYear, setselectedSampleAcademicYear] = useState<string[]>([sampleAcademicYears[sampleAcademicYears.length - 1].year]);
 
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
@@ -59,6 +53,7 @@ export default function ForumReports() {
                     <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
                         <div className="flex h-full w-full flex-col items-center">
                             <div className="flex h-full w-full flex-col gap-3">
+                                {/* Select and add, delete, and edit buttons */}
                                 <div className="flex flex-row justify-between w-full items-end">
                                     <div className="flex flex-row justify-between w-3/5 gap-2">
                                         {customRange ? (
@@ -84,24 +79,13 @@ export default function ForumReports() {
                                             </>
                                         ) : (
                                             <>
-                                                <div className="w-1/3 flex flex-col">
+                                                <div className="w-2/3 flex flex-col">
                                                     <label className="text-sm font-semibold">Calendar Year</label>
-                                                    {/* MultiSelectDropdown for Calendar Year */}
                                                     <MultiSelectDropdown
-                                                        options={sampleCalendarYears.map((year) => year.year)}
-                                                        selectedOptions={selectedSampleCalendarYear}
-                                                        setSelectedOptions={setSelectedSampleCalendarYear}
+                                                        options={sampleAcademicYears.map((year) => year.year)}
+                                                        selectedOptions={selectedSampleAcademicYear}
+                                                        setSelectedOptions={setselectedSampleAcademicYear}
                                                         placeholder="Select Calendar Year"
-                                                    />
-                                                </div>
-                                                <div className="w-1/3 flex flex-col">
-                                                    <label className="text-sm font-semibold">Trimester</label>
-                                                    {/* MultiSelectDropdown for Trimester */}
-                                                    <MultiSelectDropdown
-                                                        options={sampleTrimesterOptions.map((trimester) => trimester.name)}
-                                                        selectedOptions={selectedSampleTrimesterOptions}
-                                                        setSelectedOptions={setSelectedSampleTrimesterOptions}
-                                                        placeholder="Select Trimester"
                                                     />
                                                 </div>
                                             </>
