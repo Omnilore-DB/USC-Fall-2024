@@ -10,7 +10,7 @@ export default function ForumReports() {
     const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null);
     const [customRange, setCustomRange] = useState(false);
 
-    const sampleCalendarYears = [
+    const sampleAcademicYears = [
         { id: 1, year: "22-23" },
         { id: 2, year: "23-24" },
         { id: 3, year: "24-25" },
@@ -32,7 +32,7 @@ export default function ForumReports() {
         { id: 6, name: "Diana Prince", age: 32 },
     ];
 
-    const [selectedSampleCalendarYear, setSelectedSampleCalendarYear] = useState<string[]>([sampleCalendarYears[sampleCalendarYears.length - 1].year]);
+    const [selectedSampleAcademicYear, setSelectedSampleAcademicYear] = useState<string[]>([sampleAcademicYears[sampleAcademicYears.length - 1].year]);
     const [selectedSampleTrimesterOptions, setSelectedSampleTrimesterOptions] = useState<string[]>(sampleTrimesterOptions.map(option => option.name));
 
     const [startDate, setStartDate] = useState<string>("");
@@ -85,13 +85,13 @@ export default function ForumReports() {
                                         ) : (
                                             <>
                                                 <div className="w-1/3 flex flex-col">
-                                                    <label className="text-sm font-semibold">Calendar Year</label>
-                                                    {/* MultiSelectDropdown for Calendar Year */}
+                                                    <label className="text-sm font-semibold">Academic Year</label>
+                                                    {/* MultiSelectDropdown for Academic Year */}
                                                     <MultiSelectDropdown
-                                                        options={sampleCalendarYears.map((year) => year.year)}
-                                                        selectedOptions={selectedSampleCalendarYear}
-                                                        setSelectedOptions={setSelectedSampleCalendarYear}
-                                                        placeholder="Select Calendar Year"
+                                                        options={sampleAcademicYears.map((year) => year.year)}
+                                                        selectedOptions={selectedSampleAcademicYear}
+                                                        setSelectedOptions={setSelectedSampleAcademicYear}
+                                                        placeholder="Select Academic Year"
                                                     />
                                                 </div>
                                                 <div className="w-1/3 flex flex-col">
@@ -111,7 +111,7 @@ export default function ForumReports() {
                                                 className="w-full h-10 rounded-lg bg-gray-200 font-semibold"
                                                 onClick={() => setCustomRange((prev) => !prev)}
                                             >
-                                                {customRange ? "Calendar Year" : "Custom Range"}
+                                                {customRange ? "Academic Year" : "Custom Range"}
                                             </button>
                                         </div>
                                     </div>

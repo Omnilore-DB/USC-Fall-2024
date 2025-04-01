@@ -5,7 +5,7 @@ import { getRoles } from "@/app/supabase";
 import TableComponent from "@/components/ui/TableComponent";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
-export default function MembershipReports() {
+export default function DonationReports() {
     const [roles, setRoles] = useState<string[]>([]);
     const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null);
     const [customRange, setCustomRange] = useState(false);

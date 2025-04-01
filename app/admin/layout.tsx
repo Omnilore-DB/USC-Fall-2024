@@ -12,20 +12,33 @@ export default function AdminLayout({
 }) {
   useLoginRedirect();
   const router = useRouter();
-  const [activeReportTab, setActiveReportTab] = useState("");
   const [showSubMenu, setShowSubMenu] = useState(false);
+  const [activeReportTab, setActiveReportTab] = useState<string>("");
 
   useEffect(() => {
-    router.prefetch("/admin/tables");
-    router.prefetch("/admin/reports");
-    router.prefetch("/admin/conflicts");
-  }, [router]);
+    if (typeof window !== "undefined") {
+      const storedTab = localStorage.getItem("activeReportTab");
+      if (storedTab) setActiveReportTab(storedTab);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeReportTab) {
+      localStorage.setItem("activeReportTab", activeReportTab);
+    }
+  }, [activeReportTab]);
 
   const handleReportTabClick = (tab: string) => {
     setActiveReportTab(tab);
     setShowSubMenu(true);
     router.push(`/admin/reports/${tab.toLowerCase()}`);
   };
+
+  useEffect(() => {
+    router.prefetch("/admin/tables");
+    router.prefetch("/admin/reports");
+    router.prefetch("/admin/conflicts");
+  }, [router]);
 
   const handleOtherTabClick = (path: string) => {
     setActiveReportTab("");
@@ -34,28 +47,29 @@ export default function AdminLayout({
   };
 
 
+
   return (
     <div className="flex h-screen w-full flex-col bg-gray-100">
       <div className="flex w-full flex-grow flex-row items-center justify-center overflow-y-auto">
-      <div className="h-full w-1/6 gap-4 rounded-xl bg-white p-4 relative">
-  <div className="flex flex-row items-center gap-3">
-    <img src={Logo.src} className="h-fit w-12" alt="Omnilore Logo" />
-    <div>
-      <div className="text-xl font-bold">Omnilore</div>
-      <div className="text-xs">Learning-in-Retirement, Inc</div>
-    </div>
-  </div>
-  <div className="mt-6 flex flex-col gap-4">
+        <div className="h-full w-1/6 gap-4 rounded-xl bg-white p-4 relative">
+          <div className="flex flex-row items-center gap-3">
+            <img src={Logo.src} className="h-fit w-12" alt="Omnilore Logo" />
+            <div>
+              <div className="text-xl font-bold">Omnilore</div>
+              <div className="text-xs">Learning-in-Retirement, Inc</div>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-col gap-4">
             <div onClick={() => handleOtherTabClick("/admin/tables")}> <TableButton /> </div>
             <div
               onMouseEnter={() => setShowSubMenu(true)}
               onMouseLeave={() => setShowSubMenu(activeReportTab !== "")}
               className="relative"
             >
-              <ReportsButton  />
+              <ReportsButton />
               {(showSubMenu || activeReportTab !== "") && (
                 <div className="flex flex-col gap-1 pl-6">
-                  {['Membership-ui', 'Forum-ui', 'Financial'].map((tab) => (
+                  {['Membership-ui', 'Forum-ui', 'Donation-ui', 'Financial'].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => handleReportTabClick(tab)}
@@ -72,8 +86,8 @@ export default function AdminLayout({
               )}
             </div>
             <div onClick={() => handleOtherTabClick("/admin/conflicts")}> <ConflictsButton /> </div>
-  </div>
-</div>
+          </div>
+        </div>
 
         {/* Page content */}
         <div className="flex h-full w-5/6 flex-col overflow-auto rounded-xl bg-white">
