@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import Logo from "@/components/assets/logo.png";
 import { getRoles } from "@/app/supabase";
 import UserIcon from "@/components/assets/user-icon.png";
 import { queryTableWithFields } from "@/app/queryFunctions";
