@@ -6,13 +6,22 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import TableComponent from "@/components/ui/TableComponent";
 import SelectDropdown from "@/components/ui/SelectDropdown";
 import SearchInput from "@/components/ui/SearchInput";
-import { queryTableWithPrimaryKey } from "@/app/queryFunctions";
+import { queryTableWithPrimaryKey, TableName } from "@/app/queryFunctions";
 import ActionPanel from "@/components/ui/ActionPanel";
 import DeletePanel from "@/components/ui/DeletePanel";
 import { MoonLoader } from "react-spinners";
-import type { Database } from "@/app/api/cron/src/supabase/types";
+import { useLocalStorage } from "@uidotdev/usehooks";
+import { ClientOnly } from "@/components/is-client";
 
-export default function Table() {
+export default function () {
+  return (
+    <ClientOnly>
+      <Table />
+    </ClientOnly>
+  );
+}
+
+function Table() {
   const [query, setQuery] = useState("");
   const [roles, setRoles] = useState<string[]>([]);
   const [entries, setEntries] = useState<Record<string, any>[]>([]);
@@ -24,10 +33,11 @@ export default function Table() {
     {},
   );
   const [tables, setTables] = useState<string[]>([]);
-  const [selectedTable, setSelectedTable] = useState<
-    keyof Database["public"]["Tables"] | null
-  >(null);
-  const [primaryKeys, setPrimaryKeys] = useState<string[] | null>(null);
+  const [selectedTable, setSelectedTable] = useLocalStorage<TableName>(
+    "selected_table",
+    "members",
+  );
+  const [primaryKeys, setPrimaryKeys] = useState<string[]>([]);
   const [isEntryPanelOpen, setIsEntryPanelOpen] = useState(false);
   const [isDeletePanelOpen, setIsDeletePanelOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,10 +84,8 @@ export default function Table() {
         setTables(tablesArray);
 
         // Set the first table and trigger data fetching
-        if (tablesArray.length > 0) {
-          setSelectedTable(
-            tablesArray[0] as keyof Database["public"]["Tables"],
-          );
+        if (tablesArray.length > 0 && !tablesArray.includes(selectedTable)) {
+          setSelectedTable(tablesArray[0] as TableName);
         }
       } catch (error) {
         console.error("Error during setup", error);
@@ -89,19 +97,19 @@ export default function Table() {
     setup().catch(console.error);
   }, []);
 
-  useEffect(() => {
-    const fetchEntries = async () => {
-      if (!selectedTable) return;
-      try {
-        const { data, primaryKeys } =
-          await queryTableWithPrimaryKey(selectedTable);
-        setEntries(data);
-        setPrimaryKeys(primaryKeys ?? "");
-      } catch (error) {
-        console.error(`Failed to fetch data for table ${selectedTable}`, error);
-      }
-    };
+  const fetchEntries = async () => {
+    if (!selectedTable) return;
+    try {
+      const { data, primaryKeys } =
+        await queryTableWithPrimaryKey(selectedTable);
+      setEntries(data);
+      setPrimaryKeys(primaryKeys ?? "");
+    } catch (error) {
+      console.error(`Failed to fetch data for table ${selectedTable}`, error);
+    }
+  };
 
+  useEffect(() => {
     fetchEntries();
   }, [selectedTable]);
 
@@ -161,9 +169,7 @@ export default function Table() {
                       options={tables}
                       selectedOption={selectedTable}
                       setSelectedOption={(table) => {
-                        setSelectedTable(
-                          table as keyof Database["public"]["Tables"],
-                        );
+                        setSelectedTable(table as TableName);
                       }}
                     />
                   </div>
@@ -216,6 +222,8 @@ export default function Table() {
                   selectedTable={selectedTable}
                   mode={editMode ? "edit" : "add"}
                   selectedRow={selectedRow || undefined}
+                  primaryKeys={primaryKeys}
+                  reloadData={fetchEntries}
                 />
               )}
               {/* Delete Panel */}
@@ -225,10 +233,8 @@ export default function Table() {
                   onClose={() => setIsDeletePanelOpen(false)}
                   selectedTable={selectedTable}
                   selectedRow={selectedRow}
-                  onDelete={() => {
-                    setIsDeletePanelOpen(false);
-                    alert("DELETE REGISTERED");
-                  }}
+                  primaryKeys={primaryKeys}
+                  reloadData={fetchEntries}
                 />
               )}
             </div>

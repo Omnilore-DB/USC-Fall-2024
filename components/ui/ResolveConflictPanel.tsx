@@ -148,29 +148,31 @@ export default function ResolveConflictPanel({
           >
             {!mergeView ? (
               <>
-                {Object.keys(member1).map((key) => {
-                  if (key === "id") return null;
-                  const val1 = member1[key];
-                  const val2 = member2[key];
-                  const isEqual = String(val1) === String(val2);
-                  const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
+                {Object.keys(member1)
+                  .filter((key) => key !== "updated_at" && key !== "created_at")
+                  .map((key) => {
+                    if (key === "id") return null;
+                    const val1 = member1[key];
+                    const val2 = member2[key];
+                    const isEqual = String(val1) === String(val2);
+                    const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
 
-                  return (
-                    <div key={key} className={`rounded p-3 ${bgColor}`}>
-                      <label className="mb-2 block font-semibold capitalize">
-                        {key}
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="rounded border bg-white p-1">
-                          {val1 ?? "—"}
-                        </div>
-                        <div className="rounded border bg-white p-1">
-                          {val2 ?? "—"}
+                    return (
+                      <div key={key} className={`rounded p-3 ${bgColor}`}>
+                        <label className="mb-2 block font-semibold capitalize">
+                          {key}
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="rounded border bg-white p-1">
+                            {val1 ?? "—"}
+                          </div>
+                          <div className="rounded border bg-white p-1">
+                            {val2 ?? "—"}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
                 <div className="flex w-full justify-start gap-2">
                   <button
                     className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
@@ -198,78 +200,82 @@ export default function ResolveConflictPanel({
               </>
             ) : (
               <>
-                {Object.keys(member1).map((key) => {
-                  if (key === "id") return null;
+                {Object.keys(member1)
+                  .filter((key) => key !== "updated_at" && key !== "created_at")
+                  .map((key) => {
+                    if (key === "id") return null;
 
-                  const val1 = member1[key];
-                  const val2 = member2[key];
-                  const resolved = resolvedValues[key] ?? "";
-                  const isResolved = resolvedFields[key];
-                  const isOpenField = openFields[key];
+                    const val1 = member1[key];
+                    const val2 = member2[key];
+                    const resolved = resolvedValues[key] ?? "";
+                    const isResolved = resolvedFields[key];
+                    const isOpenField = openFields[key];
 
-                  const bgColor = isResolved ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
+                    const bgColor = isResolved
+                      ? "bg-[#DAFBC9]"
+                      : "bg-[#FAD9D9]";
 
-                  return (
-                    <div key={key} className={`rounded p-3 ${bgColor}`}>
-                      <details open={isOpenField}>
-                        <summary
-                          className="mb-2 flex cursor-pointer items-center justify-between gap-2"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            toggleFieldOpen(key);
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold capitalize">
-                              {key}:
-                            </span>
-                            {!isOpenField && (
-                              <span className="max-w-[200px] truncate text-sm italic text-gray-600">
-                                {resolved || "—"}
-                              </span>
-                            )}
-                          </div>
-                          <span className="ml-auto text-gray-500">▾</span>
-                        </summary>
-
-                        <div className="grid grid-cols-3 gap-2">
-                          <button
-                            className={`rounded border p-1 ${resolved === String(val1) ? "bg-blue-100" : "bg-white"}`}
-                            onClick={() => handleSelection(key, String(val1))}
-                          >
-                            {val1 ?? "—"}
-                          </button>
-                          <button
-                            className={`rounded border p-1 ${resolved === String(val2) ? "bg-blue-100" : "bg-white"}`}
-                            onClick={() => handleSelection(key, String(val2))}
-                          >
-                            {val2 ?? "—"}
-                          </button>
-                          <input
-                            className="w-full rounded border p-1"
-                            placeholder="Custom value"
-                            value={
-                              resolvedFields[key] &&
-                              resolved !== String(val1) &&
-                              resolved !== String(val2)
-                                ? resolved
-                                : ""
-                            }
-                            onChange={(e) =>
-                              updateCustomValue(key, e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                confirmCustom(key);
-                              }
+                    return (
+                      <div key={key} className={`rounded p-3 ${bgColor}`}>
+                        <details open={isOpenField}>
+                          <summary
+                            className="mb-2 flex cursor-pointer items-center justify-between gap-2"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toggleFieldOpen(key);
                             }}
-                          />
-                        </div>
-                      </details>
-                    </div>
-                  );
-                })}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold capitalize">
+                                {key}:
+                              </span>
+                              {!isOpenField && (
+                                <span className="max-w-[200px] truncate text-sm italic text-gray-600">
+                                  {resolved || "—"}
+                                </span>
+                              )}
+                            </div>
+                            <span className="ml-auto text-gray-500">▾</span>
+                          </summary>
+
+                          <div className="grid grid-cols-3 gap-2">
+                            <button
+                              className={`rounded border p-1 ${resolved === String(val1) ? "bg-blue-100" : "bg-white"}`}
+                              onClick={() => handleSelection(key, String(val1))}
+                            >
+                              {val1 ?? "—"}
+                            </button>
+                            <button
+                              className={`rounded border p-1 ${resolved === String(val2) ? "bg-blue-100" : "bg-white"}`}
+                              onClick={() => handleSelection(key, String(val2))}
+                            >
+                              {val2 ?? "—"}
+                            </button>
+                            <input
+                              className="w-full rounded border p-1"
+                              placeholder="Custom value"
+                              value={
+                                resolvedFields[key] &&
+                                resolved !== String(val1) &&
+                                resolved !== String(val2)
+                                  ? resolved
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                updateCustomValue(key, e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  confirmCustom(key);
+                                }
+                              }}
+                            />
+                          </div>
+                        </details>
+                      </div>
+                    );
+                  })}
 
                 <div className="flex w-full justify-start gap-2">
                   <button

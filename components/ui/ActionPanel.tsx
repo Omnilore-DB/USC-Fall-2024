@@ -1,14 +1,18 @@
 import { useEffect, useState, useRef } from "react";
 import InputField from "@/components/ui/InputField";
-import { getTableSchema } from "@/app/supabase";
+import { getTableSchema, supabase } from "@/app/supabase";
+import { SupabaseProduct } from "@/app/api/cron/src/supabase/types";
+import { getProducts, TableName } from "@/app/queryFunctions";
+import { toast } from "sonner";
 
 interface ActionPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedTable: string;
+  selectedTable: TableName;
   mode: string;
+  primaryKeys: string[];
   selectedRow?: Record<string, any>;
-  primaryKeys?: string[];
+  reloadData: () => Promise<void>;
 }
 
 export default function ActionPanel({
@@ -17,6 +21,8 @@ export default function ActionPanel({
   selectedTable,
   mode,
   selectedRow,
+  primaryKeys,
+  reloadData,
 }: ActionPanelProps) {
   const [fields, setFields] = useState<
     {
@@ -30,8 +36,18 @@ export default function ActionPanel({
     }[]
   >([]);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [userFormData, setUserFormData] = useState<Record<string, any>>({});
+  const [products, setProducts] = useState<SupabaseProduct[]>([]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const strip_empty_fields = (obj: Record<string, any>) => {
+    return Object.fromEntries(
+      Object.entries(obj).filter(
+        ([_, value]) => value !== null && value !== undefined,
+      ),
+    );
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -61,6 +77,12 @@ export default function ActionPanel({
       document.body.style.overflow = "auto";
     }
   }, [isOpen, selectedTable, mode, selectedRow]);
+
+  useEffect(() => {
+    if (isOpen) {
+      getProducts().then((products) => setProducts(products));
+    }
+  }, [isOpen]);
 
   const fetchSchema = async () => {
     const schema = await getTableSchema(selectedTable);
@@ -124,30 +146,43 @@ export default function ActionPanel({
             ref={scrollContainerRef}
             className="custom-scrollbar flex h-full w-full flex-col gap-8 overflow-hidden overflow-y-auto p-8"
           >
-            {fields.map(
-              ({
-                name,
-                type,
-                nullable,
-                isAutoIncrement,
-                isArray,
-                isEnum,
-                enumValues,
-              }) => (
-                <InputField
-                  key={name}
-                  fieldName={name}
-                  fieldType={type}
-                  required={!nullable}
-                  value={formData[name]}
-                  isAutoIncrement={isAutoIncrement}
-                  isArray={isArray}
-                  isEnum={isEnum}
-                  enumValues={enumValues}
-                  mode={mode}
-                />
-              ),
-            )}
+            {fields
+              .filter(
+                (field) =>
+                  field.name !== "created_at" &&
+                  field.name !== "updated_at" &&
+                  !(
+                    field.isAutoIncrement && primaryKeys.includes(field.name)
+                  ) &&
+                  !["json", "jsonb"].includes(field.type),
+              )
+              .map(
+                ({
+                  name,
+                  type,
+                  nullable,
+                  isAutoIncrement,
+                  isArray,
+                  isEnum,
+                  enumValues,
+                }) => (
+                  <InputField
+                    key={name}
+                    fieldName={name}
+                    fieldType={type}
+                    required={!nullable}
+                    value={formData[name]}
+                    isAutoIncrement={isAutoIncrement}
+                    isArray={isArray}
+                    isEnum={isEnum}
+                    isSKU={["sku", "skus"].includes(name)}
+                    products={products}
+                    setFormValue={setUserFormData}
+                    enumValues={enumValues}
+                    mode={mode}
+                  />
+                ),
+              )}
             <div className="flex w-full justify-start gap-2">
               <button
                 className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
@@ -158,6 +193,44 @@ export default function ActionPanel({
 
               <button
                 className={`text-medium inline-block max-h-fit max-w-fit rounded-lg px-3 py-1 font-semibold ${mode === "add" ? "bg-[#C9FFAE]" : "bg-[#E5E7EB]"} items-center justify-center`}
+                onClick={async () => {
+                  console.log("form data", { ...formData, ...userFormData });
+
+                  if (mode === "add") {
+                    const { error } = await supabase
+                      .from(selectedTable)
+                      .insert(strip_empty_fields(userFormData));
+
+                    if (error) {
+                      toast.error(`Error inserting data. ${error.message}`);
+                    } else {
+                      toast.success("Inserted successfully.");
+                      reloadData();
+                      onClose();
+                    }
+                  }
+
+                  if (mode === "edit") {
+                    const { error } = await supabase
+                      .from(selectedTable)
+                      .update(
+                        strip_empty_fields({ ...formData, ...userFormData }),
+                      )
+                      .match(
+                        Object.fromEntries(
+                          primaryKeys.map((key) => [key, formData[key]]),
+                        ),
+                      );
+
+                    if (error) {
+                      toast.error(`Error updating data. ${error.message}`);
+                    } else {
+                      toast.success("Updated successfully.");
+                      reloadData();
+                      onClose();
+                    }
+                  }
+                }}
               >
                 Save
               </button>
