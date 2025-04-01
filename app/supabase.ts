@@ -1,5 +1,6 @@
 import type { Database } from "./api/cron/src/supabase/types";
 import { createClient } from "@supabase/supabase-js";
+import { TableName } from "./queryFunctions";
 
 export const supabase = createClient<Database>(
   "https://chhlncecdckfxxdcdzvz.supabase.co",
@@ -53,9 +54,7 @@ export const getPermissions = async (role: string): Promise<Permission[]> => {
   return data as Permission[];
 };
 
-export const getDataForTable = async (
-  table: keyof Database["public"]["Tables"],
-) => {
+export const getDataForTable = async (table: TableName) => {
   try {
     const { data, error } = await supabase.from(table).select("*");
 
@@ -173,7 +172,7 @@ export const getTableSchema = async (table: string) => {
 };
 
 export const upsertTableEntry = async (
-  table: keyof Database["public"]["Tables"],
+  table: TableName,
   data: Record<string, any>,
 ) => {
   try {
@@ -192,10 +191,7 @@ export const upsertTableEntry = async (
   }
 };
 
-export const getRowById = async (
-  table: keyof Database["public"]["Tables"],
-  id: number,
-) => {
+export const getRowById = async (table: TableName, id: number) => {
   try {
     const { data, error } = await supabase
       .from(table)

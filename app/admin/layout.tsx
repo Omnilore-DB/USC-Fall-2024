@@ -175,9 +175,9 @@ const ConflictsButton = () => {
     >
       <ConflictsIcon />
       <span
-        className={`group-hover:text-[#000000] ${isActive ? "text-[#000000]" : "text-[#85849E]"}`}
+        className={`text-left group-hover:text-[#000000] ${isActive ? "text-[#000000]" : "text-[#85849E]"}`}
       >
-        Conflicts
+        Member Conflicts
       </span>
     </button>
   );

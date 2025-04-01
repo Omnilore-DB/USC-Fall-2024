@@ -1,3 +1,4 @@
+import "server-only";
 import { convert } from "../processing";
 import type {
   Database,
@@ -294,8 +295,14 @@ export const perform = {
     for (const key of keys) {
       if (
         typeof existingMember[key] === "string" &&
-        typeof newMemberData[key] === "string"
+        typeof newMemberData[key] === "string" &&
+        key !== "updated_at" &&
+        key !== "created_at" &&
+        key !== "id"
       ) {
+        console.log("exist", existingMember[key]);
+        console.log("new", newMemberData[key]);
+
         if (
           existingMember[key].toLowerCase() !== newMemberData[key].toLowerCase()
         ) {
