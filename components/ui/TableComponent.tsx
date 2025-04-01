@@ -35,7 +35,7 @@ const TableComponent = ({
     setLoading(true);
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 500); // Simulate data loading time
+    }, 200); // Simulate data loading time
     return () => clearTimeout(timer);
   }, [entries]);
 
