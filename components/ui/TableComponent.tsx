@@ -11,6 +11,7 @@ interface TableComponentProps {
   primaryKeys: string[];
   adminTable?: boolean;
   showImages?: boolean;
+  selectable?: boolean;
 }
 
 const TableComponent = ({
@@ -21,6 +22,7 @@ const TableComponent = ({
   primaryKeys,
   adminTable = true,
   showImages = false,
+  selectable = true,
 }: TableComponentProps) => {
   const [localSelectedRow, setLocalSelectedRow] = useState<Record<
     string,
@@ -59,7 +61,7 @@ const TableComponent = ({
 
   const validRoles = ["admin", "registrar", "member", "treasurer"];
   const hasValidRole = roles.some((role) => validRoles.includes(role));
-  
+
   if (!hasValidRole) {
     return (
       <div className="text-center py-4 text-gray-500">
@@ -72,7 +74,7 @@ const TableComponent = ({
     return (
       <div className="flex justify-center items-center h-full w-full">
         <div className="text-gray-500">
-            <MoonLoader/>
+          <MoonLoader />
         </div>
       </div>
     );
@@ -153,7 +155,7 @@ const TableComponent = ({
                 );
 
                 const isSelected =
-                  localSelectedRow &&
+                  selectable && localSelectedRow &&
                   primaryKeys.every(
                     (key) => localSelectedRow[key] === item[key],
                   );
@@ -161,13 +163,12 @@ const TableComponent = ({
                 return (
                   <tr
                     key={index}
-                    className={`group cursor-pointer ${
-                      hasIssue
+                    className={`group cursor-pointer ${hasIssue
                         ? "bg-red-50"
                         : isSelected
                           ? "bg-gray-100"
                           : "bg-white group-hover:bg-gray-50"
-                    }`}
+                      }`}
                     onClick={() => handleRowClick(item)}
                   >
                     {(() => {
@@ -177,15 +178,15 @@ const TableComponent = ({
                         <>
                           {/* Select body */}
                           {adminTable && (
+                            
                             <td
                               className={`px-4 py-2 w-10 text-center sticky z-10
-                                                                ${
-                                                                  hasIssue
-                                                                    ? "bg-red-50"
-                                                                    : isSelected
-                                                                      ? "bg-gray-100"
-                                                                      : "bg-white group-hover:bg-gray-50"
-                                                                }`}
+                                                                ${hasIssue
+                                  ? "bg-red-50"
+                                  : isSelected
+                                    ? "bg-gray-100"
+                                    : "bg-white group-hover:bg-gray-50"
+                                }`}
                               style={{
                                 left: `${leftOffset}px`,
                                 boxShadow: "inset 0 0 0 0.5px #e5e7eb",
@@ -233,17 +234,16 @@ const TableComponent = ({
                         .filter((name) => !primaryKeys.includes(name))
                         .map((columnName) =>
                           showImages &&
-                          (columnName === "Photo" ||
-                            columnName === "photo_link") ? (
+                            (columnName === "Photo" ||
+                              columnName === "photo_link") ? (
                             <td
                               key={columnName}
-                              className={`px-4 py-2 ${
-                                hasIssue
+                              className={`px-4 py-2 ${hasIssue
                                   ? "bg-red-50"
                                   : isSelected
                                     ? "bg-gray-100"
                                     : "bg-white group-hover:bg-gray-50"
-                              }`}
+                                }`}
                               style={{
                                 boxShadow: "inset 0 0 0 0.5px #e5e7eb",
                                 outline: "none",
@@ -261,26 +261,25 @@ const TableComponent = ({
                             <td
                               key={columnName}
                               className={` px-4 py-2
-                                                            ${
-                                                              hasIssue
-                                                                ? "bg-red-50"
-                                                                : isSelected
-                                                                  ? "bg-gray-100"
-                                                                  : "bg-white group-hover:bg-gray-50"
-                                                            }`}
+                                                            ${hasIssue
+                                  ? "bg-red-50"
+                                  : isSelected
+                                    ? "bg-gray-100"
+                                    : "bg-white group-hover:bg-gray-50"
+                                }`}
                               style={{
                                 boxShadow: "inset 0 0 0 0.5px #e5e7eb",
                                 outline: "none",
                               }}
                             >
                               {columnName === "issues" &&
-                              Array.isArray(item[columnName]) &&
-                              item[columnName].length > 0
+                                Array.isArray(item[columnName]) &&
+                                item[columnName].length > 0
                                 ? item[columnName]
-                                    .map((issue) => issue.message)
-                                    .join(", ")
+                                  .map((issue) => issue.message)
+                                  .join(", ")
                                 : typeof item[columnName] === "object" &&
-                                    item[columnName] !== null
+                                  item[columnName] !== null
                                   ? JSON.stringify(item[columnName])
                                   : item[columnName]}
                             </td>

@@ -104,3 +104,14 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #bdbdc2 !important;
 }
+
+.invisible-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.invisible-scrollbar::-webkit-scrollbar {
+  display: none;
+}
