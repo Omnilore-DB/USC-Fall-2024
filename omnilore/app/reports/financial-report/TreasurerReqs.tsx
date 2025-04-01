@@ -494,11 +494,10 @@ await fetchDonors();
   </div>
 </div>
 
-
         </>
       )}
     </div>
   );
-};
+}; 
 
 export default TreasurerReqs;
