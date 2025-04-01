@@ -40,7 +40,7 @@ export default function AdminLayout({
           </div>
 
           {/* Page content */}
-          <div className="flex h-full w-5/6 flex-col overflow-scroll rounded-xl bg-white">
+          <div className="flex h-full w-5/6 flex-col overflow-auto rounded-xl bg-white">
             {children}
           </div>
         </div>

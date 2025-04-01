@@ -11,11 +11,6 @@ export default function NavBar() {
           <div className="text-sm">Learning-in-Retirement, Inc</div>
         </div>
       </div>
-      <img
-        src="/account-icon.svg"
-        alt="Account Icon"
-        className="h-8 w-8 object-contain"
-      />
     </nav>
   );
 }

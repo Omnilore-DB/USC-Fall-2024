@@ -1,14 +1,10 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getRoles, getPermissions, Permission } from "@/app/supabase";
-import { ActionButton } from "@/components/ui/ActionButton";
+import { getRoles } from "@/app/supabase";
 import TableComponent from "@/components/ui/TableComponent";
 import SelectDropdown from "@/components/ui/SelectDropdown";
-import SearchInput from "@/components/ui/SearchInput";
 import { queryTableWithPrimaryKey } from "@/app/queryFunctions";
-import ActionPanel from "@/components/ui/ActionPanel";
-import DeletePanel from "@/components/ui/DeletePanel";
 
 export default function Reports() {
   const [query, setQuery] = useState("");
@@ -16,10 +12,6 @@ export default function Reports() {
   const [entries, setEntries] = useState<Record<string, any>[]>([]);
   const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(
     null,
-  );
-  const [editMode, setEditMode] = useState(false);
-  const [permissions, setPermissions] = useState<Record<string, Permission[]>>(
-    {},
   );
 
   const typeTOTableName = {
