@@ -1,8 +1,10 @@
 import { supabase } from "@/app/supabase";
 import { Database } from "./api/cron/src/supabase/types";
 
+export type TableName = keyof Database["public"]["Tables"];
+
 export const queryTableWithPrimaryKey = async (
-  table: keyof Database["public"]["Tables"],
+  table: TableName,
 ): Promise<{ data: any[]; primaryKeys: string[] }> => {
   console.log(`Querying table: ${table}`);
 
@@ -39,7 +41,7 @@ export const queryTableWithPrimaryKey = async (
 };
 
 export const queryTableWithFields = async (
-  table: keyof Database["public"]["Tables"],
+  table: TableName,
   schema: Record<string, any>,
 ): Promise<{ data: Record<string, any>[]; primaryKey: string | null }> => {
   try {
@@ -93,4 +95,18 @@ export const queryTableWithFields = async (
     console.error(`Error in queryTableWithFields for table ${table}:`, error);
     return { data: [], primaryKey: null };
   }
+};
+
+export const getProducts = async () => {
+  const { data, error } = await supabase
+    .from("products")
+    .select()
+    .order("year", { ascending: false });
+
+  if (error) {
+    console.error(`Error fetching products:`, error);
+    throw error;
+  }
+
+  return data;
 };

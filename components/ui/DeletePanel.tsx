@@ -1,11 +1,14 @@
+import { TableName } from "@/app/queryFunctions";
+import { supabase } from "@/app/supabase";
 import { useEffect, useRef } from "react";
-
+import { toast } from "sonner";
 interface DeletePanelProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedTable: string;
+  selectedTable: TableName;
   selectedRow?: Record<string, any> | null;
-  onDelete: () => void;
+  primaryKeys: string[];
+  reloadData: () => Promise<void>;
 }
 
 export default function DeletePanel({
@@ -13,7 +16,8 @@ export default function DeletePanel({
   onClose,
   selectedTable,
   selectedRow,
-  onDelete,
+  primaryKeys,
+  reloadData,
 }: DeletePanelProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +80,29 @@ export default function DeletePanel({
               </button>
               <button
                 className="text-medium inline-block max-h-fit max-w-fit rounded-lg bg-[#FFCFCF] px-3 py-1 font-semibold"
-                onClick={onDelete}
+                onClick={async () => {
+                  if (!selectedRow) {
+                    toast.error("No row selected");
+                    return;
+                  }
+
+                  const { error } = await supabase
+                    .from(selectedTable)
+                    .delete()
+                    .match(
+                      Object.fromEntries(
+                        primaryKeys.map((key) => [key, selectedRow[key]]),
+                      ),
+                    );
+
+                  if (error) {
+                    toast.error(`Error deleting data. ${error.message}`);
+                  } else {
+                    toast.success("Deleted successfully.");
+                    reloadData();
+                    onClose();
+                  }
+                }}
               >
                 Delete
               </button>
