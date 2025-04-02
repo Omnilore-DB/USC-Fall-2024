@@ -1,14 +1,24 @@
 "use client";
 
+import { supabase } from "@/app/supabase";
 import { useState, useEffect } from "react";
 import { getRoles } from "@/app/supabase";
 import TableComponent from "@/components/ui/TableComponent";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
+
+
+
 export default function MembershipReports() {
+    const [members, setMembers] = useState<any[]>([]);
     const [roles, setRoles] = useState<string[]>([]);
     const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null);
     const [customRange, setCustomRange] = useState(false);
+    const [startDate, setStartDate] = useState<string>("");
+    const [endDate, setEndDate] = useState<string>("");
+    const [availableYears, setAvailableYears] = useState<string[]>([]);
+    const [selectedYears, setSelectedYears] = useState<string[]>([]); 
+
 
     const sampleCalendarYears = [
         { id: 1, year: "2022" },
@@ -17,20 +27,59 @@ export default function MembershipReports() {
         { id: 4, year: "2025" },
     ];
 
-
-    const sampleData = [
-        { id: 1, name: "John Doe", age: 30 },
-        { id: 2, name: "Jane Smith", age: 25 },
-        { id: 3, name: "Alice Johnson", age: 28 },
-        { id: 4, name: "Bob Brown", age: 35 },
-        { id: 5, name: "Charlie Davis", age: 40 },
-        { id: 6, name: "Diana Prince", age: 32 },
-    ];
+    const formatAcademicYear = (shortYear: string): string => {
+        const [start, end] = shortYear.split("-").map((y) => parseInt(y, 10));
+        const fullStart = start < 50 ? 2000 + start : 1900 + start;
+        const fullEnd = end < 50 ? 2000 + end : 1900 + end;
+        return `${fullStart}–${fullEnd}`;
+    };
 
     const [selectedSampleCalendarYear, setselectedSampleCalendarYear] = useState<string[]>([sampleCalendarYears[sampleCalendarYears.length - 1].year]);
 
-    const [startDate, setStartDate] = useState<string>("");
-    const [endDate, setEndDate] = useState<string>("");
+    // added function
+    const fetchMembershipMembers = async () => {
+        if (selectedYears.length === 0) {
+            alert("Please select at least one academic year");
+            return;
+          }
+        const { data: products, error: productError } = await supabase
+            .from("products")
+            .select("sku")
+            .eq("type", "MEMBERSHIP")
+            .in("year", selectedYears);
+
+        if (productError) {
+            console.error("Failed to fetch membership SKUs", productError);
+            return;
+        }
+        const validSkus = products
+            .map((p) => p.sku)
+            .filter((sku) => sku !== "SQ-TEST");
+        if (validSkus.length === 0) {
+            setMembers([]); // no valid memberships for this year
+            return;
+            }
+        // get members
+        const { data, error } = await supabase
+            .from("members")
+            .select(`
+            *,
+            members_to_transactions(sku)
+            `)
+            .in("members_to_transactions.sku", validSkus);
+
+        if (error) {
+            console.error("Failed to fetch members", error);
+            return;
+        }
+
+        const filtered = data.filter((member: any) =>
+            member.members_to_transactions.length > 0
+        );
+
+        setMembers(filtered);
+      };
+    
 
     useEffect(() => {
         const setup = async () => {
@@ -40,6 +89,22 @@ export default function MembershipReports() {
                 return;
             }
             setRoles(userRoles);
+            const { data, error } = await supabase
+                .from("products")
+                .select("year")
+                .eq("type", "MEMBERSHIP");
+
+                if (error) {
+                console.error("Failed to fetch years", error);
+                return;
+                }
+
+            const uniqueYears = Array.from(
+                new Set(data.map((p) => p.year).filter((y): y is string => y !== null))
+                ).sort();
+            setAvailableYears(uniqueYears);
+            setSelectedYears([uniqueYears[uniqueYears.length - 1]]); // default to latest
+            // await fetchMembershipMembers();
         };
         setup().catch(console.error);
     }, []);
@@ -82,10 +147,17 @@ export default function MembershipReports() {
                                                 <div className="w-2/3 flex flex-col">
                                                     <label className="text-sm font-semibold">Calendar Year</label>
                                                     <MultiSelectDropdown
-                                                        options={sampleCalendarYears.map((year) => year.year)}
-                                                        selectedOptions={selectedSampleCalendarYear}
-                                                        setSelectedOptions={setselectedSampleCalendarYear}
-                                                        placeholder="Select Calendar Year"
+                                                        options={availableYears.map((year) => formatAcademicYear(year))}
+                                                        selectedOptions={selectedYears.map((y) => formatAcademicYear(y))}
+                                                        setSelectedOptions={(formattedSelected) => {
+                                                            // reverse map the formatted label back to the raw shortYear like '24-25'
+                                                            const rawSelected = availableYears.filter((y) =>
+                                                              formattedSelected.includes(formatAcademicYear(y))
+                                                            );
+                                                            setSelectedYears(rawSelected);
+                                                          }}
+                                                        
+                                                        placeholder="Select Academic Year(s)"
                                                     />
                                                 </div>
                                             </>
@@ -101,7 +173,7 @@ export default function MembershipReports() {
                                     </div>
                                     <div className="flex flex-row justify-between w-1/4 gap-2">
                                         <div className="flex items-end w-1/2">
-                                            <button onClick={() => alert("Add generate report logic")} className="w-full bg-blue-500 h-10 rounded-lg font-semibold text-white">
+                                            <button onClick={fetchMembershipMembers} className="w-full bg-blue-500 h-10 rounded-lg font-semibold text-white">
                                                 Generate Report
                                             </button>
                                         </div>
@@ -117,7 +189,7 @@ export default function MembershipReports() {
                                 {/* Table Component */}
                                 <div className="w-full flex-grow overflow-y-auto">
                                     <TableComponent
-                                        entries={sampleData}
+                                        entries={members}
                                         roles={roles}
                                         selectedRow={selectedRow}
                                         handleRowSelection={(row) => setSelectedRow(row)}
