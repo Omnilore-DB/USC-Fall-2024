@@ -34,6 +34,7 @@ export default function ResolveConflictPanel({
   );
   const [openFields, setOpenFields] = useState<Record<string, boolean>>({});
   const [mergeView, setMergeView] = useState(false);
+  const [splitView, setSplitView] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -41,6 +42,12 @@ export default function ResolveConflictPanel({
       scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [mergeView]);
+  
+  useEffect(() => {
+    if (splitView && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [splitView]);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -80,6 +87,7 @@ export default function ResolveConflictPanel({
       setResolvedFields({});
       setOpenFields({});
       setMergeView(false);
+      setSplitView(false);
     }
   }, [isOpen, firstMemberId, secondMemberId]);
 
@@ -129,9 +137,17 @@ export default function ResolveConflictPanel({
           <div className="flex flex-col border-b p-4">
             <div className="flex justify-between">
               <div className="text-medium inline-block max-w-fit rounded-3xl bg-[#E5E7EB] px-4 py-1 italic">
-                <span className="font-semibold">resolving </span>
-                <span className="font-light">conflict in </span>
-                <span className="font-semibold">members</span>
+                {splitView ? (
+                  <span className="font-semibold">separating </span>
+                ) : mergeView ? (
+                  <span className="font-semibold">merging </span>
+                ) : (
+                  <span className="font-semibold">comparing </span>
+                )}
+                <span className="font-light">members </span>
+                <span className="font-semibold">{firstMemberId} </span>
+                <span className="font-light">and </span>
+                <span className="font-semibold">{secondMemberId} </span>
               </div>
               <button
                 className="inline-block max-w-fit text-xl text-[#616161]"
@@ -144,36 +160,52 @@ export default function ResolveConflictPanel({
 
           <div
             ref={scrollContainerRef}
-            className="custom-scrollbar flex h-full w-full flex-col gap-8 overflow-hidden overflow-y-auto p-8"
+            className="custom-scrollbar flex h-full w-full flex-col gap-4 overflow-hidden overflow-y-auto p-8"
           >
-            {!mergeView ? (
-              <>
-                {Object.keys(member1)
-                  .filter((key) => key !== "updated_at" && key !== "created_at")
-                  .map((key) => {
-                    if (key === "id") return null;
-                    const val1 = member1[key];
-                    const val2 = member2[key];
-                    const isEqual = String(val1) === String(val2);
-                    const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
-
-                    return (
-                      <div key={key} className={`rounded p-3 ${bgColor}`}>
-                        <label className="mb-2 block font-semibold capitalize">
-                          {key}
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="rounded border bg-white p-1">
-                            {val1 ?? "—"}
+            { splitView ? (
+                <>
+                <span className="text-gray-600">Splitting members {firstMemberId} and {secondMemberId}. Update fields as needed.</span>
+                <div className="flex justify-between">
+                  <div className="text-base font-semibold w-1/2">Member {firstMemberId}</div>
+                  <div className="text-base font-semibold w-1/2">Member {secondMemberId}</div>
+                </div>
+                <div className="grid gap-4">
+                  {Object.keys(member1)
+                    .filter((key) => key !== "updated_at" && key !== "created_at")
+                    .map((key) => {
+                      if (key === "id") return null;
+                      const val1 = member1[key];
+                      const val2 = member2[key];
+                      const isEqual = String(val1) === String(val2);
+                      const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
+          
+                      return (
+                        <div key={key} className="flex gap-4">
+                          <div className={`rounded p-3 ${bgColor} flex flex-col w-full`}>
+                            <label className="mb-2 block font-semibold capitalize">
+                              {key}
+                            </label>
+                            <input
+                              className="rounded border bg-white p-1"
+                              defaultValue={val1 ?? "—"}
+                              onChange={(e) => setMember1((prev) => ({ ...prev, [key]: e.target.value }))}
+                            />
                           </div>
-                          <div className="rounded border bg-white p-1">
-                            {val2 ?? "—"}
+                          <div className={`rounded p-3 ${bgColor} flex flex-col w-full`}>
+                            <label className="mb-2 block font-semibold capitalize">
+                              {key}
+                            </label>
+                            <input
+                              className="rounded border bg-white p-1"
+                              defaultValue={val2 ?? "—"}
+                              onChange={(e) => setMember2((prev) => ({ ...prev, [key]: e.target.value }))}
+                            />
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                <div className="flex w-full justify-start gap-2">
+                      );
+                    })}
+                </div>
+                <div className="flex w-full justify-start gap-2 mt-4">
                   <button
                     className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
                     onClick={onClose}
@@ -181,25 +213,16 @@ export default function ResolveConflictPanel({
                     Cancel
                   </button>
                   <button
-                    className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-[#C9FFAE] px-3 py-1 font-semibold"
-                    onClick={() => setMergeView(true)}
-                  >
-                    Merge Members
-                  </button>
-                  <button
                     className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-red-200 px-3 py-1 font-semibold"
-                    onClick={() => {
-                      console.log("Members marked as separate");
-                      alert("Members marked as separate, add backend logic");
-                      onClose();
-                    }}
+                    onClick={() => setSplitView(false)}
                   >
-                    Mark as Separate
+                    Separate
                   </button>
                 </div>
               </>
-            ) : (
+            ) : mergeView ? (
               <>
+                <span className="text-gray-600">Merging members {firstMemberId} and {secondMemberId}. Choose the correct values or enter custom data where necessary.</span>
                 {Object.keys(member1)
                   .filter((key) => key !== "updated_at" && key !== "created_at")
                   .map((key) => {
@@ -339,6 +362,55 @@ export default function ResolveConflictPanel({
                   </button>
                 </div>
               </>
+            ) : (
+                <>
+                  <span className="text-gray-600">Reviewing members {firstMemberId} and {secondMemberId} to determine whether they should be merged or kept separate.</span>
+                  {Object.keys(member1)
+                    .filter((key) => key !== "updated_at" && key !== "created_at")
+                    .map((key) => {
+                      if (key === "id") return null;
+                      const val1 = member1[key];
+                      const val2 = member2[key];
+                      const isEqual = String(val1) === String(val2);
+                      const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
+  
+                      return (
+                        <div key={key} className={`rounded p-3 ${bgColor}`}>
+                          <label className="mb-2 block font-semibold capitalize">
+                            {key}
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="rounded border bg-white p-1">
+                              {val1 ?? "—"}
+                            </div>
+                            <div className="rounded border bg-white p-1">
+                              {val2 ?? "—"}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  <div className="flex w-full justify-start gap-2">
+                    <button
+                      className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
+                      onClick={onClose}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-[#C9FFAE] px-3 py-1 font-semibold"
+                      onClick={() => setMergeView(true)}
+                    >
+                      Merge Members
+                    </button>
+                    <button
+                      className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-red-200 px-3 py-1 font-semibold"
+                      onClick={()  => setSplitView(true)}
+                    >
+                      Separate Members
+                    </button>
+                  </div>
+                </>
             )}
           </div>
         </div>
