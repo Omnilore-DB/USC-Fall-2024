@@ -8,20 +8,17 @@ import type {
   SupabaseMemberTransaction,
   SupabaseMemberTransactionInsert,
   SupabaseMemberUpdate,
+  SupabasePayoutInsert,
   SupabaseProduct,
   SupabaseProductInsert,
   SupabaseTransaction,
   SupabaseTransactionInsert,
 } from "./types";
 import { createClient } from "@supabase/supabase-js";
-// import { drizzle as drizzleInit } from "drizzle-orm/postgres-js";
-// import postgres from "postgres";
 
 // THIS IS SUPER SECRET SERVICE KEY!
 // DO NOT USE UNLESS YOU WANT USER TO HAVE READ/WRITE ACCESS TO ALL DATA
 // NEVER USE ON CLIENT SIDE, ONLY SERVER SIDE
-// const client = postgres(process.env.DATABASE_URL!, { prepare: false });
-// const drizzle = drizzleInit(client);
 const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -129,6 +126,17 @@ export const upsert = {
     }
 
     return data;
+  },
+
+  payouts: async (payoutsToUpsert: SupabasePayoutInsert[]) => {
+    const { error } = await supabase.rpc("upsert_payouts", {
+      _payouts: payoutsToUpsert,
+    });
+
+    if (error)
+      throw new Error(
+        `Failed to upsert payouts. ${error.hint}. ${error.message}`,
+      );
   },
 };
 

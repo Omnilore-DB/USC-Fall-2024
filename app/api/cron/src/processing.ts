@@ -3,6 +3,7 @@ import type { ParsedFormData } from "./types";
 import type {
   SupabaseMemberInsert,
   SupabasePaymentPlatform,
+  SupabasePayoutInsert,
   SupabaseProductInsert,
   SupabaseProductType,
   SupabaseTransactionInsert,
@@ -16,6 +17,7 @@ import {
   fetchSquarespaceProfile,
 } from "./squarespace/api";
 import { parse_form_data } from "./squarespace/form-processor";
+import Stripe from "stripe";
 
 export const convert = {
   product: (p: SquarespaceInventoryItem): SupabaseProductInsert => {
@@ -224,5 +226,19 @@ export const convert = {
       first_name: d.first_name,
       last_name: d.last_name,
     });
+  },
+
+  payouts: {
+    stripe: (data: Stripe.Payout): SupabasePayoutInsert => {
+      return {
+        amount: data.amount,
+        date: new Date(data.created * 1000).toISOString(),
+        payment_platform: "STRIPE",
+        payout_id: data.id,
+        status: data.status,
+      };
+    },
+
+    paypal: null,
   },
 };

@@ -1521,6 +1521,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      payouts: {
+        Row: {
+          amount: number;
+          date: string;
+          id: number;
+          payment_platform: Database["public"]["Enums"]["PaymentPlatform"];
+          payout_id: string;
+          received: boolean;
+          status: string;
+        };
+        Insert: {
+          amount: number;
+          date: string;
+          id?: number;
+          payment_platform: Database["public"]["Enums"]["PaymentPlatform"];
+          payout_id: string;
+          received?: boolean;
+          status: string;
+        };
+        Update: {
+          amount?: number;
+          date?: string;
+          id?: number;
+          payment_platform?: Database["public"]["Enums"]["PaymentPlatform"];
+          payout_id?: string;
+          received?: boolean;
+          status?: string;
+        };
+        Relationships: [];
+      };
       permissions: {
         Row: {
           permission: string;
@@ -1592,7 +1622,7 @@ export type Database = {
           descriptor: string;
           group_id: string | null;
           sku: string;
-          sq_id: string;
+          sq_id: string | null;
           type: Database["public"]["Enums"]["ProductType"];
           updated_at: string;
           year: string | null;
@@ -1602,7 +1632,7 @@ export type Database = {
           descriptor: string;
           group_id?: string | null;
           sku: string;
-          sq_id: string;
+          sq_id?: string | null;
           type?: Database["public"]["Enums"]["ProductType"];
           updated_at?: string;
           year?: string | null;
@@ -1612,7 +1642,7 @@ export type Database = {
           descriptor?: string;
           group_id?: string | null;
           sku?: string;
-          sq_id?: string;
+          sq_id?: string | null;
           type?: Database["public"]["Enums"]["ProductType"];
           updated_at?: string;
           year?: string | null;
@@ -1624,7 +1654,7 @@ export type Database = {
           date: string | null;
           id: number;
           notes: string | null;
-          prospect_name: string | null;
+          prospect_name: string;
           prospect_phone: string | null;
           referred_by_member_id: number | null;
           referred_by_phone: string | null;
@@ -1633,7 +1663,7 @@ export type Database = {
           date?: string | null;
           id?: number;
           notes?: string | null;
-          prospect_name?: string | null;
+          prospect_name: string;
           prospect_phone?: string | null;
           referred_by_member_id?: number | null;
           referred_by_phone?: string | null;
@@ -1642,7 +1672,7 @@ export type Database = {
           date?: string | null;
           id?: number;
           notes?: string | null;
-          prospect_name?: string | null;
+          prospect_name?: string;
           prospect_phone?: string | null;
           referred_by_member_id?: number | null;
           referred_by_phone?: string | null;
@@ -2055,6 +2085,19 @@ export type Database = {
           zip_code: string | null;
         }[];
       };
+      get_all_donors: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          member_id: number;
+          first_name: string;
+          last_name: string;
+          street_address: string;
+          city: string;
+          state: string;
+          zip_code: string;
+          total_donation_amount: number;
+        }[];
+      };
       get_all_enum_values: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -2080,6 +2123,36 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: {
           role: string;
+        }[];
+      };
+      get_donation_transactions: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          member_id: number;
+          first_name: string;
+          last_name: string;
+          street_address: string;
+          city: string;
+          state: string;
+          zip_code: string;
+          donation_date: string;
+          donation_amount: number;
+        }[];
+      };
+      get_donors_by_month: {
+        Args: {
+          p_year: number;
+          p_month: number;
+        };
+        Returns: {
+          member_id: number;
+          first_name: string;
+          last_name: string;
+          street_address: string;
+          city: string;
+          state: string;
+          zip_code: string;
+          total_donation_amount: number;
         }[];
       };
       get_enum_values: {
@@ -2164,6 +2237,27 @@ export type Database = {
           zip_code: string | null;
         }[];
       };
+      get_paypal_fee: {
+        Args: {
+          p_year: number;
+          p_month: number;
+        };
+        Returns: number;
+      };
+      get_paypal_gross: {
+        Args: {
+          p_year: number;
+          p_month: number;
+        };
+        Returns: number;
+      };
+      get_paypal_net: {
+        Args: {
+          p_year: number;
+          p_month: number;
+        };
+        Returns: number;
+      };
       get_primary_key: {
         Args: {
           table_name: string;
@@ -2171,6 +2265,40 @@ export type Database = {
         Returns: {
           primary_key: string;
         }[];
+      };
+      get_squarespace_donors: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          member_id: number;
+          first_name: string;
+          last_name: string;
+          street_address: string;
+          city: string;
+          state: string;
+          zip_code: string;
+          total_donation_amount: number;
+        }[];
+      };
+      get_stripe_fee: {
+        Args: {
+          p_year: number;
+          p_month: number;
+        };
+        Returns: number;
+      };
+      get_stripe_gross: {
+        Args: {
+          p_year: number;
+          p_month: number;
+        };
+        Returns: number;
+      };
+      get_stripe_net: {
+        Args: {
+          p_year: number;
+          p_month: number;
+        };
+        Returns: number;
       };
       get_table_columns: {
         Args: {
@@ -2193,6 +2321,29 @@ export type Database = {
           is_nullable: boolean;
         }[];
       };
+      get_total_fee_by_type: {
+        Args: {
+          p_type: string;
+          p_year: number;
+          p_month: number;
+        };
+        Returns: number;
+      };
+      get_total_gross_by_type:
+        | {
+            Args: {
+              p_type: string;
+            };
+            Returns: number;
+          }
+        | {
+            Args: {
+              p_type: string;
+              p_year: number;
+              p_month: number;
+            };
+            Returns: number;
+          };
       get_user_id_from_email: {
         Args: {
           p_email: string;
@@ -2317,6 +2468,20 @@ export type Database = {
         };
         Returns: undefined;
       };
+      upsert_payouts: {
+        Args: {
+          _payouts: Json;
+        };
+        Returns: {
+          amount: number;
+          date: string;
+          id: number;
+          payment_platform: Database["public"]["Enums"]["PaymentPlatform"];
+          payout_id: string;
+          received: boolean;
+          status: string;
+        }[];
+      };
       upsert_products: {
         Args: {
           _products: Json;
@@ -2326,7 +2491,7 @@ export type Database = {
           descriptor: string;
           group_id: string | null;
           sku: string;
-          sq_id: string;
+          sq_id: string | null;
           type: Database["public"]["Enums"]["ProductType"];
           updated_at: string;
           year: string | null;

@@ -34,6 +34,10 @@ export type SupabaseMemberConflict =
 export type SupabaseMemberConflictInsert =
   Database["public"]["Tables"]["member_conflicts"]["Insert"];
 
+export type SupabasePayout = Database["public"]["Tables"]["payouts"]["Row"];
+export type SupabasePayoutInsert =
+  Database["public"]["Tables"]["payouts"]["Insert"];
+
 export type Database = MergeDeep<
   DatabaseGenerated,
   {
