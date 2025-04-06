@@ -1,153 +1,229 @@
 "use client";
 
+import { supabase } from "@/app/supabase";
 import { useState, useEffect } from "react";
 import { getRoles } from "@/app/supabase";
-import TableComponent from "@/components/ui/TableComponent";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
 export default function ForumReports() {
-    const [roles, setRoles] = useState<string[]>([]);
-    const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null);
-    const [customRange, setCustomRange] = useState(false);
+  const [roles, setRoles] = useState<string[]>([]);
+  const [customRange, setCustomRange] = useState(false);
+  const [availableYears] = useState(["2022", "2023", "2024", "2025"]);
+  const [availableTrimesters] = useState(["Trimester 1", "Trimester 2", "Trimester 3"]);
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [selectedTrimesters, setSelectedTrimesters] = useState<string[]>([]);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [forumMembers, setForumMembers] = useState<{ name: string; email: string }[]>([]);
 
-    const sampleAcademicYears = [
-        { id: 1, year: "22-23" },
-        { id: 2, year: "23-24" },
-        { id: 3, year: "24-25" },
-        { id: 4, year: "25-26" },
-    ];
+  useEffect(() => {
+    const setup = async () => {
+      const userRoles = await getRoles();
+      if (!userRoles) {
+        console.error("Failed to fetch roles");
+        return;
+      }
+      setRoles(userRoles);
+    };
+    setup().catch(console.error);
+  }, []);
 
-    const sampleTrimesterOptions = [
-        { id: 1, name: "Trimester 1" },
-        { id: 2, name: "Trimester 2" },
-        { id: 3, name: "Trimester 3" },
-    ];
+  const getGroupIds = (years: string[], trimesters: string[]) => {
+    const trimesterNumberMap: Record<string, string> = {
+      "Trimester 1": "1",
+      "Trimester 2": "2",
+      "Trimester 3": "3",
+    };
+    const groupIds: string[] = [];
+    for (const year of years) {
+      const shortYear = year.slice(2); // e.g., "2024" -> "24"
+      for (const trimester of trimesters) {
+        groupIds.push(`${shortYear}-${trimesterNumberMap[trimester]}`);
+      }
+    }
+    return groupIds;
+  };
 
-    const sampleData = [
-        { id: 1, name: "John Doe", age: 30 },
-        { id: 2, name: "Jane Smith", age: 25 },
-        { id: 3, name: "Alice Johnson", age: 28 },
-        { id: 4, name: "Bob Brown", age: 35 },
-        { id: 5, name: "Charlie Davis", age: 40 },
-        { id: 6, name: "Diana Prince", age: 32 },
-    ];
+  const fetchForumReport = async () => {
+    if (customRange && (!startDate || !endDate)) {
+      alert("Please select both start and end dates");
+      return;
+    }
+    if (!customRange && (selectedYears.length === 0 || selectedTrimesters.length === 0)) {
+      alert("Please select at least one calendar year and one trimester");
+      return;
+    }
 
-    const [selectedSampleAcademicYear, setSelectedSampleAcademicYear] = useState<string[]>([sampleAcademicYears[sampleAcademicYears.length - 1].year]);
-    const [selectedSampleTrimesterOptions, setSelectedSampleTrimesterOptions] = useState<string[]>(sampleTrimesterOptions.map(option => option.name));
+    const groupIds = getGroupIds(selectedYears, selectedTrimesters);
 
-    const [startDate, setStartDate] = useState<string>("");
-    const [endDate, setEndDate] = useState<string>("");
+    const { data: products, error: productError } = await supabase
+      .from("products")
+      .select("sku")
+      .eq("type", "FORUM")
+      .in("group_id", groupIds);
 
-    useEffect(() => {
-        const setup = async () => {
-            const userRoles = await getRoles();
-            if (!userRoles) {
-                console.error("Failed to fetch roles");
-                return;
-            }
-            setRoles(userRoles);
-        };
-        setup().catch(console.error);
-    }, []);
+    if (productError) {
+      console.error("Error fetching FORUM SKUs", productError);
+      return;
+    }
 
-    return (
-        <div className="flex h-full w-full flex-col bg-gray-100">
-            <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
-                {roles === null ? (
-                    <div>Don't have the necessary permission</div>
-                ) : (
-                    <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
-                        <div className="flex h-full w-full flex-col items-center">
-                            <div className="flex h-full w-full flex-col gap-3">
-                                <div className="flex flex-row justify-between w-full items-end">
-                                    <div className="flex flex-row justify-between w-3/5 gap-2">
-                                        {customRange ? (
-                                            <>
-                                                <div className="w-1/3 flex flex-col">
-                                                    <label className="text-sm font-semibold">Start Date</label>
-                                                    <input
-                                                        type="date"
-                                                        value={startDate}
-                                                        onChange={(e) => setStartDate(e.target.value)}
-                                                        className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
-                                                    />
-                                                </div>
-                                                <div className="w-1/3 flex flex-col">
-                                                    <label className="text-sm font-semibold">End Date</label>
-                                                    <input
-                                                        type="date"
-                                                        value={endDate}
-                                                        onChange={(e) => setEndDate(e.target.value)}
-                                                        className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
-                                                    />
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <div className="w-1/3 flex flex-col">
-                                                    <label className="text-sm font-semibold">Academic Year</label>
-                                                    {/* MultiSelectDropdown for Academic Year */}
-                                                    <MultiSelectDropdown
-                                                        options={sampleAcademicYears.map((year) => year.year)}
-                                                        selectedOptions={selectedSampleAcademicYear}
-                                                        setSelectedOptions={setSelectedSampleAcademicYear}
-                                                        placeholder="Select Academic Year"
-                                                    />
-                                                </div>
-                                                <div className="w-1/3 flex flex-col">
-                                                    <label className="text-sm font-semibold">Trimester</label>
-                                                    {/* MultiSelectDropdown for Trimester */}
-                                                    <MultiSelectDropdown
-                                                        options={sampleTrimesterOptions.map((trimester) => trimester.name)}
-                                                        selectedOptions={selectedSampleTrimesterOptions}
-                                                        setSelectedOptions={setSelectedSampleTrimesterOptions}
-                                                        placeholder="Select Trimester"
-                                                    />
-                                                </div>
-                                            </>
-                                        )}
-                                        <div className="w-1/3 flex items-end">
-                                            <button
-                                                className="w-full h-10 rounded-lg bg-gray-200 font-semibold"
-                                                onClick={() => setCustomRange((prev) => !prev)}
-                                            >
-                                                {customRange ? "Academic Year" : "Custom Range"}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-row justify-between w-1/4 gap-2">
-                                        <div className="flex items-end w-1/2">
-                                            <button onClick={() => alert("Add generate report logic")} className="w-full bg-blue-500 h-10 rounded-lg font-semibold text-white">
-                                                Generate Report
-                                            </button>
-                                        </div>
-                                        <div onClick={() => alert("Add export to csv")} className="flex items-end w-1/2">
-                                            <button className="w-full bg-green-500 h-10 rounded-lg font-semibold text-white">
-                                                Export as CSV
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+    const forumSkus = products.map((p) => p.sku);
 
+    const { data: mtt, error: mttError } = await supabase
+      .from("members_to_transactions")
+      .select("member_id, sku")
+      .in("sku", forumSkus);
 
-                                {/* Table Component */}
-                                <div className="w-full flex-grow overflow-y-auto">
-                                    <TableComponent
-                                        entries={sampleData}
-                                        roles={roles}
-                                        selectedRow={selectedRow}
-                                        handleRowSelection={(row) => setSelectedRow(row)}
-                                        primaryKeys={[]}
-                                        adminTable={false}
-                                        showImages={false}
-                                        selectable={false}
-                                    />
-                                </div>
-                            </div>
+    if (mttError) {
+      console.error("Error fetching member IDs", mttError);
+      return;
+    }
+
+    const memberIds = mtt.map((t) => t.member_id).filter(Boolean);
+
+    const { data: members, error: memberError } = await supabase
+      .from("members")
+      .select("first_name, last_name, email, created_at, id")
+      .in("id", memberIds);
+
+    if (memberError) {
+      console.error("Error fetching member data", memberError);
+      return;
+    }
+
+    const filtered = members
+      .filter((m) => {
+        const date = new Date(m.created_at);
+        const year = date.getFullYear().toString();
+        if (customRange) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          return date >= start && date <= end;
+        } else {
+          return selectedYears.includes(year);
+        }
+      })
+      .map((m) => ({
+        name: `${m.first_name} ${m.last_name}`,
+        email: m.email,
+      }));
+
+    setForumMembers(filtered);
+  };
+
+  return (
+    <div className="flex h-full w-full flex-col bg-gray-100">
+      <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
+        {roles === null ? (
+          <div>Don't have the necessary permission</div>
+        ) : (
+          <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
+            <div className="flex h-full w-full flex-col items-center">
+              <div className="flex h-full w-full flex-col gap-3">
+                <div className="flex flex-row justify-between w-full items-end">
+                  <div className="flex flex-row justify-between w-3/5 gap-2">
+                    {customRange ? (
+                      <>
+                        <div className="w-1/3 flex flex-col">
+                          <label className="text-sm font-semibold">Start Date</label>
+                          <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
+                          />
                         </div>
+                        <div className="w-1/3 flex flex-col">
+                          <label className="text-sm font-semibold">End Date</label>
+                          <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-1/3 flex flex-col">
+                          <label className="text-sm font-semibold">Calendar Year(s)</label>
+                          <MultiSelectDropdown
+                            options={availableYears}
+                            selectedOptions={selectedYears}
+                            setSelectedOptions={setSelectedYears}
+                            placeholder="Select Calendar Year(s)"
+                          />
+                        </div>
+                        <div className="w-1/3 flex flex-col">
+                          <label className="text-sm font-semibold">Trimester(s)</label>
+                          <MultiSelectDropdown
+                            options={availableTrimesters}
+                            selectedOptions={selectedTrimesters}
+                            setSelectedOptions={setSelectedTrimesters}
+                            placeholder="Select Trimester(s)"
+                          />
+                        </div>
+                      </>
+                    )}
+                    <div className="w-1/3 flex items-end">
+                      <button
+                        className="w-full h-10 rounded-lg bg-gray-200 font-semibold"
+                        onClick={() => {
+                          setCustomRange((prev) => !prev);
+                          setForumMembers([]);
+                        }}
+                      >
+                        {customRange ? "Calendar Year" : "Custom Range"}
+                      </button>
                     </div>
-                )}
+                  </div>
+                  <div className="flex flex-row justify-between w-1/4 gap-2">
+                    <div className="flex items-end w-1/2">
+                      <button
+                        onClick={fetchForumReport}
+                        className="w-full bg-blue-500 h-10 rounded-lg font-semibold text-white"
+                      >
+                        Generate Report
+                      </button>
+                    </div>
+                    <div className="flex items-end w-1/2">
+                      <button className="w-full bg-green-500 h-10 rounded-lg font-semibold text-white">
+                        Export as CSV
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="w-full flex-grow overflow-y-auto">
+                  <table className="w-full text-left border-collapse bg-white rounded-lg shadow">
+                    <thead>
+                      <tr>
+                        <th className="p-3 font-semibold">Name</th>
+                        <th className="p-3 font-semibold">Email</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {forumMembers.length === 0 ? (
+                        <tr>
+                          <td colSpan={2} className="p-3 text-center text-gray-500">
+                            No forum participants found
+                          </td>
+                        </tr>
+                      ) : (
+                        forumMembers.map((m, i) => (
+                          <tr key={i} className="border-t">
+                            <td className="p-3">{m.name}</td>
+                            <td className="p-3">{m.email}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-        </div>
-    );
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

@@ -1,5 +1,5 @@
 "use client";
-
+import { supabase } from "@/app/supabase";
 import { useState, useEffect } from "react";
 import { getRoles } from "@/app/supabase";
 import TableComponent from "@/components/ui/TableComponent";
@@ -9,39 +9,101 @@ export default function DonationReports() {
     const [roles, setRoles] = useState<string[]>([]);
     const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null);
     const [customRange, setCustomRange] = useState(false);
-
-    const sampleCalendarYears = [
-        { id: 1, year: "2022" },
-        { id: 2, year: "2023" },
-        { id: 3, year: "2024" },
-        { id: 4, year: "2025" },
-    ];
-
-
-    const sampleData = [
-        { id: 1, name: "John Doe", age: 30 },
-        { id: 2, name: "Jane Smith", age: 25 },
-        { id: 3, name: "Alice Johnson", age: 28 },
-        { id: 4, name: "Bob Brown", age: 35 },
-        { id: 5, name: "Charlie Davis", age: 40 },
-        { id: 6, name: "Diana Prince", age: 32 },
-    ];
-
-    const [selectedSampleCalendarYear, setselectedSampleCalendarYear] = useState<string[]>([sampleCalendarYears[sampleCalendarYears.length - 1].year]);
-
+    const [availableYears] = useState(["2022", "2023", "2024", "2025"]);
+    const [selectedYears, setSelectedYears] = useState<string[]>([]);
+    const [donationTransactions, setDonationTransactions] = useState<
+  { transaction_email: string; date: string; amount: number }[]
+>([]);
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
 
+
+    const fetchDonationTransactions = async () => {
+        if (selectedYears.length === 0) {
+          alert("Please select at least one calendar year");
+          return;
+        }
+      
+        // Step 1: Get SKUs from products
+        const { data: products, error: productError } = await supabase
+          .from("products")
+          .select("sku")
+          .eq("type", "DONATION")
+      
+        if (productError) {
+          console.error("Error fetching donation SKUs", productError);
+          return;
+        }
+        //dont need to check test
+        const donationSkus = products
+            .map((p) => p.sku)
+            .filter((sku) => sku !== "SQ-TEST");
+      
+        if (donationSkus.length === 0) {
+          setDonationTransactions([]);
+          return;
+        }
+      
+        // Step 2: Get transaction IDs from members_to_transactions
+        const { data: mtt, error: mttError } = await supabase
+          .from("members_to_transactions")
+          .select("transaction_id")
+          .in("sku", donationSkus);
+      
+        if (mttError) {
+          console.error("Error fetching transaction IDs", mttError);
+          return;
+        }
+      
+        const transactionIds = mtt.map((t) => t.transaction_id).filter(Boolean);
+      
+        if (transactionIds.length === 0) {
+          setDonationTransactions([]);
+          return;
+        }
+      
+        // Step 3: Get actual transactions
+        const { data: transactions, error: txError } = await supabase
+          .from("transactions")
+          .select("transaction_email, date, amount")
+          .in("id", transactionIds);
+      
+        if (txError) {
+          console.error("Error fetching transactions", txError);
+          return;
+        }
+      
+        const filtered = transactions
+            .filter((t) => {
+            const txYear = new Date(t.date).getFullYear().toString();
+            return selectedYears.includes(txYear);
+            })
+            .map((t) => ({
+            transaction_email: t.transaction_email,
+            date: t.date,
+            amount: t.amount,
+            }))
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+        setDonationTransactions(filtered);
+      };
+
     useEffect(() => {
         const setup = async () => {
-            const userRoles = await getRoles();
-            if (!userRoles) {
-                console.error("Failed to fetch roles");
-                return;
+            const { data, error } = await supabase
+              .from("products")
+              .select("year")
+              .eq("type", "DONATION");
+        
+            if (error) {
+              console.error("Failed to fetch years", error);
+              return;
             }
-            setRoles(userRoles);
-        };
-        setup().catch(console.error);
+        
+
+          };
+        
+          setup();
     }, []);
 
     return (
@@ -82,10 +144,10 @@ export default function DonationReports() {
                                                 <div className="w-2/3 flex flex-col">
                                                     <label className="text-sm font-semibold">Calendar Year</label>
                                                     <MultiSelectDropdown
-                                                        options={sampleCalendarYears.map((year) => year.year)}
-                                                        selectedOptions={selectedSampleCalendarYear}
-                                                        setSelectedOptions={setselectedSampleCalendarYear}
-                                                        placeholder="Select Calendar Year"
+                                                        options={availableYears}
+                                                        selectedOptions={selectedYears}
+                                                        setSelectedOptions={setSelectedYears}
+                                                        placeholder="Select Calendar Year(s)"
                                                     />
                                                 </div>
                                             </>
@@ -101,7 +163,7 @@ export default function DonationReports() {
                                     </div>
                                     <div className="flex flex-row justify-between w-1/4 gap-2">
                                         <div className="flex items-end w-1/2">
-                                            <button onClick={() => alert("Add generate report logic")} className="w-full bg-blue-500 h-10 rounded-lg font-semibold text-white">
+                                            <button onClick={fetchDonationTransactions} className="w-full bg-blue-500 h-10 rounded-lg font-semibold text-white">
                                                 Generate Report
                                             </button>
                                         </div>
@@ -116,16 +178,38 @@ export default function DonationReports() {
 
                                 {/* Table Component */}
                                 <div className="w-full flex-grow overflow-y-auto">
-                                    <TableComponent
-                                        entries={sampleData}
-                                        roles={roles}
-                                        selectedRow={selectedRow}
-                                        handleRowSelection={(row) => setSelectedRow(row)}
-                                        primaryKeys={[]}
-                                        adminTable={false}
-                                        showImages={false}
-                                        selectable={false}
-                                    />
+                                <table className="w-full text-left border-collapse bg-white rounded-lg shadow">
+                                    <thead>
+                                        <tr>
+                                        <th className="p-3 font-semibold">Email</th>
+                                        <th className="p-3 font-semibold">Date</th>
+                                        <th className="p-3 font-semibold">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {donationTransactions.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={3} className="p-3 text-center text-gray-500">
+                                            No donations found
+                                            </td>
+                                        </tr>
+                                        ) : (
+                                        donationTransactions.map((t, i) => (
+                                            <tr key={i} className="border-t">
+                                            <td className="p-3">{t.transaction_email}</td>
+                                            <td className="p-3">
+                                                {new Date(t.date).toLocaleDateString("en-US", {
+                                                year: "numeric",
+                                                month: "short",
+                                                day: "numeric",
+                                                })}
+                                            </td>
+                                            <td className="p-3">${t.amount.toFixed(2)}</td>
+                                            </tr>
+                                        ))
+                                        )}
+                                    </tbody>
+                                </table>
                                 </div>
                             </div>
                         </div>
