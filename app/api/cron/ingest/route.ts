@@ -33,7 +33,7 @@ export async function POST() {
     const convertedTs = await convert.transactions(ts);
     const upsertedTs = await upsert.transactions(convertedTs);
 
-    const new_members = await update.members_given_transactions(upsertedTs);
+    const new_members = await update.users_given_transactions(upsertedTs);
 
     await update.last_sync(start_time);
     await perform.calculate_member_conflicts();

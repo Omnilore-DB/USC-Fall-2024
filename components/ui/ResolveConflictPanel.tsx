@@ -1,5 +1,6 @@
 "use client";
 
+import type { SupabaseMember } from "@/app/api/cron/src/supabase/types";
 import { useEffect, useRef, useState } from "react";
 import { getRowById } from "@/app/supabase";
 import {
@@ -23,8 +24,8 @@ export default function ResolveConflictPanel({
   secondMemberId,
   refresh,
 }: ResolveConflictPanelProps) {
-  const [member1, setMember1] = useState<Record<string, any> | null>(null);
-  const [member2, setMember2] = useState<Record<string, any> | null>(null);
+  const [member1, setMember1] = useState<SupabaseMember | null>(null);
+  const [member2, setMember2] = useState<SupabaseMember | null>(null);
   const [resolvedValues, setResolvedValues] = useState<Record<string, string>>(
     {},
   );
@@ -42,7 +43,7 @@ export default function ResolveConflictPanel({
       scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [mergeView]);
-  
+
   useEffect(() => {
     if (splitView && scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
@@ -53,8 +54,8 @@ export default function ResolveConflictPanel({
     const fetchMembers = async () => {
       const data1 = await getRowById("members", firstMemberId);
       const data2 = await getRowById("members", secondMemberId);
-      setMember1(data1);
-      setMember2(data2);
+      setMember1(data1 as SupabaseMember);
+      setMember2(data2 as SupabaseMember);
 
       const defaultResolved: Record<string, string> = {};
       const defaultResolvedFields: Record<string, boolean> = {};
@@ -162,59 +163,121 @@ export default function ResolveConflictPanel({
             ref={scrollContainerRef}
             className="custom-scrollbar flex h-full w-full flex-col gap-4 overflow-hidden overflow-y-auto p-8"
           >
-            { splitView ? (
-                <>
-                <span className="text-gray-600">Splitting members {firstMemberId} and {secondMemberId}. Update fields as needed.</span>
+            {splitView ? (
+              <>
+                <span className="text-gray-600">
+                  Splitting members {firstMemberId} and {secondMemberId}. Update
+                  fields as needed.
+                </span>
                 <div className="flex justify-between">
-                  <div className="text-base font-semibold w-1/2">Member {firstMemberId}</div>
-                  <div className="text-base font-semibold w-1/2">Member {secondMemberId}</div>
+                  <div className="w-1/2 text-base font-semibold">
+                    Member {firstMemberId}
+                  </div>
+                  <div className="w-1/2 text-base font-semibold">
+                    Member {secondMemberId}
+                  </div>
                 </div>
                 <div className="grid gap-4">
                   {Object.keys(member1)
-                    .filter((key) => key !== "updated_at" && key !== "created_at")
+                    .filter(
+                      (key) =>
+                        key !== "updated_at" &&
+                        key !== "created_at" &&
+                        key !== "id",
+                    )
                     .map((key) => {
-                      if (key === "id") return null;
-                      const val1 = member1[key];
-                      const val2 = member2[key];
+                      const val1 = member1[key as keyof SupabaseMember];
+                      const val2 = member2[key as keyof SupabaseMember];
                       const isEqual = String(val1) === String(val2);
                       const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
-          
+
                       return (
                         <div key={key} className="flex gap-4">
-                          <div className={`rounded p-3 ${bgColor} flex flex-col w-full`}>
+                          <div
+                            className={`rounded p-3 ${bgColor} flex w-full flex-col`}
+                          >
                             <label className="mb-2 block font-semibold capitalize">
                               {key}
                             </label>
                             <input
                               className="rounded border bg-white p-1"
-                              defaultValue={val1 ?? "—"}
-                              onChange={(e) => setMember1((prev) => ({ ...prev, [key]: e.target.value }))}
+                              defaultValue={
+                                typeof val1 === "boolean"
+                                  ? String(val1)
+                                  : (val1 ?? "—")
+                              }
+                              onChange={(e) =>
+                                setMember1(
+                                  (prev) =>
+                                    ({
+                                      ...prev,
+                                      [key]: e.target.value,
+                                    }) as SupabaseMember,
+                                )
+                              }
                             />
                           </div>
-                          <div className={`rounded p-3 ${bgColor} flex flex-col w-full`}>
+                          <div
+                            className={`rounded p-3 ${bgColor} flex w-full flex-col`}
+                          >
                             <label className="mb-2 block font-semibold capitalize">
                               {key}
                             </label>
                             <input
                               className="rounded border bg-white p-1"
-                              defaultValue={val2 ?? "—"}
-                              onChange={(e) => setMember2((prev) => ({ ...prev, [key]: e.target.value }))}
+                              defaultValue={
+                                typeof val2 === "boolean"
+                                  ? String(val2)
+                                  : (val2 ?? "—")
+                              }
+                              onChange={(e) =>
+                                setMember2(
+                                  (prev) =>
+                                    ({
+                                      ...prev,
+                                      [key]: e.target.value,
+                                    }) as SupabaseMember,
+                                )
+                              }
                             />
                           </div>
                         </div>
                       );
                     })}
                 </div>
-                <div className="flex w-full justify-start gap-2 mt-4">
+                <div className="mt-4 flex w-full justify-start gap-2">
                   <button
                     className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
-                    onClick={onClose}
+                    onClick={() => onClose()}
                   >
                     Cancel
                   </button>
                   <button
                     className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-red-200 px-3 py-1 font-semibold"
-                    onClick={() => setSplitView(false)}
+                    onClick={() => {
+                      const toAwait = resolve_member_conflict_different_members(
+                        firstMemberId,
+                        member1,
+                        secondMemberId,
+                        member2,
+                      );
+
+                      toast.promise(
+                        toAwait.then(() => {
+                          onClose();
+                          setSplitView(false);
+                          refresh();
+                        }),
+                        {
+                          loading: "Separating members...",
+                          success: "Members marked as separate!",
+                          error: (error) => {
+                            console.error(error);
+                            return `Error marking members as separate. ${error.message}`;
+                          },
+                        },
+                      );
+                    }}
                   >
                     Separate
                   </button>
@@ -222,14 +285,20 @@ export default function ResolveConflictPanel({
               </>
             ) : mergeView ? (
               <>
-                <span className="text-gray-600">Merging members {firstMemberId} and {secondMemberId}. Choose the correct values or enter custom data where necessary.</span>
+                <span className="text-gray-600">
+                  Merging members {firstMemberId} and {secondMemberId}. Choose
+                  the correct values or enter custom data where necessary.
+                </span>
                 {Object.keys(member1)
-                  .filter((key) => key !== "updated_at" && key !== "created_at")
+                  .filter(
+                    (key) =>
+                      key !== "updated_at" &&
+                      key !== "created_at" &&
+                      key !== "id",
+                  )
                   .map((key) => {
-                    if (key === "id") return null;
-
-                    const val1 = member1[key];
-                    const val2 = member2[key];
+                    const val1 = member1[key as keyof SupabaseMember];
+                    const val2 = member2[key as keyof SupabaseMember];
                     const resolved = resolvedValues[key] ?? "";
                     const isResolved = resolvedFields[key];
                     const isOpenField = openFields[key];
@@ -303,7 +372,7 @@ export default function ResolveConflictPanel({
                 <div className="flex w-full justify-start gap-2">
                   <button
                     className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
-                    onClick={onClose}
+                    onClick={() => onClose()}
                   >
                     Cancel
                   </button>
@@ -363,54 +432,57 @@ export default function ResolveConflictPanel({
                 </div>
               </>
             ) : (
-                <>
-                  <span className="text-gray-600">Reviewing members {firstMemberId} and {secondMemberId} to determine whether they should be merged or kept separate.</span>
-                  {Object.keys(member1)
-                    .filter((key) => key !== "updated_at" && key !== "created_at")
-                    .map((key) => {
-                      if (key === "id") return null;
-                      const val1 = member1[key];
-                      const val2 = member2[key];
-                      const isEqual = String(val1) === String(val2);
-                      const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
-  
-                      return (
-                        <div key={key} className={`rounded p-3 ${bgColor}`}>
-                          <label className="mb-2 block font-semibold capitalize">
-                            {key}
-                          </label>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="rounded border bg-white p-1">
-                              {val1 ?? "—"}
-                            </div>
-                            <div className="rounded border bg-white p-1">
-                              {val2 ?? "—"}
-                            </div>
+              <>
+                <span className="text-gray-600">
+                  Reviewing members {firstMemberId} and {secondMemberId} to
+                  determine whether they should be merged or kept separate.
+                </span>
+                {Object.keys(member1)
+                  .filter((key) => key !== "updated_at" && key !== "created_at")
+                  .map((key) => {
+                    if (key === "id") return null;
+                    const val1 = member1[key as keyof SupabaseMember];
+                    const val2 = member2[key as keyof SupabaseMember];
+                    const isEqual = String(val1) === String(val2);
+                    const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
+
+                    return (
+                      <div key={key} className={`rounded p-3 ${bgColor}`}>
+                        <label className="mb-2 block font-semibold capitalize">
+                          {key}
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="rounded border bg-white p-1">
+                            {val1 ?? "—"}
+                          </div>
+                          <div className="rounded border bg-white p-1">
+                            {val2 ?? "—"}
                           </div>
                         </div>
-                      );
-                    })}
-                  <div className="flex w-full justify-start gap-2">
-                    <button
-                      className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
-                      onClick={onClose}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-[#C9FFAE] px-3 py-1 font-semibold"
-                      onClick={() => setMergeView(true)}
-                    >
-                      Merge Members
-                    </button>
-                    <button
-                      className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-red-200 px-3 py-1 font-semibold"
-                      onClick={()  => setSplitView(true)}
-                    >
-                      Separate Members
-                    </button>
-                  </div>
-                </>
+                      </div>
+                    );
+                  })}
+                <div className="flex w-full justify-start gap-2">
+                  <button
+                    className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
+                    onClick={onClose}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-[#C9FFAE] px-3 py-1 font-semibold"
+                    onClick={() => setMergeView(true)}
+                  >
+                    Merge Members
+                  </button>
+                  <button
+                    className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-red-200 px-3 py-1 font-semibold"
+                    onClick={() => setSplitView(true)}
+                  >
+                    Separate Members
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>

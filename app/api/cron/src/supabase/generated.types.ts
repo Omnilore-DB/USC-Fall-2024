@@ -1012,6 +1012,7 @@ export type Database = {
           public: boolean;
           state: string | null;
           street_address: string | null;
+          type: Database["public"]["Enums"]["MemberStatus"];
           updated_at: string;
           zip_code: string | null;
         };
@@ -1040,6 +1041,7 @@ export type Database = {
           public?: boolean;
           state?: string | null;
           street_address?: string | null;
+          type: Database["public"]["Enums"]["MemberStatus"];
           updated_at?: string;
           zip_code?: string | null;
         };
@@ -1068,6 +1070,7 @@ export type Database = {
           public?: boolean;
           state?: string | null;
           street_address?: string | null;
+          type?: Database["public"]["Enums"]["MemberStatus"];
           updated_at?: string;
           zip_code?: string | null;
         };
@@ -1873,6 +1876,7 @@ export type Database = {
           parsed_form_data: Json[];
           payment_platform: Database["public"]["Enums"]["PaymentPlatform"];
           raw_form_data: Json[];
+          refunded_amount: number;
           skus: string[];
           sqsp_order_id: string | null;
           sqsp_transaction_id: string | null;
@@ -1887,10 +1891,11 @@ export type Database = {
           fee: number;
           fulfillment_status?: Database["public"]["Enums"]["FulfillmentStatus"];
           id?: number;
-          issues: Json[];
-          parsed_form_data: Json[];
+          issues?: Json[];
+          parsed_form_data?: Json[];
           payment_platform: Database["public"]["Enums"]["PaymentPlatform"];
-          raw_form_data: Json[];
+          raw_form_data?: Json[];
+          refunded_amount: number;
           skus: string[];
           sqsp_order_id?: string | null;
           sqsp_transaction_id?: string | null;
@@ -1909,6 +1914,7 @@ export type Database = {
           parsed_form_data?: Json[];
           payment_platform?: Database["public"]["Enums"]["PaymentPlatform"];
           raw_form_data?: Json[];
+          refunded_amount?: number;
           skus?: string[];
           sqsp_order_id?: string | null;
           sqsp_transaction_id?: string | null;
@@ -2081,6 +2087,7 @@ export type Database = {
           public: boolean;
           state: string | null;
           street_address: string | null;
+          type: Database["public"]["Enums"]["MemberStatus"];
           updated_at: string;
           zip_code: string | null;
         }[];
@@ -2125,6 +2132,20 @@ export type Database = {
           role: string;
         }[];
       };
+      get_donation_history: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          member_id: number;
+          first_name: string;
+          last_name: string;
+          street_address: string;
+          city: string;
+          state: string;
+          zip_code: string;
+          donation_amount: number;
+          donation_date: string;
+        }[];
+      };
       get_donation_transactions: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -2137,6 +2158,16 @@ export type Database = {
           zip_code: string;
           donation_date: string;
           donation_amount: number;
+        }[];
+      };
+      get_donor_donation_details: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          member_id: number;
+          first_name: string;
+          last_name: string;
+          amount: number;
+          donation_date: string;
         }[];
       };
       get_donors_by_month: {
@@ -2233,6 +2264,7 @@ export type Database = {
           public: boolean;
           state: string | null;
           street_address: string | null;
+          type: Database["public"]["Enums"]["MemberStatus"];
           updated_at: string;
           zip_code: string | null;
         }[];
@@ -2294,6 +2326,13 @@ export type Database = {
         Returns: number;
       };
       get_stripe_net: {
+        Args: {
+          p_year: number;
+          p_month: number;
+        };
+        Returns: number;
+      };
+      get_stripe_payout_total: {
         Args: {
           p_year: number;
           p_month: number;
@@ -2500,6 +2539,7 @@ export type Database = {
     };
     Enums: {
       FulfillmentStatus: "PENDING" | "FULFILLED" | "CANCELED" | "UNKNOWN";
+      MemberStatus: "MEMBER" | "NONMEMBER";
       PaymentPlatform: "STRIPE" | "PAYPAL" | "MAIL";
       ProductType: "MEMBERSHIP" | "FORUM" | "DONATION" | "UNKNOWN";
     };

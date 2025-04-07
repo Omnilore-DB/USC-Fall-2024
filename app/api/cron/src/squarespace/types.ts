@@ -230,7 +230,22 @@ type SquarespaceProfile = {
   firstName: string;
   lastName: string;
   email: string;
-  // Additional fields can be added as needed.
+  hasAccount: boolean;
+  isCustomer: boolean;
+  createdOn: string;
+  address: Address;
+  acceptsMarketing: boolean;
+  transactionsSummary: {
+    firstOrderSubmittedOn: string;
+    lastOrderSubmittedOn: string;
+    orderCount: number;
+    totalOrderAmount: Money;
+    totalRefundAmount: Money;
+    firstDonationSubmittedOn: string;
+    lastDonationSubmittedOn: string;
+    donationCount: number;
+    totalDonationAmount: Money;
+  };
 };
 
 export type SquarespaceProfileAPIResponse = {

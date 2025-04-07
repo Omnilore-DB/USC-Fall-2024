@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export type SchemaItem = {
   schema: z.ZodSchema;
-  pre: (v: string) => string;
+  pre: (v: string) => string | boolean;
 };
 
 export const remove_extra_whitespace = (v: string) =>
@@ -13,6 +13,11 @@ export const remove_non_digits = (v: string) => v.replace(/\D/g, "");
 export const string = {
   schema: z.string().nonempty(),
   pre: remove_extra_whitespace,
+} satisfies SchemaItem;
+
+export const yes_no = {
+  schema: z.boolean(),
+  pre: (s) => (remove_all_whitespace(s).toLowerCase() === "yes" ? true : false),
 } satisfies SchemaItem;
 
 export const email = {

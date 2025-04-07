@@ -52,11 +52,14 @@ export default function ConflictsPage() {
 
   const fetchEntries = async () => {
     try {
+      setIsLoading(true);
       const { data, primaryKeys } = await queryTableWithPrimaryKey(tableName);
-      setEntries(data);
+      setEntries(data.filter((entry) => !entry.resolved));
       setPrimaryKeys(primaryKeys ?? []);
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Failed to fetch ${tableName}`, error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -79,19 +82,6 @@ export default function ConflictsPage() {
         setPermissions(allPermissions);
       } catch (error) {
         console.error("Error during setup", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const fetchEntries = async () => {
-      try {
-        setIsLoading(true);
-        const { data, primaryKeys } = await queryTableWithPrimaryKey(tableName);
-        setEntries(data);
-        setPrimaryKeys(primaryKeys ?? []);
-      } catch (error) {
-        console.error(`Failed to fetch ${tableName}`, error);
       } finally {
         setIsLoading(false);
       }

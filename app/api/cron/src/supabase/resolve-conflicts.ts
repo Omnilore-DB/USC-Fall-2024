@@ -1,6 +1,6 @@
 "use server";
 
-import type { SupabaseMemberUpdate } from "./types";
+import type { SupabaseMember, SupabaseMemberUpdate } from "./types";
 import { erase, perform, update } from "./api";
 
 // when we resolve a member conflict, the cases are:
@@ -9,13 +9,18 @@ import { erase, perform, update } from "./api";
 
 export async function resolve_member_conflict_different_members(
   first_member_id: number,
+  first_member_updated: SupabaseMember,
   second_member_id: number,
+  second_member_updated: SupabaseMember,
 ) {
-  return await update.member_conflicts({
-    first_member_id,
-    second_member_id,
+  await update.member(first_member_id, first_member_updated);
+  await update.member(second_member_id, second_member_updated);
+  await update.member_conflicts({
+    first_member_id: first_member_id,
+    second_member_id: second_member_id,
     resolved: true,
   });
+  await perform.calculate_member_conflicts();
 }
 
 export async function resolve_member_conflict_merge(

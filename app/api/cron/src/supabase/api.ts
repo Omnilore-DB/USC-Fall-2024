@@ -45,7 +45,7 @@ export const get = {
     return new Date(data[0].last_sync);
   },
 
-  all_members_matching: async (
+  all_users_matching: async (
     member: SupabaseMemberInsert,
   ): Promise<SupabaseMember[]> => {
     const { data, error } = await supabase.rpc("get_normalized_member", {
@@ -69,6 +69,24 @@ export const get = {
     if (error)
       throw new Error(
         `Failed to get supabase products. ${error.hint}. ${error.message}`,
+      );
+
+    return data;
+  },
+
+  member_transactions: async (
+    transaction_id: number,
+    line_item_index: number,
+  ): Promise<SupabaseMemberTransaction[]> => {
+    const { data, error } = await supabase
+      .from("members_to_transactions")
+      .select()
+      .eq("transaction_id", transaction_id)
+      .eq("line_item_index", line_item_index);
+
+    if (error)
+      throw new Error(
+        `Failed to get supabase member transactions. ${error.hint}. ${error.message}`,
       );
 
     return data;
@@ -121,7 +139,7 @@ export const upsert = {
       throw new Error(
         `Failed to insert member-to-transaction mapping with data ${JSON.stringify(
           mt,
-        )}: ${error.hint} ${error.message}`,
+        )}: ${error.message}`,
       );
     }
 
@@ -153,58 +171,83 @@ export const update = {
       );
   },
 
-  members_given_transactions: async (ts: SupabaseTransaction[]) => {
+  users_given_transactions: async (ts: SupabaseTransaction[]) => {
     const new_members: SupabaseMember[] = [];
 
     const products = await get.products();
     const sku_map = new Map(products.map((p) => [p.sku, p]));
 
     for (const t of ts) {
-      for (const [i, d] of t.parsed_form_data.entries()) {
-        const { data: mem, error } = convert.member(d);
+      // Skip transactions that are marked as fulfilled because it means they are test transactions
+      if (t.fulfillment_status === "FULFILLED") continue;
+
+      for (const [line_item, data] of t.parsed_form_data.entries()) {
+        const { data: mem, error } = convert.member(data);
         if (error) {
           continue;
         }
 
-        if (!sku_map.get(d.sku)) {
-          const created_product = await insert.product(
+        if (!sku_map.get(data.sku)) {
+          const created_product = await upsert.products([
             convert.product({
-              sku: d.sku,
+              sku: data.sku,
               descriptor: "Unknown Product",
               variantId:
                 "This SKU was not found in the current squarespace products nor our Supabase database, however it exists in the squarespace transactions API",
               isUnlimited: false,
               quantity: 0,
             }),
-          );
-          sku_map.set(d.sku, created_product);
+          ]);
+          sku_map.set(data.sku, created_product[0]);
         }
 
-        const matches = (await get.all_members_matching(mem))
+        const matches = (await get.all_users_matching(mem))
           .sort((a, b) => a.id - b.id)
-          .filter((match) => perform.is_member_subset(match, mem));
+          .filter((match) => perform.is_user_subset(match, mem));
+
+        const existing_mt = await get.member_transactions(t.id, line_item);
 
         if (matches.length > 0) {
-          await upsert.member_transaction({
-            member_id: matches[0].id,
-            transaction_id: t.id,
-            line_item_index: i,
-            amount: d.amount,
-            sku: d.sku,
-          });
-        }
+          if (existing_mt.length === 0) {
+            await upsert.member_transaction({
+              member_id: matches[0].id,
+              transaction_id: t.id,
+              line_item_index: line_item,
+              amount: data.amount,
+              sku: data.sku,
+            });
+          }
 
-        if (sku_map.get(d.sku)?.type !== "MEMBERSHIP") {
-          continue; // because we only add new members if they purchased a membership product
+          if (
+            sku_map.get(data.sku)?.type === "MEMBERSHIP" &&
+            matches[0].type === "NONMEMBER"
+          ) {
+            await update.member(matches[0].id, {
+              ...mem,
+              type: "MEMBER",
+            });
+          }
         } else {
-          const created_mem = await insert.member(mem);
-          await upsert.member_transaction({
-            member_id: created_mem.id,
-            transaction_id: t.id,
-            line_item_index: i,
-            amount: d.amount,
-            sku: d.sku,
-          });
+          const new_mem = {
+            ...mem,
+            type:
+              sku_map.get(data.sku)?.type === "MEMBERSHIP"
+                ? ("MEMBER" as const)
+                : ("NONMEMBER" as const),
+          };
+
+          const created_mem = await insert.member(new_mem);
+
+          if (existing_mt.length === 0) {
+            await upsert.member_transaction({
+              member_id: created_mem.id,
+              transaction_id: t.id,
+              line_item_index: line_item,
+              amount: data.amount,
+              sku: data.sku,
+            });
+          }
+
           new_members.push(created_mem);
         }
       }
@@ -218,7 +261,9 @@ export const update = {
   ) => {
     const { error, data } = await supabase
       .from("member_conflicts")
-      .upsert(mc, { onConflict: "first_member_id,second_member_id" })
+      .update(mc)
+      .eq("first_member_id", mc.first_member_id)
+      .eq("second_member_id", mc.second_member_id)
       .select();
 
     if (error)
@@ -298,7 +343,7 @@ export const perform = {
       );
   },
 
-  is_member_subset: (
+  is_user_subset: (
     existingMember: SupabaseMember,
     newMemberData: SupabaseMemberInsert,
   ) => {
@@ -308,13 +353,11 @@ export const perform = {
       if (
         typeof existingMember[key] === "string" &&
         typeof newMemberData[key] === "string" &&
+        key !== "type" &&
         key !== "updated_at" &&
         key !== "created_at" &&
         key !== "id"
       ) {
-        console.log("exist", existingMember[key]);
-        console.log("new", newMemberData[key]);
-
         if (
           existingMember[key].toLowerCase() !== newMemberData[key].toLowerCase()
         ) {

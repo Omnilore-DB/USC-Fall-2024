@@ -91,6 +91,7 @@ export const convert = {
         fee: Number(t.total.value) - Number(t.totalNetPayment.value),
         payment_platform:
           (t.payments.at(0)?.provider as SupabasePaymentPlatform) ?? "MAIL",
+        refunded_amount: Number(t.payments.at(0)?.refundedAmount.value ?? 0),
         external_transaction_id: t.payments.at(0)?.id,
         transaction_email: t.customerEmail,
         fulfillment_status: "UNKNOWN",
@@ -172,6 +173,7 @@ export const convert = {
         date: t.createdOn,
         amount: Number(t.total.value),
         fee: Number(t.total.value) - Number(t.totalNetPayment.value),
+        refunded_amount: Number(t.payments.at(0)?.refundedAmount.value ?? 0),
         payment_platform:
           (t.payments.at(0)?.provider as SupabasePaymentPlatform) ?? "MAIL",
         external_transaction_id: t.payments.at(0)?.id,
@@ -202,6 +204,12 @@ export const convert = {
         first_name: data.firstName,
         last_name: data.lastName,
         email: data.email,
+        street_address:
+          data.address.address1.trim() +
+          (data.address.address2 ? ", " + data.address.address2.trim() : ""),
+        city: data.address.city,
+        state: data.address.state,
+        zip_code: data.address.postalCode,
       });
 
       return donation;
@@ -225,6 +233,7 @@ export const convert = {
       amount: undefined,
       first_name: d.first_name,
       last_name: d.last_name,
+      type: "NONMEMBER",
     });
   },
 

@@ -63,10 +63,12 @@ export default function ActionPanel({
       if (mode === "edit" && selectedRow) {
         console.log("EDIT MODE");
         setFormData(selectedRow);
+        setUserFormData(selectedRow);
         console.log("form data ", formData);
       } else {
         console.log("ADD MODE");
         setFormData({});
+        setUserFormData({});
         setFields([]);
         console.log("form data ", formData);
       }
@@ -74,6 +76,7 @@ export default function ActionPanel({
       // Clear form data when panel is closing
       console.log("Panel closed, clearing form data");
       setFormData({});
+      setUserFormData({});
       document.body.style.overflow = "auto";
     }
   }, [isOpen, selectedTable, mode, selectedRow]);

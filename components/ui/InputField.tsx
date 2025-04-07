@@ -47,25 +47,15 @@ export default function InputField({
     } else setFormValue((obj) => ({ ...obj, [fieldName]: currentValue }));
   }, [currentValue]);
 
-  // Format array elements for display
-  const formatArray = (arr: any[]) =>
-    `[${arr
-      .map((v) => (typeof v === "object" ? JSON.stringify(v) : v))
-      .join(", ")}]`;
-
   // Determine the normalized value
   const normalizedValue = isArray ? (Array.isArray(value) ? value : []) : value;
 
-  // Handle date change from DatePicker
-  const handleChange = (date: Date | null) => {
-    if (!date) return;
-    setCurrentValue(date);
-  };
-
   useEffect(() => {
     if (mode === "add") {
-      if (isArray) {
-        setCurrentValue("[]");
+      if (isEnum) {
+        setCurrentValue(enumValues?.[0]);
+      } else if (isArray) {
+        setCurrentValue([]);
       } else if (
         fieldType === "timestamp" ||
         fieldType === "timestamptz" ||
@@ -75,7 +65,7 @@ export default function InputField({
       }
     } else {
       // On edit mode
-      setCurrentValue(isArray ? formatArray(normalizedValue) : normalizedValue);
+      setCurrentValue(normalizedValue);
 
       // If there's a timestamp/date in value, parse it
       if (
@@ -101,7 +91,7 @@ export default function InputField({
       {(fieldType === "timestamp" || fieldType === "timestamptz") && (
         <DatePicker
           selected={currentValue}
-          onChange={handleChange}
+          onChange={(date) => setCurrentValue(date)}
           showTimeSelect
           dateFormat="yyyy-MM-dd HH:mm:ss.SSSSSS"
           className="w-full rounded border border-gray-300 p-2"
@@ -112,7 +102,7 @@ export default function InputField({
       {fieldType === "date" && (
         <DatePicker
           selected={currentValue}
-          onChange={handleChange}
+          onChange={(date) => setCurrentValue(date)}
           dateFormat="yyyy-MM-dd"
           className="w-full rounded border border-gray-300 p-2"
         />
@@ -122,7 +112,7 @@ export default function InputField({
         <select
           className="w-full rounded border border-gray-300 p-2"
           required={required}
-          defaultValue={normalizedValue}
+          value={currentValue}
           onChange={(e) => setCurrentValue(e.target.value)}
         >
           {enumValues?.map((option) => (
@@ -141,9 +131,9 @@ export default function InputField({
           }
           placeholder="Select sku(s)..."
           onValueChange={(value) => {
-            setCurrentValue(`[${value.join(",")}]`);
+            setCurrentValue(value);
           }}
-          value={currentValue}
+          defaultValue={currentValue}
         />
       ) : isArray ? (
         <input
@@ -175,7 +165,7 @@ export default function InputField({
               type="number"
               className="w-full rounded border border-gray-300 p-2"
               required={required}
-              // defaultValue={normalizedValue ?? 0} not good to default to 0 always
+              defaultValue={currentValue}
               placeholder={isAutoIncrement ? "automatically generated" : ""}
               onChange={(e) => setCurrentValue(e.target.value)}
             />
