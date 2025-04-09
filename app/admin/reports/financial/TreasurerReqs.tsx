@@ -1,12 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+/* TODO:
 
-const supabase = createClient(
-  "https://chhlncecdckfxxdcdzvz.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNoaGxuY2VjZGNrZnh4ZGNkenZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY0NDg0MDIsImV4cCI6MjA0MjAyNDQwMn0.T2xvdaxJjyrtOX9_d2i3TqT4NnIMAvPWekwcyfQo7gI",
-);
+Make sure skipping fulfilled
+Make sure all amounts from payouts table is divided by 100 (it comes in cents not dollars)
+(dont do this rn) -> Make sure all the month table columns align / same width (already good for paypal and stripe but need to make it same width as squarespace)
+  - About that I think this could be kinda difficult it depends on if we wanna do it completley dynamically or just hardcode some widths that seem like
+  - they would fit the UI well (thats probably the best option)
+Don't focus too much on styles (besides the width thing because hopefully Tais can make a better UI)
+Maybe improve variable names so it is more readable
+
+Follow my comments to help improve cohesiveness
+
+*/
+
+import React, { useState } from "react";
+import { supabase } from "@/app/supabase";
 
 const TreasurerReqs = () => {
   const [fromDate, setFromDate] = useState("");
@@ -77,31 +86,34 @@ const TreasurerReqs = () => {
       } else {
         console.log("Donors fetched:", data);
 
-        const grouped = data.reduce((acc, item) => {
-          const key = item.member_id;
-          if (!acc[key]) {
-            acc[key] = {
-              member_id: item.member_id,
-              first_name: item.first_name,
-              last_name: item.last_name,
-              street_address: item.street_address,
-              city: item.city,
-              state: item.state,
-              zip_code: item.zip_code,
-              donations: [],
-              total_donation_amount: 0,
-            };
-          }
+        const grouped = data.reduce(
+          (acc, item) => {
+            const key = item.member_id;
+            if (!acc[key]) {
+              acc[key] = {
+                member_id: item.member_id,
+                first_name: item.first_name,
+                last_name: item.last_name,
+                street_address: item.street_address,
+                city: item.city,
+                state: item.state,
+                zip_code: item.zip_code,
+                donations: [],
+                total_donation_amount: 0,
+              };
+            }
 
-          acc[key].donations.push({
-            date: item.donation_date,
-            amount: item.donation_amount,
-          });
+            acc[key].donations.push({
+              date: item.donation_date,
+              amount: item.donation_amount,
+            });
 
-          acc[key].total_donation_amount += item.donation_amount;
+            acc[key].total_donation_amount += item.donation_amount;
 
-          return acc;
-        }, {});
+            return acc;
+          },
+          {} /* what is the final type of this? cast it with as SomeType (not any pls)*/,
+        );
 
         setDonors(Object.values(grouped));
       }
@@ -145,6 +157,8 @@ const TreasurerReqs = () => {
 
     for (let i = 0; i < 12; i++) {
       const key = `${baseYear}-${i + 1}`;
+
+      // change this from using rpc to just doing one payouts table query where 'date' column is between the start and end date then we can use JS/TS to do all of this instead of asking database 48 times
       const { data: g } = await supabase.rpc("get_paypal_gross", {
         p_year: baseYear,
         p_month: i + 1,
@@ -262,7 +276,7 @@ const TreasurerReqs = () => {
           <div className="overflow-x-auto">
             <table className="min-w-full border text-left text-sm">
               <thead>
-                <tr className="bg-gray-100 bg-green-50">
+                <tr className="bg-green-50">
                   <th rowSpan={2} className="border p-2">
                     Category
                   </th>
