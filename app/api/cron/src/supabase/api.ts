@@ -91,6 +91,21 @@ export const get = {
 
     return data;
   },
+
+  users_with_email: async (email: string): Promise<SupabaseMember[]> => {
+    const { data, error } = await supabase
+      .from("members")
+      .select()
+      .order("id", { ascending: true })
+      .eq("email", email.toLowerCase());
+
+    if (error)
+      throw new Error(
+        `Failed to get supabase members. ${error.hint}. ${error.message}`,
+      );
+
+    return data;
+  },
 };
 
 export const upsert = {
@@ -178,8 +193,12 @@ export const update = {
     const sku_map = new Map(products.map((p) => [p.sku, p]));
 
     for (const t of ts) {
-      // Skip transactions that are marked as fulfilled because it means they are test transactions
-      if (t.fulfillment_status === "FULFILLED") continue;
+      // Skip transactions that are marked as fulfilled because it means they are test transactions (except for squarespace donations)
+      if (
+        t.fulfillment_status === "FULFILLED" &&
+        !t.skus.some((sku) => sku === "SQDONATION")
+      )
+        continue;
 
       for (const [line_item, data] of t.parsed_form_data.entries()) {
         const { data: mem, error } = convert.member(data);

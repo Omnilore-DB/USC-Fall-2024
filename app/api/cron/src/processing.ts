@@ -18,6 +18,7 @@ import {
 } from "./squarespace/api";
 import { parse_form_data } from "./squarespace/form-processor";
 import Stripe from "stripe";
+import { get } from "./supabase/api";
 
 export const convert = {
   product: (p: SquarespaceInventoryItem): SupabaseProductInsert => {
@@ -186,6 +187,27 @@ export const convert = {
       };
 
       const { data, error } = await fetchSquarespaceProfile(t.customerEmail);
+
+      if (error?.code === "PROFILE_NOT_FOUND") {
+        const users = await get.users_with_email(t.customerEmail);
+
+        if (users.length > 0) {
+          donation.raw_form_data.push({});
+          donation.parsed_form_data.push({
+            sku: "SQDONATION",
+            amount: Number(t.total.value),
+            first_name: users[0].first_name,
+            last_name: users[0].last_name,
+            email: users[0].email,
+            street_address: users[0].street_address,
+            city: users[0].city,
+            state: users[0].state,
+            zip_code: users[0].zip_code,
+          });
+
+          return donation;
+        }
+      }
 
       if (error) {
         donation.issues.push(
