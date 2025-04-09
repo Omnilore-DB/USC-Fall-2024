@@ -1,4 +1,10 @@
+import type { Temporal } from "temporal-polyfill";
 import type { Issue, IssueCode } from "./types";
+
+export const toISO = (d: Temporal.ZonedDateTime) =>
+  encodeURIComponent(
+    d.toInstant().toZonedDateTimeISO("UTC").toString({ timeZoneName: "never" }),
+  );
 
 export const wait = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));

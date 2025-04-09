@@ -1,5 +1,5 @@
 import { batchWithDelay, make_data, make_error, type Result } from "./utils";
-import type { ParsedFormData } from "./types";
+import type { ParsedFormData, PaypalTransactionInfo } from "./types";
 import type {
   SupabaseMemberInsert,
   SupabasePaymentPlatform,
@@ -248,6 +248,23 @@ export const convert = {
       };
     },
 
-    paypal: null,
+    paypal: (data: PaypalTransactionInfo): SupabasePayoutInsert => {
+      return {
+        amount: Math.abs(Number(data.transaction_amount.value)) * 100,
+        date: new Date(data.transaction_initiation_date).toISOString(),
+        payment_platform: "PAYPAL",
+        payout_id: data.transaction_id,
+        status:
+          data.transaction_status === "D"
+            ? "failed"
+            : data.transaction_status === "P"
+              ? "pending"
+              : data.transaction_status === "S"
+                ? "paid"
+                : data.transaction_status === "V"
+                  ? "void"
+                  : "status not found",
+      };
+    },
   },
 };
