@@ -434,7 +434,7 @@ const TreasurerReqs = () => {
                         key={`net-${month}`}
                         className="border p-2 text-right"
                       >
-                        {format(paypalPayout[key] ?? 0)}
+                        {format((paypalPayout[key] ?? 0)/100)}
                       </td>
                     );
                   })}
@@ -528,7 +528,7 @@ const TreasurerReqs = () => {
                     return (
                       <React.Fragment key={`stripe-net-${month}`}>
                         <td className="border p-2 text-right">
-                          {format(stripePayout[key] ?? 0)}
+                          {format((stripePayout[key] ?? 0)/100)}
                         </td>
                       </React.Fragment>
                     );
