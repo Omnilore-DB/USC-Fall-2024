@@ -440,7 +440,7 @@ const TreasurerReqs = () => {
                   })}
 
                   <td className="border bg-green-50 p-2 text-right font-bold">
-                    {format(getYTDTotal(paypalPayout))}
+                    {format(getYTDTotal(paypalPayout)/100)}
                   </td>
                 </tr>
 
@@ -534,7 +534,7 @@ const TreasurerReqs = () => {
                     );
                   })}
                   <td className="border bg-green-50 p-2 text-right font-bold">
-                    {format(getYTDTotal(stripePayout))}
+                    {format(getYTDTotal(stripePayout)/100)}
                   </td>
                 </tr>
 
