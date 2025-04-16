@@ -4,6 +4,7 @@ import { useLoginRedirect } from "@/hooks/use-login-redirect";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import Logo from "@/components/assets/logo.png";
+import { MailIcon } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -91,6 +92,10 @@ export default function AdminLayout({
             <div onClick={() => handleOtherTabClick("/admin/conflicts")}>
               {" "}
               <ConflictsButton />{" "}
+            </div>
+            <div onClick={() => handleOtherTabClick("/admin/mail-in")}>
+              {" "}
+              <MailInButton />{" "}
             </div>
           </div>
         </div>
@@ -231,6 +236,30 @@ const ConflictsButton = () => {
         className={`text-left group-hover:text-[#000000] ${isActive ? "text-[#000000]" : "text-[#85849E]"}`}
       >
         Member Conflicts
+      </span>
+    </button>
+  );
+};
+
+const MailInButton = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const isActive = pathname === "/admin/mail-in";
+
+  const MailInIcon = () => <MailIcon />;
+
+  return (
+    <button
+      onClick={() => router.push("/admin/mail-in")}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+        isActive ? "bg-[#F6F6F6]" : "bg-white"
+      } hover:bg-[#F6F6F6]`}
+    >
+      <MailInIcon />
+      <span
+        className={`text-left group-hover:text-[#000000] ${isActive ? "text-[#000000]" : "text-[#85849E]"}`}
+      >
+        Add Mail-In Order
       </span>
     </button>
   );
