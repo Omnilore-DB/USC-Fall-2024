@@ -14,6 +14,54 @@ export default function MembershipReports() {
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
 
+  const exportToCSV = () => {
+    if (members.length === 0) {
+      alert("No data to export");
+      return;
+    }
+    const headers = [
+      "Name",
+      "Address",
+      "Phone",
+      "Email",
+      "Emergency Contact",
+      "Emergency Phone",
+      "Status",
+      "Expiration"
+    ];
+    const rows = members.map(m => [
+      m.name ?? "",
+      m.address ?? "",
+      m.phone ?? "",
+      m.email ?? "",
+      m.emergency_contact ?? "",
+      m.emergency_contact_phone ?? "",
+      m.member_status ?? "",
+      m.expiration_date ?? ""
+    ]);
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","))
+    ].join("\r\n");
+  
+    // Format academic years for filename
+    const yearsString =
+      selectedYears.length > 0
+        ? selectedYears.map(formatAcademicYear).join("_")
+        : "all";
+    const filename = `membership_report_${yearsString}.csv`;
+  
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const formatAcademicYear = (shortYear: string): string => {
     const [start, end] = shortYear.split("-").map((y) => parseInt(y, 10));
     const fullStart = start < 50 ? 2000 + start : 1900 + start;
@@ -209,7 +257,7 @@ export default function MembershipReports() {
               >
                 Generate Report
               </button>
-              <button className="bg-green-500 h-10 px-4 rounded-lg font-semibold text-white">
+              <button className="bg-green-500 h-10 px-4 rounded-lg font-semibold text-white" onClick={exportToCSV}>
                 Export as CSV
               </button>
             </div>
