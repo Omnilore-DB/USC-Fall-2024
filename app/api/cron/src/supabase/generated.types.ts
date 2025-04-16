@@ -1528,6 +1528,7 @@ export type Database = {
         Row: {
           amount: number;
           date: string;
+          date_adjusted: string | null;
           id: number;
           payment_platform: Database["public"]["Enums"]["PaymentPlatform"];
           payout_id: string;
@@ -1537,6 +1538,7 @@ export type Database = {
         Insert: {
           amount: number;
           date: string;
+          date_adjusted?: string | null;
           id?: number;
           payment_platform: Database["public"]["Enums"]["PaymentPlatform"];
           payout_id: string;
@@ -1546,6 +1548,7 @@ export type Database = {
         Update: {
           amount?: number;
           date?: string;
+          date_adjusted?: string | null;
           id?: number;
           payment_platform?: Database["public"]["Enums"]["PaymentPlatform"];
           payout_id?: string;
@@ -1626,6 +1629,7 @@ export type Database = {
           group_id: string | null;
           sku: string;
           sq_id: string | null;
+          status: string | null;
           type: Database["public"]["Enums"]["ProductType"];
           updated_at: string;
           year: string | null;
@@ -1636,6 +1640,7 @@ export type Database = {
           group_id?: string | null;
           sku: string;
           sq_id?: string | null;
+          status?: string | null;
           type?: Database["public"]["Enums"]["ProductType"];
           updated_at?: string;
           year?: string | null;
@@ -1646,6 +1651,7 @@ export type Database = {
           group_id?: string | null;
           sku?: string;
           sq_id?: string | null;
+          status?: string | null;
           type?: Database["public"]["Enums"]["ProductType"];
           updated_at?: string;
           year?: string | null;
@@ -2142,8 +2148,17 @@ export type Database = {
         }[];
       };
       get_donation_transactions: {
-        Args: Record<PropertyKey, never>;
+        Args:
+          | { start_date: string; end_date: string }
+          | Record<PropertyKey, never>;
         Returns: {
+          transaction_id: number;
+          transaction_amount: number;
+          transaction_date: string;
+          payment_platform: string;
+          fee: number;
+          fulfillment_status: string;
+          refunded_amount: number;
           member_id: number;
           first_name: string;
           last_name: string;
@@ -2151,8 +2166,10 @@ export type Database = {
           city: string;
           state: string;
           zip_code: string;
-          donation_date: string;
-          donation_amount: number;
+          phone: string;
+          email: string;
+          product_type: string;
+          product_sku: string;
         }[];
       };
       get_donor_donation_details: {
@@ -2442,6 +2459,7 @@ export type Database = {
         Returns: {
           amount: number;
           date: string;
+          date_adjusted: string | null;
           id: number;
           payment_platform: Database["public"]["Enums"]["PaymentPlatform"];
           payout_id: string;
@@ -2457,6 +2475,7 @@ export type Database = {
           group_id: string | null;
           sku: string;
           sq_id: string | null;
+          status: string | null;
           type: Database["public"]["Enums"]["ProductType"];
           updated_at: string;
           year: string | null;
