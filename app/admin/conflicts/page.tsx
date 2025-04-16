@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { getRoles, getPermissions, Permission, getMemberNamesByIds } from "@/app/supabase";
+import {
+  getRoles,
+  getPermissions,
+  Permission,
+  getMemberNamesByIds,
+} from "@/app/supabase";
 import { queryTableWithPrimaryKey } from "@/app/queryFunctions";
 import TableComponent from "@/components/ui/TableComponent";
 import SearchInput from "@/components/ui/SearchInput";
@@ -54,35 +59,43 @@ export default function ConflictsPage() {
     try {
       setIsLoading(true);
       const { data, primaryKeys } = await queryTableWithPrimaryKey(tableName);
-  
+
       // Get all unique member IDs from the conflicts
-      const memberIds = Array.from(new Set(
-        data
-          .filter((entry) => !entry.resolved)
-          .flatMap(entry => [entry.first_member_id, entry.second_member_id])
-      )).filter(Boolean);
-  
+      const memberIds = Array.from(
+        new Set(
+          data
+            .filter((entry) => !entry.resolved)
+            .flatMap((entry) => [
+              entry.first_member_id,
+              entry.second_member_id,
+            ]),
+        ),
+      ).filter(Boolean);
+
       let memberMap: Record<string, string> = {};
       if (memberIds.length > 0) {
         // Use the reusable function to fetch member names
         const members = await getMemberNamesByIds(memberIds);
         memberMap = Object.fromEntries(
-          members.map((m: any) => [String(m.id), `${m.first_name} ${m.last_name}`])
+          members.map((m: any) => [
+            String(m.id),
+            `${m.first_name} ${m.last_name}`,
+          ]),
         );
       }
-  
+
       // Attach names to each conflict entry
       setEntries(
         data
           .filter((entry) => !entry.resolved)
-          .map(entry => ({
+          .map((entry) => ({
             first_member_id: entry.first_member_id,
             first_member_name: memberMap[entry.first_member_id] || "",
             second_member_id: entry.second_member_id,
             second_member_name: memberMap[entry.second_member_id] || "",
             resolved: entry.resolved,
-            ...entry, 
-          }))
+            ...entry,
+          })),
       );
       setPrimaryKeys(primaryKeys ?? []);
     } catch (error) {

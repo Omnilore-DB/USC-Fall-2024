@@ -46,12 +46,10 @@ export default function AdminLayout({
     router.push(path);
   };
 
-
-
   return (
     <div className="flex h-screen w-full flex-col bg-gray-100">
       <div className="flex w-full flex-grow flex-row items-center justify-center overflow-y-auto">
-        <div className="h-full w-1/6 gap-4 rounded-xl bg-white p-4 relative">
+        <div className="relative h-full w-1/6 gap-4 rounded-xl bg-white p-4">
           <div className="flex flex-row items-center gap-3">
             <img src={Logo.src} className="h-fit w-12" alt="Omnilore Logo" />
             <div>
@@ -60,7 +58,10 @@ export default function AdminLayout({
             </div>
           </div>
           <div className="mt-6 flex flex-col gap-4">
-            <div onClick={() => handleOtherTabClick("/admin/tables")}> <TableButton /> </div>
+            <div onClick={() => handleOtherTabClick("/admin/tables")}>
+              {" "}
+              <TableButton />{" "}
+            </div>
             <div
               onMouseEnter={() => setShowSubMenu(true)}
               onMouseLeave={() => setShowSubMenu(activeReportTab !== "")}
@@ -69,23 +70,28 @@ export default function AdminLayout({
               <ReportsButton />
               {(showSubMenu || activeReportTab !== "") && (
                 <div className="flex flex-col gap-1 pl-6">
-                  {['Membership', 'Forum', 'Donation', 'Financial'].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => handleReportTabClick(tab)}
-                      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${activeReportTab === tab ? 'bg-[#F6F6F6] text-[#000000]' : 'bg-white text-[#85849E]'} hover:bg-[#F6F6F6]`}
-                    >
-                      <span
-                        className={`group-hover:text-[#000000] ${activeReportTab === tab ? 'text-[#000000]' : 'text-[#85849E]'}`}
+                  {["Membership", "Forum", "Donation", "Financial"].map(
+                    (tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => handleReportTabClick(tab)}
+                        className={`group flex w-full items-center gap-2 rounded-lg p-2 ${activeReportTab === tab ? "bg-[#F6F6F6] text-[#000000]" : "bg-white text-[#85849E]"} hover:bg-[#F6F6F6]`}
                       >
-                        {tab}
-                      </span>
-                    </button>
-                  ))}
+                        <span
+                          className={`group-hover:text-[#000000] ${activeReportTab === tab ? "text-[#000000]" : "text-[#85849E]"}`}
+                        >
+                          {tab}
+                        </span>
+                      </button>
+                    ),
+                  )}
                 </div>
               )}
             </div>
-            <div onClick={() => handleOtherTabClick("/admin/conflicts")}> <ConflictsButton /> </div>
+            <div onClick={() => handleOtherTabClick("/admin/conflicts")}>
+              {" "}
+              <ConflictsButton />{" "}
+            </div>
           </div>
         </div>
 
@@ -121,8 +127,9 @@ const TableButton = () => {
 
   return (
     <button
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
-        } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+        isActive ? "bg-[#F6F6F6]" : "bg-white"
+      } hover:bg-[#F6F6F6]`}
     >
       <TableIcon />
       <span
@@ -157,8 +164,9 @@ const ReportsButton = () => {
 
   return (
     <button
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
-        } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+        isActive ? "bg-[#F6F6F6]" : "bg-white"
+      } hover:bg-[#F6F6F6]`}
     >
       <ReportsIcon />
       <span
@@ -214,8 +222,9 @@ const ConflictsButton = () => {
   return (
     <button
       onClick={() => router.push("/admin/conflicts")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${isActive ? "bg-[#F6F6F6]" : "bg-white"
-        } hover:bg-[#F6F6F6]`}
+      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+        isActive ? "bg-[#F6F6F6]" : "bg-white"
+      } hover:bg-[#F6F6F6]`}
     >
       <ConflictsIcon />
       <span
