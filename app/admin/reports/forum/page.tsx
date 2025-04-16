@@ -6,6 +6,56 @@ import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
 export default function ForumReports() {
+  // CSV export function
+  const exportToCSV = () => {
+    if (forumMembers.length === 0) {
+      alert("No data to export");
+      return;
+    }
+    const headers = ["Name", "Email"];
+    const rows = forumMembers.map(m => [
+      m.name ?? "",
+      m.email ?? ""
+    ]);
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","))
+    ].join("\r\n");
+
+    // Map trimester names to short codes
+    const trimesterMap: Record<string, string> = {
+      "Trimester 1": "t1",
+      "Trimester 2": "t2",
+      "Trimester 3": "t3"
+    };
+
+    const yearsString = selectedYears.length > 0 ? selectedYears.join("_") : "all";
+
+    // If all trimesters are selected, omit them from the filename
+    let trimestersString = "";
+    if (
+      selectedTrimesters.length > 0 &&
+      selectedTrimesters.length < 3
+    ) {
+      trimestersString = selectedTrimesters.map(t => trimesterMap[t] || t).join("_");
+    }
+
+    const filename =
+      trimestersString
+        ? `forum_report_${yearsString}_${trimestersString}.csv`
+        : `forum_report_${yearsString}.csv`;
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const [roles, setRoles] = useState<string[]>([]);
   const [customRange, setCustomRange] = useState(false);
   const [availableYears] = useState(["2022", "2023", "2024", "2025"]);
@@ -187,7 +237,10 @@ export default function ForumReports() {
                       </button>
                     </div>
                     <div className="flex items-end w-1/2">
-                      <button className="w-full bg-green-500 h-10 rounded-lg font-semibold text-white">
+                      <button
+                        className="w-full bg-green-500 h-10 rounded-lg font-semibold text-white"
+                        onClick={exportToCSV}
+                      >
                         Export as CSV
                       </button>
                     </div>
