@@ -246,7 +246,11 @@ const MailInButton = () => {
   const pathname = usePathname();
   const isActive = pathname === "/admin/mail-in";
 
-  const MailInIcon = () => <MailIcon />;
+  const MailInIcon = () => (
+    <MailIcon
+      className={`group-hover:stroke-[#000000] ${isActive ? "stroke-[#000000]" : "stroke-[#85849E]"}`}
+    />
+  );
 
   return (
     <button
