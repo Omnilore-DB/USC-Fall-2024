@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { format } from "date-fns";
 import { MultiSelect } from "./multi-select";
-import { getProducts } from "@/app/queryFunctions";
 import { SupabaseProduct } from "@/app/api/cron/src/supabase/types";
 
-interface ActionPanelProps {
+interface InputFieldProps {
   fieldName: string;
   fieldType: string;
   required: boolean;
@@ -16,9 +14,12 @@ interface ActionPanelProps {
   isEnum?: boolean;
   isSKU?: boolean;
   products?: SupabaseProduct[];
-  setFormValue: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+  // setFormValue: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+  setFormValue: (name: string, value: any) => void;
   enumValues?: string[];
   mode: string;
+  displayLabel?: boolean;
+  onEnter?: () => void;
 }
 
 export default function InputField({
@@ -34,21 +35,36 @@ export default function InputField({
   enumValues,
   setFormValue,
   mode,
-}: ActionPanelProps) {
-  const [currentValue, setCurrentValue] = useState(value);
-
-  useEffect(() => {
-    if (currentValue === value) {
-      setFormValue((obj) => {
-        const newObj = { ...obj };
-        delete newObj[fieldName];
-        return newObj;
-      });
-    } else setFormValue((obj) => ({ ...obj, [fieldName]: currentValue }));
-  }, [currentValue]);
+  displayLabel = true,
+  onEnter,
+}: InputFieldProps) {
 
   // Determine the normalized value
   const normalizedValue = isArray ? (Array.isArray(value) ? value : []) : value;
+
+  function parseDate(value: any): Date | null {
+    if (!value) return null;
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  
+
+  function getInitialValueByType(type: string) {
+    if (type === "bool") return false;
+    if (type === "date" || type.includes("timestamp")) return new Date();
+    if (type.startsWith("int") || type.startsWith("float") || type === "numeric") return "";
+    if (type === "json" || type === "jsonb") return "";
+    if (type === "text" || type === "varchar" || type === "uuid") return "";
+    if (type === "array") return [];
+    return "";
+  }
+
+  const initialValue =
+    value === null || value === undefined || value === ""
+      ? getInitialValueByType(fieldType)
+      : value;
+  
+  const [currentValue, setCurrentValue] = useState(initialValue);
 
   useEffect(() => {
     if (mode === "add") {
@@ -64,47 +80,61 @@ export default function InputField({
         setCurrentValue(new Date());
       }
     } else {
-      // On edit mode
-      setCurrentValue(normalizedValue);
-
-      // If there's a timestamp/date in value, parse it
       if (
         (fieldType.includes("timestamp") ||
           fieldType.includes("timestampz") ||
           fieldType === "date") &&
         value
       ) {
-        setCurrentValue(new Date(value));
+        if (value instanceof Date && !isNaN(value.getTime())) {
+          setCurrentValue(value);
+        } else {
+          const parsed = parseDate(value);
+          setCurrentValue(parsed);
+        }
+      } else {
+        setCurrentValue(normalizedValue);
       }
     }
   }, [mode, value]);
+  
 
   return (
     <div>
-      <div className="text-medium">
-        <span className="font-semibold text-[#616161]">{fieldName}</span>
-        {required && <span className="text-red-500">*</span>}
-        <span className="font-light text-[#8C8C8C]"> {fieldType}</span>
-      </div>
+      {displayLabel && (
+        <div className="text-medium">
+          <span className="font-semibold text-[#616161]">{fieldName}</span>
+          {required && <span className="text-red-500">*</span>}
+          <span className="font-light text-[#8C8C8C]"> {fieldType}</span>
+        </div>
+      )}
 
       {/* Timestamp (with time) */}
       {(fieldType === "timestamp" || fieldType === "timestamptz") && (
         <DatePicker
+          wrapperClassName="w-full"
+          className="w-full rounded border border-gray-300 p-2"
           selected={currentValue}
-          onChange={(date) => setCurrentValue(date)}
+          onChange={(date) => {
+            setCurrentValue(date);
+            setFormValue(fieldName, date);
+          }}
           showTimeSelect
           dateFormat="yyyy-MM-dd HH:mm:ss.SSSSSS"
-          className="w-full rounded border border-gray-300 p-2"
         />
       )}
 
       {/* Date (no time) */}
       {fieldType === "date" && (
         <DatePicker
-          selected={currentValue}
-          onChange={(date) => setCurrentValue(date)}
-          dateFormat="yyyy-MM-dd"
+          wrapperClassName="w-full"
           className="w-full rounded border border-gray-300 p-2"
+          selected={currentValue}
+          onChange={(date) => {
+            setCurrentValue(date);
+            setFormValue(fieldName, date);
+          }}
+          dateFormat="yyyy-MM-dd"
         />
       )}
 
@@ -113,7 +143,13 @@ export default function InputField({
           className="w-full rounded border border-gray-300 p-2"
           required={required}
           value={currentValue}
-          onChange={(e) => setCurrentValue(e.target.value)}
+          onChange={(e) => {
+            setCurrentValue(e.target.value);
+            setFormValue(fieldName, e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && typeof onEnter === "function") onEnter();
+          }}
         >
           {enumValues?.map((option) => (
             <option key={option} value={option}>
@@ -132,6 +168,7 @@ export default function InputField({
           placeholder="Select sku(s)..."
           onValueChange={(value) => {
             setCurrentValue(value);
+            setFormValue(fieldName, value);
           }}
           defaultValue={currentValue}
         />
@@ -141,7 +178,13 @@ export default function InputField({
           className="w-full rounded border border-gray-300 p-2"
           required={required}
           value={currentValue}
-          onChange={(e) => setCurrentValue(e.target.value)}
+          onChange={(e) => {
+            setCurrentValue(e.target.value);
+            setFormValue(fieldName, e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && typeof onEnter === "function") onEnter();
+          }}
         />
       ) : (
         <>
@@ -150,8 +193,14 @@ export default function InputField({
               type="text"
               className="w-full rounded border border-gray-300 p-2"
               required={required}
-              defaultValue={normalizedValue}
-              onChange={(e) => setCurrentValue(e.target.value)}
+              value={currentValue}
+              onChange={(e) => {
+                setCurrentValue(e.target.value);
+                setFormValue(fieldName, e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && typeof onEnter === "function") onEnter();
+              }}
             />
           )}
 
@@ -165,9 +214,15 @@ export default function InputField({
               type="number"
               className="w-full rounded border border-gray-300 p-2"
               required={required}
-              defaultValue={currentValue}
+              value={currentValue}
               placeholder={isAutoIncrement ? "automatically generated" : ""}
-              onChange={(e) => setCurrentValue(e.target.value)}
+              onChange={(e) => {
+                setCurrentValue(e.target.value);
+                setFormValue(fieldName, e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && typeof onEnter === "function") onEnter();
+              }}
             />
           )}
 
@@ -176,8 +231,11 @@ export default function InputField({
               type="checkbox"
               className="rounded border border-gray-300 p-2"
               required={required}
-              defaultChecked={normalizedValue === "true"}
-              onChange={(e) => setCurrentValue(e.target.value)}
+              checked={!!currentValue}
+              onChange={(e) => {
+                setCurrentValue(e.target.checked);
+                setFormValue(fieldName, e.target.checked);
+              }}
             />
           )}
 
@@ -186,7 +244,7 @@ export default function InputField({
               type="text"
               className="w-full rounded border border-gray-300 p-2"
               required={required}
-              defaultValue={normalizedValue}
+              value={normalizedValue ?? ""}
               readOnly
             />
           )}
@@ -196,10 +254,10 @@ export default function InputField({
               type="text"
               className="w-full rounded border border-gray-300 p-2"
               required={required}
-              defaultValue={
+              value={
                 typeof normalizedValue === "object"
                   ? JSON.stringify(normalizedValue)
-                  : normalizedValue
+                  : (normalizedValue ?? "")
               }
               readOnly
             />

@@ -83,48 +83,6 @@ export const getMemberNamesByIds = async (memberIds: string[] | number[]) => {
   return data || [];
 };
 
-// export const getTableSchema = async (table: string) => {
-//   try {
-//     const { data, error } = await supabase.rpc("get_table_schema", { table_name: table });
-//     if (error) {
-//       console.error(`Failed to fetch schema for table ${table}:`, error.message);
-//       return {};
-//     }
-//     const schema: Record<string, any> = {};
-//     const { data: enumData, error: enumError } = await supabase.rpc("get_all_enum_values");
-//     if (enumError) {
-//       console.error("Failed to fetch ENUM values:", enumError.message);
-//     }
-//     const enumMap = enumData?.reduce(
-//       (acc: Record<string, string[]>, row: { enum_type: string; enum_value: string }) => {
-//         if (!acc[row.enum_type]) acc[row.enum_type] = [];
-//         acc[row.enum_type].push(row.enum_value);
-//         return acc;
-//       },
-//       {}
-//     ) || {};
-//     data?.forEach((col: any) => {
-//       const columnName = col.name ?? col.column_name;
-//       const udtName = col.dataType ?? col.udt_name;
-//       const isNullable = col.nullable ?? col.is_nullable;
-//       const isArray = udtName.startsWith("_");
-//       const baseType = isArray ? udtName.substring(1) : udtName;
-//       const isEnum = !!enumMap[baseType];
-//       schema[columnName] = {
-//         type: baseType,
-//         nullable: isNullable,
-//         isArray,
-//         isEnum,
-//         enumValues: isEnum ? enumMap[baseType] : []
-//       };
-//     });
-//     return { columns: schema };
-//   } catch (error) {
-//     console.error(`Unexpected error fetching schema for table ${table}:`, error);
-//     return {};
-//   }
-// };
-
 export const getTableSchema = async (table: string) => {
   try {
     const { data, error } = await supabase.rpc("get_table_columns", {

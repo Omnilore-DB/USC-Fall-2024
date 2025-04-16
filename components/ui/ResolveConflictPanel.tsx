@@ -1,8 +1,10 @@
 "use client";
+import InputField from "@/components/ui/InputField";
+
 
 import type { SupabaseMember } from "@/app/api/cron/src/supabase/types";
 import { useEffect, useRef, useState } from "react";
-import { getRowById } from "@/app/supabase";
+import { getRowById, getTableSchema } from "@/app/supabase";
 import {
   resolve_member_conflict_merge,
   resolve_member_conflict_different_members,
@@ -24,6 +26,7 @@ export default function ResolveConflictPanel({
   secondMemberId,
   refresh,
 }: ResolveConflictPanelProps) {
+  const [fields, setFields] = useState<any[]>([]);
   const [member1, setMember1] = useState<SupabaseMember | null>(null);
   const [member2, setMember2] = useState<SupabaseMember | null>(null);
   const [resolvedValues, setResolvedValues] = useState<Record<string, string>>(
@@ -39,10 +42,26 @@ export default function ResolveConflictPanel({
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (mergeView && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    const fetchSchema = async () => {
+      const schema = await getTableSchema("members");
+      if (schema?.columns) {
+        const fieldList = Object.entries(schema.columns).map(
+          ([name, details]: any) => ({
+            name,
+            type: details.type,
+            nullable: details.nullable,
+            isAutoIncrement: details.isAutoIncrement,
+            isArray: details.isArray,
+            isEnum: details.isEnum,
+            enumValues: details.enumValues || [],
+          })
+        );
+        setFields(fieldList); // <--- this line stores the result
+      }
+    };
+    fetchSchema();
   }, [mergeView]);
+  
 
   useEffect(() => {
     if (splitView && scrollContainerRef.current) {
@@ -51,6 +70,7 @@ export default function ResolveConflictPanel({
   }, [splitView]);
 
   useEffect(() => {
+    console.log("calling fetchMembers", isOpen, firstMemberId, secondMemberId);
     const fetchMembers = async () => {
       const data1 = await getRowById("members", firstMemberId);
       const data2 = await getRowById("members", secondMemberId);
@@ -65,16 +85,34 @@ export default function ResolveConflictPanel({
 
       Object.entries(data1).forEach(([key, val1]) => {
         const val2 = data2[key as keyof typeof data2];
-        const bothEmpty = (!val1 && !val2) || (val1 === "" && val2 === "");
-
-        const isResolved = val1 === val2 || bothEmpty;
+      
+        // Strict equality for primitives, including 0, false, etc.
+        const sameValue = val1 === val2;
+      
+        // Both empty string (not null/undefined)
+        const bothEmptyString = val1 === "" && val2 === "";
+      
+        // Both null
+        const bothNull = val1 === null && val2 === null;
+      
+        // Both undefined
+        const bothUndefined = val1 === undefined && val2 === undefined;
+      
+        // Consider resolved if strictly equal, or both empty string, or both null, or both undefined
+        const isResolved = sameValue || bothEmptyString || bothNull || bothUndefined;
+      
         defaultResolved[key] = isResolved ? String(val1 ?? "") : "";
         defaultResolvedFields[key] = isResolved;
         defaultOpenFields[key] = !isResolved;
+        // console.log(`Field ${key}: isResolved=${isResolved}, val1=${val1}, val2=${val2}`);
       });
+      console.log("defaultResolved", defaultResolved);
+      console.log("defaultResolvedFields", defaultResolvedFields);
+      console.log("defaultOpenFields", defaultOpenFields);
 
       setResolvedValues(defaultResolved);
       setResolvedFields(defaultResolvedFields);
+      console.log("setResolvedFields in fetchMembers");
       setOpenFields(defaultOpenFields);
     };
 
@@ -86,29 +124,38 @@ export default function ResolveConflictPanel({
       setResolvedValues({});
       setCustomFields({});
       setResolvedFields({});
+      console.log("setResolvedFields in fetchMembers isOpen");
       setOpenFields({});
       setMergeView(false);
       setSplitView(false);
     }
   }, [isOpen, firstMemberId, secondMemberId]);
 
+  useEffect(() => {
+    console.log("resolvedValues", resolvedValues);
+  }, [resolvedValues]);
+
   const handleSelection = (key: string, value: string) => {
     setResolvedValues((prev) => ({ ...prev, [key]: value }));
     setResolvedFields((prev) => ({ ...prev, [key]: true }));
+    console.log("setResolvedFields in handleSelection");
     setOpenFields((prev) => ({ ...prev, [key]: false }));
     setCustomFields((prev) => ({ ...prev, [key]: false }));
   };
 
   const updateCustomValue = (key: string, value: string) => {
     setResolvedValues((prev) => ({ ...prev, [key]: value }));
-    const isValid = value.trim().length > 0;
+    const isValid = typeof value === "string" && value.trim().length > 0;
     setResolvedFields((prev) => ({ ...prev, [key]: isValid }));
+    console.log("setResolvedFields in updateCustomValue");
   };
 
   const confirmCustom = (key: string) => {
+    console.log("confirmCustom");
     if (resolvedValues[key]?.trim()) {
       setOpenFields((prev) => ({ ...prev, [key]: false }));
     }
+    setResolvedFields((prev) => ({ ...prev, [key]: true }));
   };
 
   const toggleFieldOpen = (key: string) => {
@@ -119,6 +166,11 @@ export default function ResolveConflictPanel({
   };
 
   if (!isOpen || !member1 || !member2) return null;
+
+  function isValidDate(d: any): d is Date {
+    return d instanceof Date && !isNaN(d.getTime());
+  }
+  
 
   return (
     <>
@@ -178,16 +230,17 @@ export default function ResolveConflictPanel({
                   </div>
                 </div>
                 <div className="grid gap-4">
-                  {Object.keys(member1)
-                    .filter(
-                      (key) =>
-                        key !== "updated_at" &&
-                        key !== "created_at" &&
-                        key !== "id",
-                    )
-                    .map((key) => {
-                      const val1 = member1[key as keyof SupabaseMember];
-                      const val2 = member2[key as keyof SupabaseMember];
+                  {fields
+                      .filter(
+                        (field) =>
+                          field.name !== "updated_at" &&
+                          field.name !== "created_at" &&
+                          field.name !== "id"
+                      )
+                      .map((field) => {
+                        const key = field.name;
+                        const val1 = member1 ? member1[key as keyof SupabaseMember] : undefined;
+                        const val2 = member2 ? member2[key as keyof SupabaseMember] : undefined;
                       const isEqual = String(val1) === String(val2);
                       const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
 
@@ -199,22 +252,23 @@ export default function ResolveConflictPanel({
                             <label className="mb-2 block font-semibold capitalize">
                               {key}
                             </label>
-                            <input
-                              className="rounded border bg-white p-1"
-                              defaultValue={
-                                typeof val1 === "boolean"
-                                  ? String(val1)
-                                  : (val1 ?? "—")
+                            <InputField
+                              fieldName={key}
+                              fieldType={field.type}
+                              required={!field.nullable}
+                              value={val1}
+                              setFormValue={(name: string, value: any) =>
+                                setMember1((prev) => ({
+                                  ...prev,
+                                  [name]: value,
+                                }) as SupabaseMember)
                               }
-                              onChange={(e) =>
-                                setMember1(
-                                  (prev) =>
-                                    ({
-                                      ...prev,
-                                      [key]: e.target.value,
-                                    }) as SupabaseMember,
-                                )
-                              }
+                              onEnter={() => handleSelection(key, String(val1))}
+                              enumValues={field.enumValues}
+                              isEnum={field.isEnum}
+                              isArray={field.isArray}
+                              isAutoIncrement={field.isAutoIncrement}
+                              displayLabel={false}
                             />
                           </div>
                           <div
@@ -223,22 +277,23 @@ export default function ResolveConflictPanel({
                             <label className="mb-2 block font-semibold capitalize">
                               {key}
                             </label>
-                            <input
-                              className="rounded border bg-white p-1"
-                              defaultValue={
-                                typeof val2 === "boolean"
-                                  ? String(val2)
-                                  : (val2 ?? "—")
+                            <InputField
+                              fieldName={key}
+                              fieldType={field.type}
+                              required={!field.nullable}
+                              value={val2}
+                              setFormValue={(name: string, value: any) =>
+                                setMember2((prev) => ({
+                                  ...prev,
+                                  [name]: value,
+                                }) as SupabaseMember)
                               }
-                              onChange={(e) =>
-                                setMember2(
-                                  (prev) =>
-                                    ({
-                                      ...prev,
-                                      [key]: e.target.value,
-                                    }) as SupabaseMember,
-                                )
-                              }
+                              onEnter={() => handleSelection(key, String(val2))}
+                              enumValues={field.enumValues}
+                              isEnum={field.isEnum}
+                              isArray={field.isArray}
+                              isAutoIncrement={field.isAutoIncrement}
+                              displayLabel={false}
                             />
                           </div>
                         </div>
@@ -289,14 +344,15 @@ export default function ResolveConflictPanel({
                   Merging members {firstMemberId} and {secondMemberId}. Choose
                   the correct values or enter custom data where necessary.
                 </span>
-                {Object.keys(member1)
+                {fields
                   .filter(
-                    (key) =>
-                      key !== "updated_at" &&
-                      key !== "created_at" &&
-                      key !== "id",
+                    (field) =>
+                      field.name !== "updated_at" &&
+                      field.name !== "created_at" &&
+                      field.name !== "id"
                   )
-                  .map((key) => {
+                  .map((field) => {
+                    const key = field.name;
                     const val1 = member1[key as keyof SupabaseMember];
                     const val2 = member2[key as keyof SupabaseMember];
                     const resolved = resolvedValues[key] ?? "";
@@ -306,6 +362,8 @@ export default function ResolveConflictPanel({
                     const bgColor = isResolved
                       ? "bg-[#DAFBC9]"
                       : "bg-[#FAD9D9]";
+                    
+                    // console.log(`Field ${key}: isResolved=${isResolved}, val1=${val1}, val2=${val2}`);
 
                     return (
                       <div key={key} className={`rounded p-3 ${bgColor}`}>
@@ -323,7 +381,7 @@ export default function ResolveConflictPanel({
                               </span>
                               {!isOpenField && (
                                 <span className="max-w-[200px] truncate text-sm italic text-gray-600">
-                                  {resolved || "—"}
+                                  {resolved == null || resolved === "" || resolved === "null" ? "—" : isValidDate(resolved) ? resolved.toLocaleDateString() : resolved}
                                 </span>
                               )}
                             </div>
@@ -343,26 +401,27 @@ export default function ResolveConflictPanel({
                             >
                               {val2 ?? "—"}
                             </button>
-                            <input
-                              className="w-full rounded border p-1"
-                              placeholder="Custom value"
-                              value={
-                                resolvedFields[key] &&
-                                resolved !== String(val1) &&
-                                resolved !== String(val2)
-                                  ? resolved
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                updateCustomValue(key, e.target.value)
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  confirmCustom(key);
+                            <InputField
+                                fieldName={key}
+                                fieldType={field.type}
+                                required={!field.nullable}
+                                value={
+                                  resolvedValues[key] || ""
                                 }
-                              }}
-                            />
+                                setFormValue={(name, value) => 
+                                  setResolvedValues((prev) => ({
+                                    ...prev,
+                                    [name]: value,
+                                  }))
+                                }
+                                
+                                onEnter={() => confirmCustom(key)}
+                                enumValues={field.enumValues}
+                                isEnum={field.isEnum}
+                                isArray={field.isArray}
+                                isAutoIncrement={field.isAutoIncrement}
+                                displayLabel={false}
+                              />
                           </div>
                         </details>
                       </div>
@@ -437,12 +496,17 @@ export default function ResolveConflictPanel({
                   Reviewing members {firstMemberId} and {secondMemberId} to
                   determine whether they should be merged or kept separate.
                 </span>
-                {Object.keys(member1)
-                  .filter((key) => key !== "updated_at" && key !== "created_at")
-                  .map((key) => {
-                    if (key === "id") return null;
-                    const val1 = member1[key as keyof SupabaseMember];
-                    const val2 = member2[key as keyof SupabaseMember];
+                {fields
+                    .filter(
+                      (field) =>
+                        field.name !== "updated_at" &&
+                        field.name !== "created_at" &&
+                        field.name !== "id"
+                    )
+                    .map((field) => {
+                    const key = field.name;
+                    const val1 = member1 ? member1[key as keyof SupabaseMember] : undefined;
+                    const val2 = member2 ? member2[key as keyof SupabaseMember] : undefined;
                     const isEqual = String(val1) === String(val2);
                     const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
 
@@ -461,7 +525,7 @@ export default function ResolveConflictPanel({
                         </div>
                       </div>
                     );
-                  })}
+                })}
                 <div className="flex w-full justify-start gap-2">
                   <button
                     className="text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
