@@ -6,6 +6,43 @@ import TableComponent from "@/components/ui/TableComponent";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
 export default function DonationReports() {
+    // ... existing state declarations ...
+
+    // CSV export function
+    const exportToCSV = () => {
+        if (donationTransactions.length === 0) {
+            alert("No data to export");
+            return;
+        }
+        const headers = ["Email", "Date", "Amount"];
+        const rows = donationTransactions.map(t => [
+            t.transaction_email,
+            new Date(t.date).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+            }),
+            t.amount.toFixed(2)
+        ]);
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","))
+        ].join("\r\n");
+
+        // Construct filename
+        const yearsString = selectedYears.length > 0 ? selectedYears.join("_") : "all";
+        const filename = `donation_report_${yearsString}.csv`;
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
     const [roles, setRoles] = useState<string[]>([]);
     const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null);
     const [customRange, setCustomRange] = useState(false);
@@ -167,8 +204,11 @@ export default function DonationReports() {
                                                 Generate Report
                                             </button>
                                         </div>
-                                        <div onClick={() => alert("Add export to csv")} className="flex items-end w-1/2">
-                                            <button className="w-full bg-green-500 h-10 rounded-lg font-semibold text-white">
+                                        <div className="flex items-end w-1/2">
+                                            <button
+                                                className="w-full bg-green-500 h-10 rounded-lg font-semibold text-white"
+                                                onClick={() => exportToCSV()}
+                                            >
                                                 Export as CSV
                                             </button>
                                         </div>
