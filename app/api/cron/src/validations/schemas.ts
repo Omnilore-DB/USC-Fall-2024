@@ -31,7 +31,7 @@ export const phone = {
 } satisfies SchemaItem;
 
 export const zip_code = {
-  schema: z.string().regex(/^\d{5}(-\d{4})?$/),
+  schema: z.string().regex(/^\d{5}(-\d{4})?$/, "Invalid zip code"),
   pre: remove_all_whitespace,
 } satisfies SchemaItem;
 

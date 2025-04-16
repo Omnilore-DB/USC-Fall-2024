@@ -27,9 +27,9 @@ export default function MembershipReports() {
       "Emergency Contact",
       "Emergency Phone",
       "Status",
-      "Expiration"
+      "Expiration",
     ];
-    const rows = members.map(m => [
+    const rows = members.map((m) => [
       m.name ?? "",
       m.address ?? "",
       m.phone ?? "",
@@ -37,11 +37,13 @@ export default function MembershipReports() {
       m.emergency_contact ?? "",
       m.emergency_contact_phone ?? "",
       m.member_status ?? "",
-      m.expiration_date ?? ""
+      m.expiration_date ?? "",
     ]);
     const csvContent = [
       headers.join(","),
-      ...rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","))
+      ...rows.map((r) =>
+        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(","),
+      ),
     ].join("\r\n");
 
     // Format academic years for filename
@@ -56,7 +58,7 @@ export default function MembershipReports() {
       filename = `membership_report_${yearsString}.csv`;
     }
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -93,7 +95,9 @@ export default function MembershipReports() {
       return;
     }
 
-    const validSkus = products.map((p) => p.sku).filter((sku) => sku !== "SQ-TEST");
+    const validSkus = products
+      .map((p) => p.sku)
+      .filter((sku) => sku !== "SQ-TEST");
     if (validSkus.length === 0) {
       setMembers([]);
       return;
@@ -110,7 +114,6 @@ export default function MembershipReports() {
     }
 
     let filteredMemberIds: (string | number)[] = [];
-
 
     if (customRange) {
       const { data: transactions, error: txError } = await supabase
@@ -140,7 +143,6 @@ export default function MembershipReports() {
       filteredMemberIds = mtt.map((row) => row.member_id);
     }
 
-
     if (filteredMemberIds.length === 0) {
       setMembers([]);
       return;
@@ -149,10 +151,9 @@ export default function MembershipReports() {
     const { data: membersData, error: membersError } = await supabase
       .from("members")
       .select(
-        "first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date"
+        "first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date",
       )
-      .in("id", filteredMemberIds.map(Number))
-
+      .in("id", filteredMemberIds.map(Number));
 
     if (membersError) {
       console.error("Failed to fetch members", membersError);
@@ -192,7 +193,7 @@ export default function MembershipReports() {
       }
 
       const uniqueYears = Array.from(
-        new Set(data.map((p) => p.year).filter((y): y is string => y !== null))
+        new Set(data.map((p) => p.year).filter((y): y is string => y !== null)),
       ).sort();
       setAvailableYears(uniqueYears);
     };
@@ -205,46 +206,57 @@ export default function MembershipReports() {
         {roles === null ? (
           <div>Don't have the necessary permission</div>
         ) : (
-
           // {/* Select and add, delete, and edit buttons */ }
           <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
             <div className="flex h-full w-full flex-col items-center">
               <div className="flex h-full w-full flex-col gap-3">
                 {/* Select and add, delete, and edit buttons */}
-                <div className="flex flex-row justify-between w-full items-end">
-                  <div className="flex flex-row justify-between w-3/5 gap-2">
+                <div className="flex w-full flex-row items-end justify-between">
+                  <div className="flex w-3/5 flex-row justify-between gap-2">
                     {customRange ? (
                       <>
-                        <div className="w-1/3 flex flex-col">
-                          <label className="text-sm font-semibold">Start Date</label>
+                        <div className="flex w-1/3 flex-col">
+                          <label className="text-sm font-semibold">
+                            Start Date
+                          </label>
                           <input
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
+                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
                           />
                         </div>
-                        <div className="w-1/3 flex flex-col">
-                          <label className="text-sm font-semibold">End Date</label>
+                        <div className="flex w-1/3 flex-col">
+                          <label className="text-sm font-semibold">
+                            End Date
+                          </label>
                           <input
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
+                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
                           />
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="w-2/3 flex flex-col">
-                          <div className="w-full flex flex-col">
-                            <label className="text-sm font-semibold">Academic Year</label>
+                        <div className="flex w-2/3 flex-col">
+                          <div className="flex w-full flex-col">
+                            <label className="text-sm font-semibold">
+                              Academic Year
+                            </label>
                             <MultiSelectDropdown
-                              options={availableYears.map((year) => formatAcademicYear(year))}
-                              selectedOptions={selectedYears.map((y) => formatAcademicYear(y))}
+                              options={availableYears.map((year) =>
+                                formatAcademicYear(year),
+                              )}
+                              selectedOptions={selectedYears.map((y) =>
+                                formatAcademicYear(y),
+                              )}
                               setSelectedOptions={(formattedSelected) => {
                                 const rawSelected = availableYears.filter((y) =>
-                                  formattedSelected.includes(formatAcademicYear(y))
+                                  formattedSelected.includes(
+                                    formatAcademicYear(y),
+                                  ),
                                 );
                                 setSelectedYears(rawSelected);
                               }}
@@ -253,26 +265,28 @@ export default function MembershipReports() {
                           </div>
                         </div>
                       </>
-
                     )}
-                    <div className="w-1/3 flex items-end">
+                    <div className="flex w-1/3 items-end">
                       <button
-                        className="w-full h-10 rounded-lg bg-gray-200 font-semibold"
+                        className="h-10 w-full rounded-lg bg-gray-200 font-semibold"
                         onClick={() => setCustomRange((prev) => !prev)}
                       >
                         {customRange ? "Academic Year" : "Custom Range"}
                       </button>
                     </div>
                   </div>
-                  <div className="flex flex-row justify-between w-1/4 gap-2">
-                    <div className="flex items-end w-1/2">
-                      <button onClick={fetchMembershipMembers} className="w-full bg-blue-500 h-10 rounded-lg font-semibold text-white">
+                  <div className="flex w-1/4 flex-row justify-between gap-2">
+                    <div className="flex w-1/2 items-end">
+                      <button
+                        onClick={fetchMembershipMembers}
+                        className="h-10 w-full rounded-lg bg-blue-500 font-semibold text-white"
+                      >
                         Generate Report
                       </button>
                     </div>
-                    <div className="flex items-end w-1/2">
+                    <div className="flex w-1/2 items-end">
                       <button
-                        className="w-full bg-green-500 h-10 rounded-lg font-semibold text-white"
+                        className="h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
                         onClick={() => exportToCSV()}
                       >
                         Export as CSV
@@ -282,7 +296,7 @@ export default function MembershipReports() {
                 </div>
 
                 <div className="w-full flex-grow overflow-y-auto">
-                  <table className="w-full text-left border-collapse bg-white rounded-lg shadow">
+                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow">
                     <thead>
                       <tr>
                         <th className="p-3 font-semibold">Name</th>
@@ -298,7 +312,10 @@ export default function MembershipReports() {
                     <tbody>
                       {members.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="p-3 text-center text-gray-500">
+                          <td
+                            colSpan={8}
+                            className="p-3 text-center text-gray-500"
+                          >
                             No members found
                           </td>
                         </tr>
@@ -322,7 +339,6 @@ export default function MembershipReports() {
               </div>
             </div>
           </div>
-
         )}
 
         {/* <div className="w-full flex-grow overflow-y-auto">
@@ -363,8 +379,6 @@ export default function MembershipReports() {
                 </tbody>
               </table>
             </div> */}
-
-
       </div>
     </div>
   );

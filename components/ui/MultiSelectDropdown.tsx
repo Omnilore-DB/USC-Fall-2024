@@ -23,7 +23,7 @@ const MultiSelectDropdown = ({
       setSelectedOptions(selectedOptions.filter((opt) => opt !== value));
     } else {
       const sortedSelected = [...selectedOptions, value].sort(
-        (a, b) => options.indexOf(a) - options.indexOf(b)
+        (a, b) => options.indexOf(a) - options.indexOf(b),
       );
       setSelectedOptions(sortedSelected);
     }
@@ -31,7 +31,10 @@ const MultiSelectDropdown = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -45,16 +48,16 @@ const MultiSelectDropdown = ({
   return (
     <div ref={dropdownRef} className="relative w-full">
       <div
-        className="border-1 group flex w-full items-center justify-between rounded-lg border-gray-200 bg-white h-10 px-2 py-0 font-semibold text-gray-800 shadow-sm transition focus:outline-none cursor-pointer"
+        className="border-1 group flex h-10 w-full cursor-pointer items-center justify-between rounded-lg border-gray-200 bg-white px-2 py-0 font-semibold text-gray-800 shadow-sm transition focus:outline-none"
         onClick={() => setOpen((prev) => !prev)}
       >
-        <div className="flex gap-1 items-center overflow-x-auto whitespace-nowrap invisible-scrollbar">
+        <div className="invisible-scrollbar flex items-center gap-1 overflow-x-auto whitespace-nowrap">
           {selectedOptions.length > 0 ? (
             <div className="flex gap-1">
               {selectedOptions.map((option) => (
                 <div
                   key={option}
-                  className="flex items-center bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full text-sm whitespace-nowrap"
+                  className="flex items-center whitespace-nowrap rounded-full bg-blue-200 px-2 py-0.5 text-sm text-blue-800"
                 >
                   {option}
                   <X
@@ -71,16 +74,16 @@ const MultiSelectDropdown = ({
             <span className="text-gray-500">{placeholder}</span>
           )}
         </div>
-        <ChevronDown className="h-4 w-4 text-gray-500 ml-2" />
+        <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
       </div>
       {open && (
-        <div className="absolute top-12 left-0 z-30 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
-          <div className="p-1 max-h-60 overflow-y-auto">
+        <div className="absolute left-0 top-12 z-30 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
+          <div className="max-h-60 overflow-y-auto p-1">
             {options.length > 0 ? (
               options.map((option) => (
                 <label
                   key={option}
-                  className={`flex items-center gap-2 cursor-pointer rounded-md px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${
+                  className={`flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${
                     selectedOptions.includes(option) ? "bg-gray-200" : ""
                   }`}
                 >
@@ -92,12 +95,14 @@ const MultiSelectDropdown = ({
                   />
                   {option}
                   {selectedOptions.includes(option) && (
-                    <Check className="h-4 w-4 text-green-600 ml-auto" />
+                    <Check className="ml-auto h-4 w-4 text-green-600" />
                   )}
                 </label>
               ))
             ) : (
-              <div className="px-3 py-2 text-gray-400">No options available</div>
+              <div className="px-3 py-2 text-gray-400">
+                No options available
+              </div>
             )}
           </div>
         </div>
