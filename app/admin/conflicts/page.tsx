@@ -80,7 +80,6 @@ export default function ConflictsPage() {
             first_member_name: memberMap[entry.first_member_id] || "",
             second_member_id: entry.second_member_id,
             second_member_name: memberMap[entry.second_member_id] || "",
-            createdAt: entry.createdAt,
             resolved: entry.resolved,
             ...entry, 
           }))
