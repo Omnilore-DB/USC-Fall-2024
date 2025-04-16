@@ -70,6 +70,19 @@ export const getDataForTable = async (table: TableName) => {
   }
 };
 
+export const getMemberNamesByIds = async (memberIds: string[] | number[]) => {
+  if (!memberIds || memberIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("members")
+    .select("id, first_name, last_name")
+    .in("id", memberIds);
+  if (error) {
+    console.error("Failed to fetch member names:", error.message);
+    return [];
+  }
+  return data || [];
+};
+
 // export const getTableSchema = async (table: string) => {
 //   try {
 //     const { data, error } = await supabase.rpc("get_table_schema", { table_name: table });
