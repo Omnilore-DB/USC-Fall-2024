@@ -50,7 +50,6 @@ type MailInOrderData = {
   sku: string;
   amount: string;
   fee: string;
-  refunded_amount: string;
 
   emergency_contact?: string;
   emergency_contact_phone?: string;
@@ -71,7 +70,6 @@ function Table() {
       sku: "",
       amount: "",
       fee: "0",
-      refunded_amount: "0",
       emergency_contact: "",
       emergency_contact_phone: "",
     } as MailInOrderData,
@@ -145,13 +143,17 @@ function Table() {
         ) : (
           <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
             <div className="flex h-full w-full flex-col items-center">
-              <div className="flex h-full w-full flex-col gap-3">
+              <div className="flex h-full w-full flex-col gap-6 overflow-y-auto rounded-lg bg-white p-8 shadow-md">
+                <h1 className="text-2xl font-semibold text-gray-800">
+                  Mail-In Order Form
+                </h1>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     handleSubmit();
                   }}
+                  className="grid grid-cols-1 gap-6 md:grid-cols-2"
                 >
                   <Field
                     name="first_name"
@@ -160,22 +162,23 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label>
-                        <div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
                           First Name<span className="text-red-600">*</span>
-                        </div>
+                        </label>
                         <input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -185,22 +188,23 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
                           Last Name<span className="text-red-600">*</span>
-                        </div>
+                        </label>
                         <input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -210,24 +214,25 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
                           Date<span className="text-red-600">*</span>
-                        </div>
+                        </label>
                         <DatePicker
                           selected={field.state.value}
                           onChange={(date) => date && field.handleChange(date)}
                           dateFormat="yyyy-MM-dd"
-                          className="w-full rounded border border-gray-300 p-2"
+                          wrapperClassName="w-full"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -240,20 +245,23 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>Email</div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Email
+                        </label>
                         <input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -267,22 +275,25 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>Phone</div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Phone
+                        </label>
                         <input
                           value={field.state.value}
                           type="tel"
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -294,22 +305,23 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
                           Street Address<span className="text-red-600">*</span>
-                        </div>
+                        </label>
                         <input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -319,22 +331,23 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
                           City<span className="text-red-600">*</span>
-                        </div>
+                        </label>
                         <input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -344,13 +357,14 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
                           State<span className="text-red-600">*</span>
-                        </div>
+                        </label>
                         <select
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
                           {state.schema.options.map((option) => (
                             <option key={option} value={option}>
@@ -359,13 +373,13 @@ function Table() {
                           ))}
                         </select>
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -375,23 +389,24 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
                           Zip Code<span className="text-red-600">*</span>
-                        </div>
+                        </label>
                         <input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -404,17 +419,17 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
                           SKU<span className="text-red-600">*</span>
-                        </div>
+                        </label>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button
                               variant="outline"
                               role="combobox"
                               className={cn(
-                                "w-[200px] justify-between",
+                                "w-full justify-between rounded-md border border-gray-300 px-3 py-2 text-left focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
                                 !field.state.value && "text-muted-foreground",
                               )}
                             >
@@ -430,7 +445,7 @@ function Table() {
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-[200px] p-0">
+                          <PopoverContent className="w-[200px] p-0 md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px]">
                             <Command>
                               <CommandInput placeholder="Search product..." />
                               <CommandList>
@@ -467,13 +482,13 @@ function Table() {
                           </PopoverContent>
                         </Popover>
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -485,24 +500,25 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
                           Amount<span className="text-red-600">*</span>
-                        </div>
+                        </label>
                         <input
                           value={field.state.value}
                           type="number"
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -514,51 +530,24 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
                           Fee<span className="text-red-600">*</span>
-                        </div>
+                        </label>
                         <input
                           value={field.state.value}
                           type="number"
                           onChange={(e) => field.handleChange(e.target.value)}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
-                    )}
-                  </Field>
-                  <Field
-                    name="refunded_amount"
-                    validators={{
-                      onChange: z
-                        .string()
-                        .regex(/^\d+(\.\d{1,2})?$/, "Invalid refunded amount"),
-                    }}
-                  >
-                    {(field) => (
-                      <label className="">
-                        <div>
-                          Refunded Amount<span className="text-red-600">*</span>
-                        </div>
-                        <input
-                          value={field.state.value}
-                          type="number"
-                          onChange={(e) => field.handleChange(e.target.value)}
-                        />
-                        {field.state.meta.errors ? (
-                          <em role="alert">
-                            {field.state.meta.errors
-                              .map((e) => e?.message)
-                              .join(", ")}
-                          </em>
-                        ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -584,21 +573,24 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>Emergency Contact</div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Emergency Contact
+                        </label>
                         <input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
                   <Field
@@ -612,35 +604,43 @@ function Table() {
                     }}
                   >
                     {(field) => (
-                      <label className="">
-                        <div>Emergency Contact Phone</div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Emergency Contact Phone
+                        </label>
                         <input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
-                          <em role="alert">
+                          <p className="text-sm text-red-600">
                             {field.state.meta.errors
                               .map((e) => e?.message)
                               .join(", ")}
-                          </em>
+                          </p>
                         ) : null}
-                      </label>
+                      </div>
                     )}
                   </Field>
-                  <Subscribe
-                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                    children={([canSubmit, isSubmitting]) => (
-                      <button
-                        type="submit"
-                        className="bg-blue-200 px-3 py-2"
-                        disabled={!canSubmit}
-                      >
-                        {isSubmitting ? "..." : "Submit"}
-                      </button>
-                    )}
-                  />
+                  <div className="col-span-2 flex justify-end">
+                    <Subscribe
+                      selector={(state) => [
+                        state.canSubmit,
+                        state.isSubmitting,
+                      ]}
+                      children={([canSubmit, isSubmitting]) => (
+                        <button
+                          type="submit"
+                          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={!canSubmit}
+                        >
+                          {isSubmitting ? "Adding..." : "Add Mail-In Order"}
+                        </button>
+                      )}
+                    />
+                  </div>
                 </form>
               </div>
             </div>
