@@ -31,19 +31,29 @@ export default function ForumReports() {
 
     const yearsString = selectedYears.length > 0 ? selectedYears.join("_") : "all";
 
-    // If all trimesters are selected, omit them from the filename
-    let trimestersString = "";
-    if (
-      selectedTrimesters.length > 0 &&
-      selectedTrimesters.length < 3
-    ) {
-      trimestersString = selectedTrimesters.map(t => trimesterMap[t] || t).join("_");
+    let filename = "";
+    if (customRange && startDate && endDate) {
+      filename = `forum_report_${startDate}_to_${endDate}.csv`;
+    } else {
+      // Map trimester names to short codes
+      const trimesterMap: Record<string, string> = {
+        "Trimester 1": "t1",
+        "Trimester 2": "t2",
+        "Trimester 3": "t3"
+      };
+      const yearsString = selectedYears.length > 0 ? selectedYears.join("_") : "all";
+      let trimestersString = "";
+      if (
+        selectedTrimesters.length > 0 &&
+        selectedTrimesters.length < 3
+      ) {
+        trimestersString = selectedTrimesters.map(t => trimesterMap[t] || t).join("_");
+      }
+      filename =
+        trimestersString
+          ? `forum_report_${yearsString}_${trimestersString}.csv`
+          : `forum_report_${yearsString}.csv`;
     }
-
-    const filename =
-      trimestersString
-        ? `forum_report_${yearsString}_${trimestersString}.csv`
-        : `forum_report_${yearsString}.csv`;
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

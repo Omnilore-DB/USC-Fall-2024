@@ -45,11 +45,16 @@ export default function MembershipReports() {
     ].join("\r\n");
   
     // Format academic years for filename
-    const yearsString =
-      selectedYears.length > 0
-        ? selectedYears.map(formatAcademicYear).join("_")
-        : "all";
-    const filename = `membership_report_${yearsString}.csv`;
+    let filename = "";
+    if (customRange && startDate && endDate) {
+      filename = `membership_report_${startDate}_to_${endDate}.csv`;
+    } else {
+      const yearsString =
+        selectedYears.length > 0
+          ? selectedYears.map(formatAcademicYear).join("_")
+          : "all";
+      filename = `membership_report_${yearsString}.csv`;
+    }
   
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

@@ -6,8 +6,6 @@ import TableComponent from "@/components/ui/TableComponent";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
 export default function DonationReports() {
-    // ... existing state declarations ...
-
     // CSV export function
     const exportToCSV = () => {
         if (donationTransactions.length === 0) {
@@ -29,9 +27,13 @@ export default function DonationReports() {
             ...rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","))
         ].join("\r\n");
 
-        // Construct filename
-        const yearsString = selectedYears.length > 0 ? selectedYears.join("_") : "all";
-        const filename = `donation_report_${yearsString}.csv`;
+        let filename = "";
+        if (customRange && startDate && endDate) {
+            filename = `donation_report_${startDate}_to_${endDate}.csv`;
+        } else {
+            const yearsString = selectedYears.length > 0 ? selectedYears.join("_") : "all";
+            filename = `donation_report_${yearsString}.csv`;
+        }
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
