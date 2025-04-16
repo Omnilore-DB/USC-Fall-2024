@@ -43,7 +43,7 @@ export default function MembershipReports() {
       headers.join(","),
       ...rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","))
     ].join("\r\n");
-  
+
     // Format academic years for filename
     let filename = "";
     if (customRange && startDate && endDate) {
@@ -55,7 +55,7 @@ export default function MembershipReports() {
           : "all";
       filename = `membership_report_${yearsString}.csv`;
     }
-  
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -131,7 +131,7 @@ export default function MembershipReports() {
           return txDate >= start && txDate <= end;
         })
         .map((tx) => tx.id);
-        console.log("Valid transaction IDs:", validTxIds);
+      console.log("Valid transaction IDs:", validTxIds);
 
       filteredMemberIds = mtt
         .filter((row) => validTxIds.includes(row.transaction_id))
@@ -139,7 +139,7 @@ export default function MembershipReports() {
     } else {
       filteredMemberIds = mtt.map((row) => row.member_id);
     }
-    
+
 
     if (filteredMemberIds.length === 0) {
       setMembers([]);
@@ -195,7 +195,6 @@ export default function MembershipReports() {
         new Set(data.map((p) => p.year).filter((y): y is string => y !== null))
       ).sort();
       setAvailableYears(uniqueYears);
-      setSelectedYears([uniqueYears[uniqueYears.length - 1]]);
     };
     setup().catch(console.error);
   }, []);
@@ -206,68 +205,127 @@ export default function MembershipReports() {
         {roles === null ? (
           <div>Don't have the necessary permission</div>
         ) : (
-          <div className="flex h-[95%] w-[98%] flex-col items-center gap-4">
-            <div className="flex w-full flex-row gap-2">
-              {customRange ? (
-                <>
-                  <div className="w-1/3 flex flex-col">
-                    <label className="text-sm font-semibold">Start Date</label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
-                    />
+
+          // {/* Select and add, delete, and edit buttons */ }
+          <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
+            <div className="flex h-full w-full flex-col items-center">
+              <div className="flex h-full w-full flex-col gap-3">
+                {/* Select and add, delete, and edit buttons */}
+                <div className="flex flex-row justify-between w-full items-end">
+                  <div className="flex flex-row justify-between w-3/5 gap-2">
+                    {customRange ? (
+                      <>
+                        <div className="w-1/3 flex flex-col">
+                          <label className="text-sm font-semibold">Start Date</label>
+                          <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
+                          />
+                        </div>
+                        <div className="w-1/3 flex flex-col">
+                          <label className="text-sm font-semibold">End Date</label>
+                          <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-2/3 flex flex-col">
+                          <div className="w-full flex flex-col">
+                            <label className="text-sm font-semibold">Academic Year</label>
+                            <MultiSelectDropdown
+                              options={availableYears.map((year) => formatAcademicYear(year))}
+                              selectedOptions={selectedYears.map((y) => formatAcademicYear(y))}
+                              setSelectedOptions={(formattedSelected) => {
+                                const rawSelected = availableYears.filter((y) =>
+                                  formattedSelected.includes(formatAcademicYear(y))
+                                );
+                                setSelectedYears(rawSelected);
+                              }}
+                              placeholder="Select Academic Year(s)"
+                            />
+                          </div>
+                        </div>
+                      </>
+
+                    )}
+                    <div className="w-1/3 flex items-end">
+                      <button
+                        className="w-full h-10 rounded-lg bg-gray-200 font-semibold"
+                        onClick={() => setCustomRange((prev) => !prev)}
+                      >
+                        {customRange ? "Academic Year" : "Custom Range"}
+                      </button>
+                    </div>
                   </div>
-                  <div className="w-1/3 flex flex-col">
-                    <label className="text-sm font-semibold">End Date</label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
-                    />
+                  <div className="flex flex-row justify-between w-1/4 gap-2">
+                    <div className="flex items-end w-1/2">
+                      <button onClick={fetchMembershipMembers} className="w-full bg-blue-500 h-10 rounded-lg font-semibold text-white">
+                        Generate Report
+                      </button>
+                    </div>
+                    <div className="flex items-end w-1/2">
+                      <button
+                        className="w-full bg-green-500 h-10 rounded-lg font-semibold text-white"
+                        onClick={() => exportToCSV()}
+                      >
+                        Export as CSV
+                      </button>
+                    </div>
                   </div>
-                </>
-              ) : (
-                <div className="w-2/3 flex flex-col">
-                  <label className="text-sm font-semibold">Academic Year</label>
-                  <MultiSelectDropdown
-                    options={availableYears.map((year) => formatAcademicYear(year))}
-                    selectedOptions={selectedYears.map((y) => formatAcademicYear(y))}
-                    setSelectedOptions={(formattedSelected) => {
-                      const rawSelected = availableYears.filter((y) =>
-                        formattedSelected.includes(formatAcademicYear(y))
-                      );
-                      setSelectedYears(rawSelected);
-                    }}
-                    placeholder="Select Academic Year(s)"
-                  />
                 </div>
-              )}
-              <div className="w-1/3 flex items-end">
-                <button
-                  className="w-full h-10 rounded-lg bg-gray-200 font-semibold"
-                  onClick={() => setCustomRange((prev) => !prev)}
-                >
-                  {customRange ? "Calendar Year" : "Custom Range"}
-                </button>
+
+                <div className="w-full flex-grow overflow-y-auto">
+                  <table className="w-full text-left border-collapse bg-white rounded-lg shadow">
+                    <thead>
+                      <tr>
+                        <th className="p-3 font-semibold">Name</th>
+                        <th className="p-3 font-semibold">Address</th>
+                        <th className="p-3 font-semibold">Phone</th>
+                        <th className="p-3 font-semibold">Email</th>
+                        <th className="p-3 font-semibold">Emergency Contact</th>
+                        <th className="p-3 font-semibold">Emergency Phone</th>
+                        <th className="p-3 font-semibold">Status</th>
+                        <th className="p-3 font-semibold">Expiration</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {members.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-3 text-center text-gray-500">
+                            No members found
+                          </td>
+                        </tr>
+                      ) : (
+                        members.map((m, i) => (
+                          <tr key={i} className="border-t">
+                            <td className="p-3">{m.name}</td>
+                            <td className="p-3">{m.address}</td>
+                            <td className="p-3">{m.phone}</td>
+                            <td className="p-3">{m.email}</td>
+                            <td className="p-3">{m.emergency_contact}</td>
+                            <td className="p-3">{m.emergency_contact_phone}</td>
+                            <td className="p-3">{m.member_status}</td>
+                            <td className="p-3">{m.expiration_date}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex w-full flex-row justify-end gap-2">
-              <button
-                onClick={fetchMembershipMembers}
-                className="bg-blue-500 h-10 px-4 rounded-lg font-semibold text-white"
-              >
-                Generate Report
-              </button>
-              <button className="bg-green-500 h-10 px-4 rounded-lg font-semibold text-white" onClick={exportToCSV}>
-                Export as CSV
-              </button>
-            </div>
+        )}
 
-            <div className="w-full flex-grow overflow-y-auto">
+        {/* <div className="w-full flex-grow overflow-y-auto">
               <table className="w-full text-left border-collapse bg-white rounded-lg shadow">
                 <thead>
                   <tr>
@@ -304,9 +362,9 @@ export default function MembershipReports() {
                   )}
                 </tbody>
               </table>
-            </div>
-          </div>
-        )}
+            </div> */}
+
+
       </div>
     </div>
   );
