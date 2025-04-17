@@ -305,70 +305,42 @@ const TreasurerReqs = () => {
               </thead>
 
               <tbody>
-                {categories.map((cat) => (
-                  <React.Fragment key={cat}>
-                    {/* Main data row */}
-                    <tr>
-                      <td className="border p-2">{cat}</td>
-                      {allMonths.map((month, i) => {
-                        const sampleDate = new Date(fromDate);
-                        const year = sampleDate.getUTCFullYear();
-                        const monthNum = i + 1;
-                        const key = `${cat}-${year}-${monthNum}`;
-
-                        const gross = grossData[key] ?? 0;
-                        const fee = feeData[key] ?? 0;
-                        const net = gross - fee;
-
-                        const format = (v: number) =>
-                          v.toLocaleString("en-US", {
-                            style: "currency",
-                            currency: "USD",
-                          });
-
-                        return (
-                          <React.Fragment key={`${cat}-${month}`}>
-                            <td className="border p-2 text-right">
-                              {format(gross)}
-                            </td>
-                            <td className="border p-2 text-right">
-                              {format(fee)}
-                            </td>
-                            <td className="border p-2 text-right">
-                              {format(net)}
-                            </td>
-                          </React.Fragment>
-                        );
-                      })}
-                      <td className="border bg-green-50 p-2 text-right">
-                        {format(
-                          getYTDTotal(grossData, cat) -
-                            getYTDTotal(feeData, cat),
-                        )}
-                      </td>
-                    </tr>
-
-                    {cat === "DONATION" && (
-                      <tr className="bg-green-50">
-                        <td className="border p-2">Bank Confirmation</td>
-                        {allMonths.map((month) => (
-                          <td
-                            key={`confirm-${month}`}
-                            className="border p-2 text-center"
-                            colSpan={3}
-                          >
-                            <input type="checkbox" className="h-4 w-4" />
-                          </td>
-                        ))}
-                        <td className="border p-2"></td> {/* YTD cell */}
+                  {categories.map((cat) => (
+                    <React.Fragment key={cat}>
+                      {/* Main data row */}
+                      <tr>
+                        <td className="p-2 border">{cat}</td>
+                        {allMonths.map((month, i) => {
+                          const sampleDate = new Date(fromDate);
+                          const year = sampleDate.getUTCFullYear();
+                          const monthNum = i + 1;
+                          const key = `${cat}-${year}-${monthNum}`;
+        
+                          const gross = grossData[key] ?? 0;
+                          const fee = feeData[key] ?? 0;
+                          const net = gross - fee;
+        
+                          const format = (v: number) =>
+                            v.toLocaleString("en-US", { style: "currency", currency: "USD" });
+        
+                          return (
+                            <React.Fragment key={`${cat}-${month}`}>
+                              <td className="p-2 border text-right ">{format(gross)}</td>
+                              <td className="p-2 border text-right">{format(fee)}</td>
+                              <td className="p-2 border text-right">{format(net)}</td>
+                            </React.Fragment>
+                          );
+                        })}
+                        <td className="p-2 border  bg-green-50 text-right">
+                          {format(getYTDTotal(grossData, cat) - getYTDTotal(feeData, cat))}
+                        </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          
           {/* Paypal Section */}
           <h2 className="mb-2 mt-8 text-xl font-bold">PayPal</h2>
           <div className="mb-10 overflow-x-auto">
@@ -423,9 +395,9 @@ const TreasurerReqs = () => {
                   </td>
                 </tr>
 
-                {/* Row: Bank Deposit */}
+                {/* Row: Payout */}
                 <tr className="bg-gray-50 font-semibold">
-                  <td className="border p-2">Bank Deposit</td>
+                  <td className="border p-2">Payout</td>
 
                   {allMonths.map((month, i) => {
                     const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
@@ -520,9 +492,9 @@ const TreasurerReqs = () => {
                   </td>
                 </tr>
 
-                {/* Row: Bank Deposit */}
+                {/* Row: Payout */}
                 <tr className="bg-gray-50 font-semibold">
-                  <td className="border p-2">Bank Deposit</td>
+                  <td className="border p-2">Payout</td>
                   {allMonths.map((month, i) => {
                     const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
                     return (
