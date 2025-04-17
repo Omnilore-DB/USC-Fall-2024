@@ -363,7 +363,6 @@ export default function ResolveConflictPanel({
                       ? "bg-[#DAFBC9]"
                       : "bg-[#FAD9D9]";
                     
-                    // console.log(`Field ${key}: isResolved=${isResolved}, val1=${val1}, val2=${val2}`);
 
                     return (
                       <div key={key} className={`rounded p-3 ${bgColor}`}>
@@ -381,7 +380,13 @@ export default function ResolveConflictPanel({
                               </span>
                               {!isOpenField && (
                                 <span className="max-w-[200px] truncate text-sm italic text-gray-600">
-                                  {resolved == null || resolved === "" || resolved === "null" ? "—" : isValidDate(resolved) ? resolved.toLocaleDateString() : resolved}
+                                  {resolved === null || resolved === "" || resolved === "null" || typeof resolved === "undefined"
+                                    ? "—"
+                                    : typeof resolved === "boolean"
+                                    ? String(resolved)
+                                    : isValidDate(resolved)
+                                    ? resolved.toLocaleDateString()
+                                    : resolved}
                                 </span>
                               )}
                             </div>
@@ -393,13 +398,19 @@ export default function ResolveConflictPanel({
                               className={`rounded border p-1 ${resolved === String(val1) ? "bg-blue-100" : "bg-white"}`}
                               onClick={() => handleSelection(key, String(val1))}
                             >
-                              {val1 ?? "—"}
+                              {val1 === null || val1 === "" || val1 === "null" || typeof val1 === "boolean"
+                                    ? String(val1)
+                                    : val1 
+                                    ?? "—"}
                             </button>
                             <button
                               className={`rounded border p-1 ${resolved === String(val2) ? "bg-blue-100" : "bg-white"}`}
                               onClick={() => handleSelection(key, String(val2))}
                             >
-                              {val2 ?? "—"}
+                              {val2 === null || val2 === "" || val2 === "null" || typeof val2 === "boolean"
+                                    ? String(val2)
+                                    : val2 
+                                    ?? "—"}
                             </button>
                             <InputField
                                 fieldName={key}

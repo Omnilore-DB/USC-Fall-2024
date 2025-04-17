@@ -282,6 +282,8 @@ const TableComponent = ({
                                 : typeof item[columnName] === "object" &&
                                     item[columnName] !== null
                                   ? JSON.stringify(item[columnName])
+                                : typeof item[columnName] === "boolean"
+                                    ? item[columnName].toString()
                                   : item[columnName]}
                             </td>
                           ),
