@@ -235,7 +235,7 @@ const TreasurerReqs = () => {
   return (
     <div className="p-8">
       <h1 className="mb-6 bg-green-50 text-3xl font-bold">
-        TreasurerReqs Report
+        Treasurer's Report
       </h1>
 
       <div className="mb-6 flex items-center gap-4 bg-green-50">
@@ -337,9 +337,44 @@ const TreasurerReqs = () => {
                       </tr>
                     </React.Fragment>
                   ))}
-                </tbody>
-              </table>
-            </div>
+
+          {/* Sum row */}
+        <tr className="bg-green-100 font-semibold">
+          <td className="p-2 border">Total</td>
+          {allMonths.map((month, i) => {
+            const year = new Date(fromDate).getUTCFullYear();
+            const grossSum = categories.reduce((sum, cat) => {
+              const key = `${cat}-${year}-${i + 1}`;
+              return sum + (grossData[key] ?? 0);
+            }, 0);
+            const feeSum = categories.reduce((sum, cat) => {
+              const key = `${cat}-${year}-${i + 1}`;
+              return sum + (feeData[key] ?? 0);
+            }, 0);
+            const netSum = grossSum - feeSum;
+        
+            return (
+              <React.Fragment key={`sum-${month}`}>
+                <td className="p-2 border text-right">{format(grossSum)}</td>
+                <td className="p-2 border text-right">{format(feeSum)}</td>
+                <td className="p-2 border text-right">{format(netSum)}</td>
+              </React.Fragment>
+            );
+          })}
+  
+              <td className="p-2 border bg-green-100 text-right font-bold">
+                {format(
+                  categories.reduce((total, cat) => {
+                    const gross = getYTDTotal(grossData, cat);
+                    const fee = getYTDTotal(feeData, cat);
+                    return total + (gross - fee);
+                  }, 0)
+                )}
+              </td>
+          </tr>
+        </tbody>
+        </table>
+       </div>
           
           {/* Paypal Section */}
           <h2 className="mb-2 mt-8 text-xl font-bold">PayPal</h2>
