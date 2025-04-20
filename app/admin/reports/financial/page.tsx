@@ -334,9 +334,8 @@ const TreasurerReqs = () => {
   }, [triggerPresetReport, fromDate, toDate]);
 
   return (
-    <div className="flex h-full w-full flex-col bg-gray-100">
+    <div className="flex h-full w-full flex-col bg-gray-100 custom-scrollbar">
       <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
-
         <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
           <div className="flex h-full w-full flex-col items-center">
             <div className="flex h-full w-full flex-col gap-3">
@@ -411,7 +410,7 @@ const TreasurerReqs = () => {
                 </div>
               </div>
 
-              <div>
+              <div className="custom-scrollbar bg-white p-4 rounded-lg">
                 {showReport && (
                   <div className="w-full flex-grow overflow-y-auto">
                     <p className="mb-4">
