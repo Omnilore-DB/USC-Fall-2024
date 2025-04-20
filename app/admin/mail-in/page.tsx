@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { getRoles, getPermissions, Permission } from "@/app/supabase";
 import { MoonLoader } from "react-spinners";
 import { Check, ChevronsUpDown } from "lucide-react";
-import { ClientOnly } from "@/components/is-client";
 import { useForm } from "@tanstack/react-form";
 import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
@@ -25,37 +24,11 @@ import { CommandInput } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { state, zip_code } from "@/app/api/cron/src/validations/schemas";
+import type { MailInOrderData } from "@/app/api/cron/src/types";
+import { toast } from "sonner";
+import { insertMailInOrder } from "./actions";
 
-export default function () {
-  return (
-    <ClientOnly>
-      <Table />
-    </ClientOnly>
-  );
-}
-
-type MailInOrderData = {
-  date: Date;
-  first_name: string;
-  last_name: string;
-
-  email?: string;
-  phone?: string;
-
-  street_address: string;
-  city: string;
-  state: string;
-  zip_code: string;
-
-  sku: string;
-  amount: string;
-  fee: string;
-
-  emergency_contact?: string;
-  emergency_contact_phone?: string;
-};
-
-function Table() {
+export default function Table() {
   const { Field, handleSubmit, Subscribe } = useForm({
     defaultValues: {
       date: new Date(),
@@ -74,7 +47,26 @@ function Table() {
       emergency_contact_phone: "",
     } as MailInOrderData,
     onSubmit: async (data) => {
-      console.log(data);
+      const cleanedData = Object.fromEntries(
+        Object.entries(data.value).map(([key, value]) => [
+          key,
+          value === "" ? null : value,
+        ]),
+      ) as MailInOrderData;
+
+      const toAwait = insertMailInOrder(cleanedData);
+
+      toast.promise(toAwait, {
+        loading: "Creating mail-in order...",
+        success: "Mail-in order created successfully",
+        error: (error) => {
+          console.error(error);
+          return `Error creating mail-in order. ${error.message}`;
+        },
+      });
+
+      await toAwait;
+      data.formApi.reset();
     },
   });
 
@@ -238,10 +230,32 @@ function Table() {
                   <Field
                     name="email"
                     validators={{
-                      onChange: z
-                        .string()
-                        .email("Invalid email")
-                        .or(z.literal("")),
+                      onChangeListenTo: ["phone"],
+                      onChange: ({ value, fieldApi }) => {
+                        const phoneValue =
+                          fieldApi.form.getFieldValue("phone") ?? "";
+                        if (
+                          (value ?? "").length === 0 &&
+                          phoneValue.length === 0
+                        ) {
+                          return {
+                            message: "Either email or phone number is required",
+                          };
+                        }
+                        const result = z
+                          .string()
+                          .email("Invalid email")
+                          .or(z.literal(""))
+                          .safeParse(value);
+                        if (!result.success) {
+                          return {
+                            message: result.error
+                              .flatten()
+                              .formErrors.join(", "),
+                          };
+                        }
+                        return undefined;
+                      },
                     }}
                   >
                     {(field) => (
@@ -250,7 +264,7 @@ function Table() {
                           Email
                         </label>
                         <input
-                          value={field.state.value}
+                          value={field.state.value ?? ""}
                           onChange={(e) => field.handleChange(e.target.value)}
                           className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
@@ -267,11 +281,36 @@ function Table() {
                   <Field
                     name="phone"
                     validators={{
-                      onBlur: z
-                        .string()
-                        .length(10, "Phone number must be 10 digits")
-                        .regex(/^\d+$/, "Phone number must only contain digits")
-                        .or(z.literal("")),
+                      onChangeListenTo: ["email"],
+                      onChange: ({ value, fieldApi }) => {
+                        const emailValue =
+                          fieldApi.form.getFieldValue("email") ?? "";
+                        if (
+                          (value ?? "").length === 0 &&
+                          emailValue.length === 0
+                        ) {
+                          return {
+                            message: "Either email or phone number is required",
+                          };
+                        }
+                        const result = z
+                          .string()
+                          .length(10, "Phone number must be 10 digits")
+                          .regex(
+                            /^\d+$/,
+                            "Phone number must only contain digits",
+                          )
+                          .or(z.literal(""))
+                          .safeParse(value);
+                        if (!result.success) {
+                          return {
+                            message: result.error
+                              .flatten()
+                              .formErrors.join(", "),
+                          };
+                        }
+                        return undefined;
+                      },
                     }}
                   >
                     {(field) => (
@@ -280,7 +319,7 @@ function Table() {
                           Phone
                         </label>
                         <input
-                          value={field.state.value}
+                          value={field.state.value ?? ""}
                           type="tel"
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
@@ -578,7 +617,7 @@ function Table() {
                           Emergency Contact
                         </label>
                         <input
-                          value={field.state.value}
+                          value={field.state.value ?? ""}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -596,11 +635,41 @@ function Table() {
                   <Field
                     name="emergency_contact_phone"
                     validators={{
-                      onBlur: z
-                        .string()
-                        .length(10, "Phone number must be 10 digits")
-                        .regex(/^\d+$/, "Phone number must only contain digits")
-                        .or(z.literal("")),
+                      onBlurListenTo: ["emergency_contact"],
+                      onBlur: ({ value, fieldApi }) => {
+                        if (
+                          (
+                            fieldApi.form.getFieldValue("emergency_contact") ??
+                            ""
+                          ).length > 0 &&
+                          (value ?? "").length === 0
+                        ) {
+                          return {
+                            message:
+                              "Phone is required if emergency contact is provided",
+                          };
+                        }
+
+                        const result = z
+                          .string()
+                          .length(10, "Phone number must be 10 digits")
+                          .regex(
+                            /^\d+$/,
+                            "Phone number must only contain digits",
+                          )
+                          .or(z.literal(""))
+                          .safeParse(value);
+
+                        if (!result.success) {
+                          return {
+                            message: result.error
+                              .flatten()
+                              .formErrors.join(", "),
+                          };
+                        }
+
+                        return undefined;
+                      },
                     }}
                   >
                     {(field) => (
@@ -609,7 +678,7 @@ function Table() {
                           Emergency Contact Phone
                         </label>
                         <input
-                          value={field.state.value}
+                          value={field.state.value ?? ""}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"

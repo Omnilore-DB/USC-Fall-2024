@@ -53,7 +53,7 @@ export type Database = MergeDeep<
           Insert: {
             issues: Issue[];
             parsed_form_data: ParsedFormData[];
-            raw_form_data: Record<string, string>[];
+            raw_form_data: Record<string, unknown>[];
           };
 
           Update: {

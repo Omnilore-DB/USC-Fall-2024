@@ -202,6 +202,7 @@ export const update = {
 
       for (const [line_item, data] of t.parsed_form_data.entries()) {
         const { data: mem, error } = convert.member(data);
+
         if (error) {
           continue;
         }
@@ -237,15 +238,19 @@ export const update = {
             });
           }
 
-          if (
-            sku_map.get(data.sku)?.type === "MEMBERSHIP" &&
-            matches[0].type === "NONMEMBER"
-          ) {
-            await update.member(matches[0].id, {
-              ...mem,
-              type: "MEMBER",
-            });
-          }
+          await update.member(matches[0].id, {
+            ...matches[0],
+            type:
+              sku_map.get(data.sku)?.type === "MEMBERSHIP"
+                ? "MEMBER"
+                : matches[0].type,
+            emergency_contact:
+              mem.emergency_contact ?? matches[0].emergency_contact,
+            emergency_contact_phone:
+              mem.emergency_contact_phone ?? matches[0].emergency_contact_phone,
+            phone: matches[0].phone ?? mem.phone,
+            email: matches[0].email ?? mem.email,
+          });
         } else {
           const new_mem = {
             ...mem,
@@ -335,6 +340,22 @@ export const insert = {
     if (error)
       throw new Error(
         `Failed to insert new product. ${error.hint}. ${error.message}`,
+      );
+
+    return data[0];
+  },
+
+  transaction: async (
+    t: SupabaseTransactionInsert,
+  ): Promise<SupabaseTransaction> => {
+    const { error, data } = await supabase
+      .from("transactions")
+      .insert(t)
+      .select();
+
+    if (error)
+      throw new Error(
+        `Failed to insert new transaction. ${error.hint}. ${error.message}`,
       );
 
     return data[0];

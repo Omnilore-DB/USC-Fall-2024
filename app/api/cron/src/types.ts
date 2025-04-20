@@ -55,3 +55,24 @@ export type PaypalTransactionSearchResponse = {
 
 export type PaypalTransactionInfo =
   PaypalTransactionSearchResponse["transaction_details"][number]["transaction_info"];
+
+export type MailInOrderData = {
+  date: Date;
+  first_name: string;
+  last_name: string;
+
+  email: string | null;
+  phone: string | null;
+
+  street_address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+
+  sku: string;
+  amount: string;
+  fee: string;
+
+  emergency_contact: string | null;
+  emergency_contact_phone: string | null;
+};
