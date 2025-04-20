@@ -1,19 +1,5 @@
 "use client";
 
-/* TODO:
-
-Make sure skipping fulfilled
-Make sure all amounts from payouts table is divided by 100 (it comes in cents not dollars)
-(dont do this rn) -> Make sure all the month table columns align / same width (already good for paypal and stripe but need to make it same width as squarespace)
-  - About that I think this could be kinda difficult it depends on if we wanna do it completley dynamically or just hardcode some widths that seem like
-  - they would fit the UI well (thats probably the best option)
-Don't focus too much on styles (besides the width thing because hopefully Tais can make a better UI)
-Maybe improve variable names so it is more readable
-
-Follow my comments to help improve cohesiveness
-
-*/
-
 import React, { useState } from "react";
 import { supabase } from "@/app/supabase";
 
@@ -23,38 +9,6 @@ const TreasurerReqs = () => {
   const [showReport, setShowReport] = useState(false);
   const [grossData, setGrossData] = useState<Record<string, number>>({});
   const [feeData, setFeeData] = useState<Record<string, number>>({});
-
-  const format = (v: number) =>
-    v.toLocaleString("en-US", { style: "currency", currency: "USD" });
-
-  const getYTDTotal = (obj: Record<string, number>, category?: string) => {
-    const year = new Date(fromDate).getUTCFullYear();
-    return allMonths.reduce((sum, _, i) => {
-      const key = category
-        ? `${category}-${year}-${i + 1}`
-        : `${year}-${i + 1}`;
-      return sum + (obj[key] ?? 0);
-    }, 0);
-  };
-
-  const allMonths = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
-  const categories = ["MEMBERSHIP", "FORUM", "DONATION"];
-
-  const [donors, setDonors] = useState<any[]>([]);
 
   const [paypalGross, setPaypalGross] = useState<Record<string, number>>({});
   const [paypalFee, setPaypalFee] = useState<Record<string, number>>({});
@@ -66,12 +20,38 @@ const TreasurerReqs = () => {
   const [stripeNet, setStripeNet] = useState<Record<string, number>>({});
   const [stripePayout, setStripePayout] = useState<Record<string, number>>({});
 
+  const [donors, setDonors] = useState<any[]>([]);
+
+  const [triggerPresetReport, setTriggerPresetReport] = useState(false);
+  const [monthsInRange, setMonthsInRange] = useState<{ year: number; month: number }[]>([]);
+
+  const categories = ["MEMBERSHIP", "FORUM", "DONATION"];
+
+  const format = (v: number) =>
+    v.toLocaleString("en-US", { style: "currency", currency: "USD" });
+
   const handleGenerateReport = async () => {
     if (!fromDate || !toDate) return;
-    setShowReport(true);
-
     const start = new Date(fromDate);
     const end = new Date(toDate);
+    const diffMonths = (end.getUTCFullYear() - start.getUTCFullYear()) * 12 + (end.getUTCMonth() - start.getUTCMonth());
+    if (diffMonths > 11) {
+      alert("Please select a date range that is less than a year");
+      return;
+    }
+    setShowReport(true);
+
+    const range: {year: number; month: number }[] = [];
+    const loop = new Date(start);
+    while (loop <= end) {
+      range.push({
+        year: loop.getUTCFullYear(),
+        month: loop.getUTCMonth() + 1,
+      });
+      loop.setUTCMonth(loop.getUTCMonth() + 1);
+    }
+    setMonthsInRange(range);
+
     const grossResults: Record<string, number> = {};
     const feeResults: Record<string, number> = {};
 
@@ -119,118 +99,125 @@ const TreasurerReqs = () => {
       }
     };
 
+    const grossFeePromises = [];
+
     for (const category of categories) {
-      const current = new Date(start);
-      while (current <= end) {
-        const year = current.getUTCFullYear();
-        const month = current.getUTCMonth() + 1;
+      for (const { year, month } of range) {
         const key = `${category}-${year}-${month}`;
-
-        const grossRes = await supabase.rpc("get_total_gross_by_type", {
-          p_type: category,
-          p_year: year,
-          p_month: month,
-        });
-
-        const feeRes = await supabase.rpc("get_total_fee_by_type", {
-          p_type: category,
-          p_year: year,
-          p_month: month,
-        });
-
-        grossResults[key] = grossRes.data ?? 0;
-        feeResults[key] = feeRes.data ?? 0;
-
-        current.setUTCMonth(current.getUTCMonth() + 1);
+        grossFeePromises.push(
+          Promise.all([
+            supabase.rpc("get_total_gross_by_type", { p_type: category, p_year: year, p_month: month }),
+            supabase.rpc("get_total_fee_by_type", { p_type: category, p_year: year, p_month: month }),
+          ]).then(([grossRes, feeRes]) => {
+            grossResults[key] = grossRes.data ?? 0;
+            feeResults[key] = feeRes.data ?? 0;
+          })
+        );
       }
     }
+
+    await Promise.all(grossFeePromises);
+
 
     setGrossData(grossResults);
     setFeeData(feeResults);
 
-    const sample = new Date(fromDate);
-    const baseYear = sample.getUTCFullYear();
-    const pg: Record<string, number> = {};
-    const pf: Record<string, number> = {};
-    const pn: Record<string, number> = {};
-    const pp: Record<string, number> = {};
+    const paypal_gross: Record<string, number> = {};
+    const paypal_fee: Record<string, number> = {};
+    const paypal_net: Record<string, number> = {};
+    const paypal_payout: Record<string, number> = {};
 
-    for (let i = 0; i < 12; i++) {
-      const key = `${baseYear}-${i + 1}`;
-
-      // change this from using rpc to just doing one payouts table query where 'date' column is between the start and end date then we can use JS/TS to do all of this instead of asking database 48 times
-      const { data: g } = await supabase.rpc("get_paypal_gross", {
-        p_year: baseYear,
-        p_month: i + 1,
+    await Promise.all(range.map(({ year, month }) => {
+      const key = `${year}-${month}`;
+      return Promise.all([
+        supabase.rpc("get_paypal_gross", { p_year: year, p_month: month }),
+        supabase.rpc("get_paypal_fee", { p_year: year, p_month: month }),
+        supabase.rpc("get_paypal_net", { p_year: year, p_month: month }),
+        supabase.rpc("get_paypal_payout_total", { p_year: year, p_month: month }),
+      ]).then(([g, f, n, ppo]) => {
+        paypal_gross[key] = g.data ?? 0;
+        paypal_fee[key] = f.data ?? 0;
+        paypal_net[key] = n.data ?? 0;
+        paypal_payout[key] = ppo.data ?? 0;
       });
-      const { data: f } = await supabase.rpc("get_paypal_fee", {
-        p_year: baseYear,
-        p_month: i + 1,
+    }));
+    
+
+    setPaypalGross(paypal_gross);
+    setPaypalFee(paypal_fee);
+    setPaypalNet(paypal_net);
+    setPaypalPayout(paypal_payout);
+
+    const stripe_gross: Record<string, number> = {};
+    const stripe_fee: Record<string, number> = {};
+    const stripe_net: Record<string, number> = {};
+    const stripe_payout: Record<string, number> = {};
+
+    await Promise.all(range.map(({ year, month }) => {
+      const key = `${year}-${month}`;
+      return Promise.all([
+        supabase.rpc("get_stripe_gross", { p_year: year, p_month: month }),
+        supabase.rpc("get_stripe_fee", { p_year: year, p_month: month }),
+        supabase.rpc("get_stripe_net", { p_year: year, p_month: month }),
+        supabase.rpc("get_stripe_payout_total", { p_year: year, p_month: month }),
+      ]).then(([g, f, n, p]) => {
+        stripe_gross[key] = g.data ?? 0;
+        stripe_fee[key] = f.data ?? 0;
+        stripe_net[key] = n.data ?? 0;
+        stripe_payout[key] = p.data ?? 0;
       });
+    }));
 
-      const { data: ppo } = await supabase.rpc("get_paypal_payout_total", {
-        p_year: baseYear,
-        p_month: i + 1,
-      });
-      pp[key] = ppo ?? 0;
-
-      const { data: n } = await supabase.rpc("get_paypal_net", {
-        p_year: baseYear,
-        p_month: i + 1,
-      });
-
-      pg[key] = g ?? 0;
-      pf[key] = f ?? 0;
-      pn[key] = n ?? 0;
-      pp[key] = ppo ?? 0;
-    }
-
-    setPaypalGross(pg);
-    setPaypalFee(pf);
-    setPaypalNet(pn);
-    setPaypalPayout(pp);
-
-    const sg: Record<string, number> = {};
-    const sf: Record<string, number> = {};
-    const sn: Record<string, number> = {};
-    const sp: Record<string, number> = {};
-
-    for (let i = 0; i < 12; i++) {
-      const key = `${baseYear}-${i + 1}`;
-
-      const { data: g } = await supabase.rpc("get_stripe_gross", {
-        p_year: baseYear,
-        p_month: i + 1,
-      });
-
-      const { data: f } = await supabase.rpc("get_stripe_fee", {
-        p_year: baseYear,
-        p_month: i + 1,
-      });
-
-      const { data: n } = await supabase.rpc("get_stripe_net", {
-        p_year: baseYear,
-        p_month: i + 1,
-      });
-
-      const { data: p } = await supabase.rpc("get_stripe_payout_total", {
-        p_year: baseYear,
-        p_month: i + 1,
-      });
-
-      sg[key] = g ?? 0;
-      sf[key] = f ?? 0;
-      sn[key] = n ?? 0;
-      sp[key] = p ?? 0;
-    }
-
-    setStripeGross(sg);
-    setStripeFee(sf);
-    setStripeNet(sn);
-    setStripePayout(sp);
+    setStripeGross(stripe_gross);
+    setStripeFee(stripe_fee);
+    setStripeNet(stripe_net);
+    setStripePayout(stripe_payout);
 
     await fetchDonors();
   };
+
+  const getTotalLabel = () => {
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+  
+    const isJan1 = start.getUTCMonth() === 0 && start.getUTCDate() === 1;
+    const isDec31 = end.getUTCMonth() === 11 && end.getUTCDate() === 31;
+    const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+  
+    return isJan1 && isDec31 && sameYear
+      ? `${start.getUTCFullYear()} YTD Total`
+      : "Date Range Total";
+  };  
+
+  const getRangeTotal = (obj: Record<string, number>) => {
+    return monthsInRange.reduce((sum, { year, month }) => {
+      const key = `${year}-${month}`;
+      return sum + (obj[key] ?? 0);
+    }, 0);
+  };
+
+  const getCatRangeTotal = (obj: Record<string, number>, cat: string) => {
+    return monthsInRange.reduce((sum, { year, month }) => {
+      const key = `${cat}-${year}-${month}`;
+      return sum + (obj[key] ?? 0);
+    }, 0);
+  };
+
+  const handlePresetRange = (year: number) => {
+    const start = `${year}-01-01`;
+    const end = `${year}-12-31`;
+  
+    setFromDate(start);
+    setToDate(end);
+    setTriggerPresetReport(true); // This will cause useEffect to fire after state updates
+  };
+
+  React.useEffect(() => {
+    if (triggerPresetReport && fromDate && toDate) {
+      handleGenerateReport();
+      setTriggerPresetReport(false); // reset the flag
+    }
+  }, [triggerPresetReport, fromDate, toDate]);
 
   return (
     <div className="p-8">
@@ -238,7 +225,8 @@ const TreasurerReqs = () => {
         Treasurer's Report
       </h1>
 
-      <div className="mb-6 flex items-center gap-4 bg-green-50">
+      <div className="mb-6 flex flex-wrap items-center gap-4 bg-green-50">
+        {/* From Date */}
         <div>
           <label className="mr-2 bg-green-50 font-medium">From:</label>
           <input
@@ -248,6 +236,8 @@ const TreasurerReqs = () => {
             className="rounded border p-2"
           />
         </div>
+
+        {/* To Date */}
         <div>
           <label className="mr-2 bg-green-50 font-medium">To:</label>
           <input
@@ -257,21 +247,41 @@ const TreasurerReqs = () => {
             className="rounded border p-2"
           />
         </div>
+
+        {/* Generate Report */}
         <button
           onClick={handleGenerateReport}
           className="rounded bg-blue-600 px-4 py-2 text-white"
         >
           Generate Report
         </button>
+
+        {/* Preset Buttons */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-600">Presets:</span>
+          <button
+            onClick={() => handlePresetRange(2023)}
+            className="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
+          >
+            2023
+          </button>
+          <button
+            onClick={() => handlePresetRange(2024)}
+            className="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
+          >
+            2024
+          </button>
+        </div>
       </div>
+
 
       {showReport && (
         <>
-          <h2 className="mb-4 bg-green-50 text-2xl font-bold">Squarespace</h2>
           <p className="mb-4">
             Showing report from <strong>{fromDate}</strong> to{" "}
             <strong>{toDate}</strong>
           </p>
+          <h2 className="mb-4 bg-green-50 text-2xl font-bold">Squarespace</h2>
 
           <div className="overflow-x-auto">
             <table className="min-w-full border text-left text-sm">
@@ -280,22 +290,23 @@ const TreasurerReqs = () => {
                   <th rowSpan={2} className="border p-2">
                     Category
                   </th>
-                  {allMonths.map((month) => (
+                  {monthsInRange.map(({year, month}) => (
                     <th
                       colSpan={3}
-                      key={month}
+                      key={`${year}-${month}`}
                       className="border p-2 text-center"
                     >
-                      {month}
+                      {new Date(year, month - 1).toLocaleString("default", { month: "short", year: "numeric" })}
+                      {/* {month} */}
                     </th>
                   ))}
-                  <th rowSpan={2} className="border p-2">
-                    YTD Total
+                  <th rowSpan={2} className="border p-2 text-center">
+                    {getTotalLabel()}
                   </th>
                 </tr>
                 <tr className="bg-gray-100">
-                  {allMonths.map((month) => (
-                    <React.Fragment key={`${month}-sub`}>
+                  {monthsInRange.map(({year, month}) => (
+                    <React.Fragment key={`sub-${year}-${month}`}>
                       <th className="border bg-green-50 p-2">Gross</th>
                       <th className="border bg-green-50 p-2">Fees</th>
                       <th className="border bg-green-50 p-2">Net</th>
@@ -305,77 +316,70 @@ const TreasurerReqs = () => {
               </thead>
 
               <tbody>
-                  {categories.map((cat) => (
-                    <React.Fragment key={cat}>
-                      {/* Main data row */}
-                      <tr>
-                        <td className="p-2 border">{cat}</td>
-                        {allMonths.map((month, i) => {
-                          const sampleDate = new Date(fromDate);
-                          const year = sampleDate.getUTCFullYear();
-                          const monthNum = i + 1;
-                          const key = `${cat}-${year}-${monthNum}`;
-        
-                          const gross = grossData[key] ?? 0;
-                          const fee = feeData[key] ?? 0;
-                          const net = gross - fee;
-        
-                          const format = (v: number) =>
-                            v.toLocaleString("en-US", { style: "currency", currency: "USD" });
-        
-                          return (
-                            <React.Fragment key={`${cat}-${month}`}>
-                              <td className="p-2 border text-right ">{format(gross)}</td>
-                              <td className="p-2 border text-right">{format(fee)}</td>
-                              <td className="p-2 border text-right">{format(net)}</td>
-                            </React.Fragment>
-                          );
-                        })}
-                        <td className="p-2 border  bg-green-50 text-right">
-                          {format(getYTDTotal(grossData, cat) - getYTDTotal(feeData, cat))}
-                        </td>
-                      </tr>
-                    </React.Fragment>
-                  ))}
+                {categories.map((cat) => (
+                  <React.Fragment key={cat}>
+                    {/* Main data row */}
+                    <tr>
+                      <td className="border p-2">{cat}</td>
+                      {allMonths.map((month, i) => {
+                        const sampleDate = new Date(fromDate);
+                        const year = sampleDate.getUTCFullYear();
+                        const monthNum = i + 1;
+                        const key = `${cat}-${year}-${monthNum}`;
 
-          {/* Sum row */}
-        <tr className="bg-green-100 font-semibold">
-          <td className="p-2 border">Total</td>
-          {allMonths.map((month, i) => {
-            const year = new Date(fromDate).getUTCFullYear();
-            const grossSum = categories.reduce((sum, cat) => {
-              const key = `${cat}-${year}-${i + 1}`;
-              return sum + (grossData[key] ?? 0);
-            }, 0);
-            const feeSum = categories.reduce((sum, cat) => {
-              const key = `${cat}-${year}-${i + 1}`;
-              return sum + (feeData[key] ?? 0);
-            }, 0);
-            const netSum = grossSum - feeSum;
-        
-            return (
-              <React.Fragment key={`sum-${month}`}>
-                <td className="p-2 border text-right">{format(grossSum)}</td>
-                <td className="p-2 border text-right">{format(feeSum)}</td>
-                <td className="p-2 border text-right">{format(netSum)}</td>
-              </React.Fragment>
-            );
-          })}
-  
-              <td className="p-2 border bg-green-100 text-right font-bold">
-                {format(
-                  categories.reduce((total, cat) => {
-                    const gross = getYTDTotal(grossData, cat);
-                    const fee = getYTDTotal(feeData, cat);
-                    return total + (gross - fee);
-                  }, 0)
-                )}
-              </td>
-          </tr>
-        </tbody>
-        </table>
-       </div>
-          
+                        const gross = grossData[key] ?? 0;
+                        const fee = feeData[key] ?? 0;
+                        const net = gross - fee;
+
+                        const format = (v: number) =>
+                          v.toLocaleString("en-US", {
+                            style: "currency",
+                            currency: "USD",
+                          });
+
+                        return (
+                          <React.Fragment key={`${cat}-${month}`}>
+                            <td className="border p-2 text-right">
+                              {format(gross)}
+                            </td>
+                            <td className="border p-2 text-right">
+                              {format(fee)}
+                            </td>
+                            <td className="border p-2 text-right">
+                              {format(net)}
+                            </td>
+                          </React.Fragment>
+                        );
+                      })}
+                      <td className="border bg-green-50 p-2 text-right">
+                        {format(
+                          getYTDTotal(grossData, cat) -
+                            getYTDTotal(feeData, cat),
+                        )}
+                      </td>
+                    </tr>
+
+                    {cat === "DONATION" && (
+                      <tr className="bg-green-50">
+                        <td className="border p-2">Bank Confirmation</td>
+                        {allMonths.map((month) => (
+                          <td
+                            key={`confirm-${month}`}
+                            className="border p-2 text-center"
+                            colSpan={3}
+                          >
+                            <input type="checkbox" className="h-4 w-4" />
+                          </td>
+                        ))}
+                        <td className="border p-2"></td> {/* YTD cell */}
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
           {/* Paypal Section */}
           <h2 className="mb-2 mt-8 text-xl font-bold">PayPal</h2>
           <div className="mb-10 overflow-x-auto">
@@ -384,12 +388,17 @@ const TreasurerReqs = () => {
                 {/* Row 1: Month headers + YTD */}
                 <tr className="bg-green-100 text-center">
                   <th className="border bg-green-50 p-2">Category</th>
-                  {allMonths.map((month) => (
-                    <th key={month} className="border p-2 text-center">
-                      {month}
+                  {monthsInRange.map(({year, month}) => (
+                    <th 
+                      key={`paypal-head-${year}-${month}`} 
+                      className="border p-2 text-center"
+                    >
+                      {new Date(year, month - 1).toLocaleString("default", { 
+                        month: "short", 
+                        year: "numeric" })}
                     </th>
                   ))}
-                  <th className="border p-2 text-center">YTD</th>
+                  <th className="border p-2 text-center">{getTotalLabel()}</th>
                 </tr>
               </thead>
 
@@ -397,10 +406,10 @@ const TreasurerReqs = () => {
                 {/* Row: Gross */}
                 <tr>
                   <td className="border p-2 font-semibold">Gross</td>
-                  {allMonths.map((month, i) => {
-                    const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
+                  {monthsInRange.map(({year, month}) => {
+                    const key = `${year}-${month}`;
                     return (
-                      <React.Fragment key={`gross-${month}`}>
+                      <React.Fragment key={`gross-${year}-${month}`}>
                         <td className="border p-2 text-right">
                           {format(paypalGross[key] ?? 0)}
                         </td>
@@ -408,17 +417,17 @@ const TreasurerReqs = () => {
                     );
                   })}
                   <td className="border bg-green-50 p-2 text-right font-bold">
-                    {format(getYTDTotal(paypalGross))}
+                    {format(getRangeTotal(paypalGross))}
                   </td>
                 </tr>
 
                 {/* Row: Fee */}
                 <tr>
                   <td className="border p-2 font-semibold">Fee</td>
-                  {allMonths.map((month, i) => {
-                    const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
+                  {monthsInRange.map(({year, month}) => {
+                    const key = `${year}-${month}`;
                     return (
-                      <React.Fragment key={`fee-${month}`}>
+                      <React.Fragment key={`fee-${year}-${month}`}>
                         <td className="border p-2 text-right">
                           {format(paypalFee[key] ?? 0)}
                         </td>
@@ -426,7 +435,7 @@ const TreasurerReqs = () => {
                     );
                   })}
                   <td className="border bg-green-50 p-2 text-right font-bold">
-                    {format(getYTDTotal(paypalFee))}
+                    {format(getRangeTotal(paypalFee))}
                   </td>
                 </tr>
 
@@ -434,20 +443,20 @@ const TreasurerReqs = () => {
                 <tr className="bg-gray-50 font-semibold">
                   <td className="border p-2">Payout</td>
 
-                  {allMonths.map((month, i) => {
-                    const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
+                  {monthsInRange.map(({year, month}) => {
+                    const key = `${year}-${month}`;
                     return (
                       <td
                         key={`net-${month}`}
                         className="border p-2 text-right"
                       >
-                        {format((paypalPayout[key] ?? 0) / 100)}
+                        {format(paypalPayout[key] ?? 0)}
                       </td>
                     );
                   })}
 
                   <td className="border bg-green-50 p-2 text-right font-bold">
-                    {format(getYTDTotal(paypalPayout) / 100)}
+                    {format(getYTDTotal(paypalPayout))}
                   </td>
                 </tr>
 
@@ -456,15 +465,14 @@ const TreasurerReqs = () => {
                   <td className="border p-2 font-semibold">
                     Bank Confirmation
                   </td>
-                  {allMonths.map((month, i) => {
-                    const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
+                  {monthsInRange.map(({year, month}) => {
+                    const key = `${year}-${month}`;
                     return (
-                      <td
-                        key={`paypal-confirm-${month}`}
-                        className="border p-2 text-center"
-                      >
+                      <React.Fragment key={`paypal-confirm-${year}-${month}`}>
+                      <td className="border p-2 text-center">
                         <input type="checkbox" className="mt-1 h-4 w-4" />
                       </td>
+                    </React.Fragment>
                     );
                   })}
                   <td className="border bg-green-50 p-2 text-right font-bold"></td>
@@ -481,12 +489,18 @@ const TreasurerReqs = () => {
                 {/* Row 1: Month headers + YTD */}
                 <tr className="bg-green-100 text-center">
                   <th className="border p-2">Category</th>
-                  {allMonths.map((month) => (
-                    <th key={month} className="border p-2 text-center">
-                      {month}
+                  {monthsInRange.map(({year, month}) => (
+                    <th
+                      key={`stripe-head-${year}-${month}`}
+                      className="border p-2 text-center"
+                    >
+                      {new Date(year, month - 1).toLocaleString("default", {
+                        month: "short",
+                        year: "numeric",
+                      })}
                     </th>
                   ))}
-                  <th className="border p-2 text-center">YTD</th>
+                  <th className="border p-2 text-center">{getTotalLabel()}</th>
                 </tr>
               </thead>
 
@@ -494,10 +508,10 @@ const TreasurerReqs = () => {
                 {/* Row: Gross */}
                 <tr>
                   <td className="border p-2 font-semibold">Gross</td>
-                  {allMonths.map((month, i) => {
-                    const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
+                  {monthsInRange.map(({ year, month }) => {
+                    const key = `${year}-${month}`;
                     return (
-                      <React.Fragment key={`stripe-gross-${month}`}>
+                      <React.Fragment key={`stripe-gross-${year}-${month}`}>
                         <td className="border p-2 text-right">
                           {format(stripeGross[key] ?? 0)}
                         </td>
@@ -505,15 +519,15 @@ const TreasurerReqs = () => {
                     );
                   })}
                   <td className="border bg-green-50 p-2 text-right font-bold">
-                    {format(getYTDTotal(stripeGross))}
+                    {format(getRangeTotal(stripeGross))}
                   </td>
                 </tr>
 
                 {/* Row: Fee */}
                 <tr>
                   <td className="border p-2 font-semibold">Fee</td>
-                  {allMonths.map((month, i) => {
-                    const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
+                  {monthsInRange.map(({year, month}) => {
+                    const key = `${year}-${month}`;
                     return (
                       <React.Fragment key={`stripe-fee-${month}`}>
                         <td className="border p-2 text-right">
@@ -523,13 +537,13 @@ const TreasurerReqs = () => {
                     );
                   })}
                   <td className="border bg-green-50 p-2 text-right font-bold">
-                    {format(getYTDTotal(stripeFee))}
+                    {format(getRangeTotal(stripeFee))}
                   </td>
                 </tr>
 
                 {/* Row: Payout */}
                 <tr className="bg-gray-50 font-semibold">
-                  <td className="border p-2">Payout</td>
+                  <td className="border p-2">Bank Deposit</td>
                   {allMonths.map((month, i) => {
                     const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
                     return (
@@ -541,17 +555,16 @@ const TreasurerReqs = () => {
                     );
                   })}
                   <td className="border bg-green-50 p-2 text-right font-bold">
-                    {format(getYTDTotal(stripePayout) / 100)}
+                    {format(getYTDTotal(stripePayout))}
                   </td>
                 </tr>
 
                 {/* Row: Bank Confirmation */}
                 <tr className="bg-green-50 font-semibold">
                   <td className="border p-2">Bank Confirmation</td>
-                  {allMonths.map((month, i) => {
-                    const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
+                  {monthsInRange.map((year, month) => {
                     return (
-                      <React.Fragment key={`stripe-confirm-${month}`}>
+                      <React.Fragment key={`stripe-confirm-${year}-${month}`}>
                         <td className="border p-2 text-center">
                           <input type="checkbox" className="mt-1 h-4 w-4" />
                         </td>
