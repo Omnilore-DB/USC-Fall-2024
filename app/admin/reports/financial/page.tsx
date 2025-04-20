@@ -703,11 +703,11 @@ const TreasurerReqs = () => {
 
                     {/*  Annual Donation Section */}
 
-                    <div className="mt-12">
+
                       <div className="sticky left-0 bg-white z-10 pb-2">
                         <h2 className="mt-8 mb-2 text-base font-semibold">Annual Donation</h2>
                       </div>
-                      <div className="overflow-auto">
+                      <div className="sticky left-0 overflow-auto">
                         <table className="table-fixed w-full border bg-white text-sm">
                           <thead>
                             <tr className="bg-gray-100">
@@ -783,7 +783,6 @@ const TreasurerReqs = () => {
                           </tbody>
                         </table>
                       </div>
-                    </div>
                   </div>
                   </div>
 
