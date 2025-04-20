@@ -421,7 +421,7 @@ const TreasurerReqs = () => {
                     <h2 className="mb-2 text-base font-semibold">Squarespace</h2>
 
                     <div className="overflow-x-auto">
-                    <table className="table-fixed w-full border-collapse rounded-lg bg-white text-sm shadow">
+                    <table className="table-fixed w-full border-collapse rounded-lg bg-white text-sm shadow text-center">
                         <thead>
                           <tr className="bg-gray-100">
                             <th rowSpan={2} className="border p-2 w-32">
@@ -456,7 +456,7 @@ const TreasurerReqs = () => {
                             <React.Fragment key={cat}>
                               {/* Main data row */}
                               <tr>
-                                <td className="border p-2">{cat}</td>
+                                <td className="border p-2 text-left font-semibold">{cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}</td>
                                 {monthsInRange.map(({ year, month }) => {
                                   // Convert category to uppercase for data lookup to match existing data keys
                                   const upperCat = cat.toUpperCase();
@@ -468,19 +468,19 @@ const TreasurerReqs = () => {
 
                                   return (
                                     <React.Fragment key={`${cat}-${year}-${month}`}>
-                                      <td className="border p-2 text-right">
+                                      <td className="border p-2">
                                         {format(gross)}
                                       </td>
-                                      <td className="border p-2 text-right">
+                                      <td className="border p-2 ">
                                         {format(fee)}
                                       </td>
-                                      <td className="border p-2 text-right">
+                                      <td className="border p-2 ">
                                         {format(net)}
                                       </td>
                                     </React.Fragment>
                                   );
                                 })}
-                                <td className="border bg-gray-100 p-2 text-right">
+                                <td className="border bg-gray-100 p-2 ">
                                   {format(
                                     getCatRangeTotal(grossData, cat.toUpperCase()) -
                                     getCatRangeTotal(feeData, cat.toUpperCase())
@@ -497,7 +497,7 @@ const TreasurerReqs = () => {
                     <h2 className="mt-8 mb-2 text-base font-semibold">PayPal</h2>
 
                     <div className="mb-10 overflow-x-auto">
-                    <table className="table-fixed w-full border-collapse rounded-lg bg-white text-sm shadow">
+                    <table className="table-fixed w-full border-collapse rounded-lg bg-white text-sm shadow ">
                         <thead>
                           {/* Row 1: Month headers + YTD */}
                           <tr className="bg-gray-100 text-center">
@@ -525,13 +525,13 @@ const TreasurerReqs = () => {
                               const key = `${year}-${month}`;
                               return (
                                 <React.Fragment key={`gross-${year}-${month}`}>
-                                  <td className="border p-2 text-right">
+                                  <td className="border p-2 text-center">
                                     {format(paypalGross[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
                               );
                             })}
-                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                            <td className="border bg-gray-100 p-2  font-bold ">
                               {format(getRangeTotal(paypalGross))}
                             </td>
                           </tr>
@@ -543,13 +543,13 @@ const TreasurerReqs = () => {
                               const key = `${year}-${month}`;
                               return (
                                 <React.Fragment key={`fee-${year}-${month}`}>
-                                  <td className="border p-2 text-right">
+                                  <td className="border p-2 text-center">
                                     {format(paypalFee[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
                               );
                             })}
-                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                            <td className="border bg-gray-100 p-2  font-bold ">
                               {format(getRangeTotal(paypalFee))}
                             </td>
                           </tr>
@@ -563,14 +563,14 @@ const TreasurerReqs = () => {
                               return (
                                 <td
                                   key={`net-${year}-${month}`}
-                                  className="border p-2 text-right"
+                                  className="border p-2 text-center"
                                 >
                                   {format(paypalPayout[key] ?? 0)}
                                 </td>
                               );
                             })}
 
-                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                            <td className="border bg-gray-100 p-2  font-bold">
                               {format(getRangeTotal(paypalPayout))}
                             </td>
                           </tr>
@@ -590,7 +590,7 @@ const TreasurerReqs = () => {
                                 </React.Fragment>
                               );
                             })}
-                            <td className="border bg-gray-100 p-2 text-right font-bold"></td>
+                            <td className="border bg-gray-100 p-2  font-bold"></td>
                           </tr>
                         </tbody>
                       </table>
@@ -600,15 +600,15 @@ const TreasurerReqs = () => {
                     <h2 className="mt-8 mb-2 text-base font-semibold">Stripe</h2>
 
                     <div className="mb-10 overflow-x-auto">
-                      <table className="table-fixed w-full border-collapse border">
+                      <table className="table-fixed w-full border-collapse border text-sm">
                         <thead>
                           {/* Row 1: Month headers + YTD */}
                           <tr className="bg-gray-100 text-center">
-                            <th className="border p-2 w-32">Category</th>
+                            <th className="border p-2 w-32 ">Category</th>
                             {monthsInRange.map(({ year, month }) => (
                               <th
                                 key={`stripe-head-${year}-${month}`}
-                                className="border p-2 text-center w-64"
+                                className="border p-2 text-center w-64 "
                               >
                                 {new Date(year, month - 1).toLocaleString("default", {
                                   month: "short",
@@ -628,13 +628,13 @@ const TreasurerReqs = () => {
                               const key = `${year}-${month}`;
                               return (
                                 <React.Fragment key={`stripe-gross-${year}-${month}`}>
-                                  <td className="border p-2 text-right">
+                                  <td className="border p-2 text-center">
                                     {format(stripeGross[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
                               );
                             })}
-                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                            <td className="border bg-gray-100 p-2  font-bold">
                               {format(getRangeTotal(stripeGross))}
                             </td>
                           </tr>
@@ -646,13 +646,13 @@ const TreasurerReqs = () => {
                               const key = `${year}-${month}`;
                               return (
                                 <React.Fragment key={`stripe-fee-${year}-${month}`}>
-                                  <td className="border p-2 text-right">
+                                  <td className="border p-2 text-center">
                                     {format(stripeFee[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
                               );
                             })}
-                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                            <td className="border bg-gray-100 p-2  font-bold">
                               {format(getRangeTotal(stripeFee))}
                             </td>
                           </tr>
@@ -664,13 +664,13 @@ const TreasurerReqs = () => {
                               const key = `${year}-${month}`;
                               return (
                                 <React.Fragment key={`stripe-net-${year}-${month}`}>
-                                  <td className="border p-2 text-right">
+                                  <td className="border p-2 text-center">
                                     {format(stripePayout[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
                               );
                             })}
-                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                            <td className="border bg-gray-100 p-2  font-bold">
                               {format(getRangeTotal(stripePayout))}
                             </td>
                           </tr>
@@ -688,7 +688,7 @@ const TreasurerReqs = () => {
                               );
                             })}
                             {/* YTD Total */}
-                            <td className="border bg-gray-100 p-2 text-right font-bold"></td>
+                            <td className="border bg-gray-100 p-2  font-bold"></td>
                           </tr>
                         </tbody>
                       </table>
@@ -699,7 +699,7 @@ const TreasurerReqs = () => {
                     <div className="mt-12">
                       <h2 className="mt-8 mb-2 text-base font-semibold">Annual Donation</h2>
                       <div className="overflow-x-auto">
-                        <table className="table-fixed w-full border bg-white text-left text-sm">
+                        <table className="table-fixed w-full border bg-white text-sm">
                           <thead>
                             <tr className="bg-gray-100">
                               <th className="border p-2 font-bold">Donor</th>
@@ -732,10 +732,10 @@ const TreasurerReqs = () => {
                                     {/* Donor summary row */}
                                     <tr className="bg-gray-50 font-semibold">
                                       <td className="border p-2">{fullName}</td>
-                                      <td className="border p-2 text-right">{total}</td>
+                                      <td className="border p-2 ">{total}</td>
                                       <td className="border p-2"></td>
                                       <td className="border p-2"></td>
-                                      <td className="border p-2 text-right">{total}</td>
+                                      <td className="border p-2 ">{total}</td>
                                       <td className="border p-2">{fullAddress || "—"}</td>
                                     </tr>
 
@@ -744,17 +744,17 @@ const TreasurerReqs = () => {
                                     {donor.donations?.map((donation: { date: string; amount: number }, i: number) => (
                                       <tr key={`${donor.member_id}-${i}`}>
                                         <td className="border p-2"></td>
-                                        <td className="border p-2 text-right"></td>
+                                        <td className="border p-2 "></td>
                                         <td className="border p-2 text-center">
                                           {new Date(donation.date).toLocaleDateString()}
                                         </td>
-                                        <td className="border p-2 text-right">
+                                        <td className="border p-2 ">
                                           {new Intl.NumberFormat("en-US", {
                                             style: "currency",
                                             currency: "USD",
                                           }).format(donation.amount || 0)}
                                         </td>
-                                        <td className="border p-2 text-right"></td>
+                                        <td className="border p-2 "></td>
                                         <td className="border p-2"></td>
                                       </tr>
                                     ))}
