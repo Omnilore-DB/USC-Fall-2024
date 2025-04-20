@@ -216,7 +216,8 @@ const TreasurerReqs = () => {
 
     for (const category of categories) {
       for (const { year, month } of range) {
-        const key = `${category}-${year}-${month}`;
+        const upperCaseCategory = category.toUpperCase();
+        const key = `${upperCaseCategory}-${year}-${month}`;
         grossFeePromises.push(
           Promise.all([
             supabase.rpc("get_total_gross_by_type", { p_type: category, p_year: year, p_month: month }),
@@ -336,61 +337,61 @@ const TreasurerReqs = () => {
     <div className="flex h-full w-full flex-col bg-gray-100">
       <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
 
-          <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
-            <div className="flex h-full w-full flex-col items-center">
-              <div className="flex h-full w-full flex-col gap-3">
-                <div className="flex w-full flex-row items-end justify-between ">
-                  <div className="flex w-3/5 flex-row justify-between gap-2">
-                    {customRange ? (
-                      <>
-                        <div className="flex w-1/3 flex-col">
-                          <label className="text-sm font-semibold">
-                            Start Date
-                          </label>
-                          <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
-                          />
-                        </div>
-                        <div className="flex w-1/3 flex-col">
-                          <label className="text-sm font-semibold">
-                            End Date
-                          </label>
-                          <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex w-2/3 flex-col">
-                          <label className="text-sm font-semibold">
-                            Calendar Year
-                          </label>
-                          <MultiSelectDropdown
-                            options={availableYears}
-                            selectedOptions={selectedYears}
-                            setSelectedOptions={setSelectedYears}
-                            placeholder="Select Calendar Year(s)"
-                          />
-                        </div>
-                      </>
-                    )}
-                    <div className="flex w-1/3 items-end">
-                      <button
-                        className="h-10 w-full rounded-lg bg-gray-200 font-semibold"
-                        onClick={() => setCustomRange((prev) => !prev)}
-                      >
-                        {customRange ? "Calendar Year" : "Custom Range"}
-                      </button>
-                    </div>
+        <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
+          <div className="flex h-full w-full flex-col items-center">
+            <div className="flex h-full w-full flex-col gap-3">
+              <div className="flex w-full flex-row items-end justify-between ">
+                <div className="flex w-3/5 flex-row justify-between gap-2">
+                  {customRange ? (
+                    <>
+                      <div className="flex w-1/3 flex-col">
+                        <label className="text-sm font-semibold">
+                          Start Date
+                        </label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
+                        />
+                      </div>
+                      <div className="flex w-1/3 flex-col">
+                        <label className="text-sm font-semibold">
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex w-2/3 flex-col">
+                        <label className="text-sm font-semibold">
+                          Calendar Year
+                        </label>
+                        <MultiSelectDropdown
+                          options={availableYears}
+                          selectedOptions={selectedYears}
+                          setSelectedOptions={setSelectedYears}
+                          placeholder="Select Calendar Year(s)"
+                        />
+                      </div>
+                    </>
+                  )}
+                  <div className="flex w-1/3 items-end">
+                    <button
+                      className="h-10 w-full rounded-lg bg-gray-200 font-semibold"
+                      onClick={() => setCustomRange((prev) => !prev)}
+                    >
+                      {customRange ? "Calendar Year" : "Custom Range"}
+                    </button>
                   </div>
-                  <div className="flex w-1/4 flex-row justify-between gap-2 ">
+                </div>
+                <div className="flex w-1/4 flex-row justify-between gap-2 ">
                   <div className="flex w-1/2 items-end">
                     <button
                       onClick={handleGenerateReport}
@@ -408,374 +409,374 @@ const TreasurerReqs = () => {
                     </button>
                   </div>
                 </div>
-                </div>
-                  
-                  <div>
+              </div>
+
+              <div>
                 {showReport && (
-                  <div className="w-full flex-grow overflow-y-auto mt-4">
+                  <div className="w-full flex-grow overflow-y-auto">
                     <p className="mb-4">
-                      Showing report from <strong>{fromDate}</strong> to{" "}
-                      <strong>{toDate}</strong>
+                      {/* Showing report from <strong>{fromDate}</strong> to{" "}
+                      <strong>{toDate}</strong> */}
                     </p>
-                    <h2 className="mb-4 text-xl font-bold">Squarespace</h2>
+                    <h2 className="mb-2 text-base font-semibold">Squarespace</h2>
 
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border text-left text-sm">
-                    <thead>
-                      <tr className="bg-green-50">
-                        <th rowSpan={2} className="border p-2">
-                          Category
-                        </th>
-                        {monthsInRange.map(({ year, month }) => (
-                          <th
-                            colSpan={3}
-                            key={`${year}-${month}`}
-                            className="border p-2 text-center"
-                          >
-                            {new Date(year, month - 1).toLocaleString("default", { month: "short", year: "numeric" })}
-                          </th>
-                        ))}
-                        <th rowSpan={2} className="border p-2 text-center">
-                          {getTotalLabel()}
-                        </th>
-                      </tr>
-                      <tr className="bg-gray-100">
-                        {monthsInRange.map(({ year, month }) => (
-                          <React.Fragment key={`sub-${year}-${month}`}>
-                            <th className="border bg-green-50 p-2">Gross</th>
-                            <th className="border bg-green-50 p-2">Fees</th>
-                            <th className="border bg-green-50 p-2">Net</th>
-                          </React.Fragment>
-                        ))}
-                      </tr>
-                    </thead>
+                    <div className="overflow-x-auto">
+                    <table className="table-fixed w-full border-collapse rounded-lg bg-white text-sm shadow">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th rowSpan={2} className="border p-2 w-32">
+                              Category
+                            </th>
+                            {monthsInRange.map(({ year, month }) => (
+                              <th
+                                colSpan={3}
+                                key={`${year}-${month}`}
+                                className="border p-2 text-center w-64"
+                              >
+                                {new Date(year, month - 1).toLocaleString("default", { month: "short", year: "numeric" })}
+                              </th>
+                            ))}
+                            <th rowSpan={2} className="border p-2 text-center">
+                              {getTotalLabel()}
+                            </th>
+                          </tr>
+                          <tr className="bg-gray-100">
+                            {monthsInRange.map(({ year, month }) => (
+                              <React.Fragment key={`sub-${year}-${month}`}>
+                                <th className="border bg-gray-100 p-2">Gross</th>
+                                <th className="border bg-gray-100 p-2">Fees</th>
+                                <th className="border bg-gray-100 p-2">Net</th>
+                              </React.Fragment>
+                            ))}
+                          </tr>
+                        </thead>
 
-                    <tbody>
-                      {categories.map((cat) => (
-                        <React.Fragment key={cat}>
-                          {/* Main data row */}
+                        <tbody>
+                          {categories.map((cat) => (
+                            <React.Fragment key={cat}>
+                              {/* Main data row */}
+                              <tr>
+                                <td className="border p-2">{cat}</td>
+                                {monthsInRange.map(({ year, month }) => {
+                                  // Convert category to uppercase for data lookup to match existing data keys
+                                  const upperCat = cat.toUpperCase();
+                                  const key = `${upperCat}-${year}-${month}`;
+
+                                  const gross = grossData[key] ?? 0;
+                                  const fee = feeData[key] ?? 0;
+                                  const net = gross - fee;
+
+                                  return (
+                                    <React.Fragment key={`${cat}-${year}-${month}`}>
+                                      <td className="border p-2 text-right">
+                                        {format(gross)}
+                                      </td>
+                                      <td className="border p-2 text-right">
+                                        {format(fee)}
+                                      </td>
+                                      <td className="border p-2 text-right">
+                                        {format(net)}
+                                      </td>
+                                    </React.Fragment>
+                                  );
+                                })}
+                                <td className="border bg-gray-100 p-2 text-right">
+                                  {format(
+                                    getCatRangeTotal(grossData, cat.toUpperCase()) -
+                                    getCatRangeTotal(feeData, cat.toUpperCase())
+                                  )}
+                                </td>
+                              </tr>
+                            </React.Fragment>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Paypal Section */}
+                    <h2 className="mt-8 mb-2 text-base font-semibold">PayPal</h2>
+
+                    <div className="mb-10 overflow-x-auto">
+                    <table className="table-fixed w-full border-collapse rounded-lg bg-white text-sm shadow">
+                        <thead>
+                          {/* Row 1: Month headers + YTD */}
+                          <tr className="bg-gray-100 text-center">
+                            <th className="border bg-gray-100 p-2 w-32">Category</th>
+                            {monthsInRange.map(({ year, month }) => (
+                              <th
+                                key={`paypal-head-${year}-${month}`}
+                                className="border p-2 text-center w-64"
+                              >
+                                {new Date(year, month - 1).toLocaleString("default", {
+                                  month: "short",
+                                  year: "numeric"
+                                })}
+                              </th>
+                            ))}
+                            <th className="border p-2 text-center">{getTotalLabel()}</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {/* Row: Gross */}
                           <tr>
-                            <td className="border p-2">{cat}</td>
+                            <td className="border p-2 font-semibold">Gross</td>
                             {monthsInRange.map(({ year, month }) => {
-                              const key = `${cat}-${year}-${month}`;
-
-                              const gross = grossData[key] ?? 0;
-                              const fee = feeData[key] ?? 0;
-                              const net = gross - fee;
-
+                              const key = `${year}-${month}`;
                               return (
-                                <React.Fragment key={`${cat}-${year}-${month}`}>
+                                <React.Fragment key={`gross-${year}-${month}`}>
                                   <td className="border p-2 text-right">
-                                    {format(gross)}
-                                  </td>
-                                  <td className="border p-2 text-right">
-                                    {format(fee)}
-                                  </td>
-                                  <td className="border p-2 text-right">
-                                    {format(net)}
+                                    {format(paypalGross[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
                               );
                             })}
-                            <td className="border bg-green-50 p-2 text-right">
-                              {format(
-                                getCatRangeTotal(grossData, cat) -
-                                getCatRangeTotal(feeData, cat)
-                              )}
+                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                              {format(getRangeTotal(paypalGross))}
                             </td>
                           </tr>
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
 
-                {/* Paypal Section */}
-                <h2 className="mb-2 mt-8 text-xl font-bold">PayPal</h2>
-                <div className="mb-10 overflow-x-auto">
-                  <table className="min-w-full border-collapse border">
-                    <thead>
-                      {/* Row 1: Month headers + YTD */}
-                      <tr className="bg-green-100 text-center">
-                        <th className="border bg-green-50 p-2">Category</th>
-                        {monthsInRange.map(({ year, month }) => (
-                          <th
-                            key={`paypal-head-${year}-${month}`}
-                            className="border p-2 text-center"
-                          >
-                            {new Date(year, month - 1).toLocaleString("default", {
-                              month: "short",
-                              year: "numeric"
-                            })}
-                          </th>
-                        ))}
-                        <th className="border p-2 text-center">{getTotalLabel()}</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {/* Row: Gross */}
-                      <tr>
-                        <td className="border p-2 font-semibold">Gross</td>
-                        {monthsInRange.map(({ year, month }) => {
-                          const key = `${year}-${month}`;
-                          return (
-                            <React.Fragment key={`gross-${year}-${month}`}>
-                              <td className="border p-2 text-right">
-                                {format(paypalGross[key] ?? 0)}
-                              </td>
-                            </React.Fragment>
-                          );
-                        })}
-                        <td className="border bg-green-50 p-2 text-right font-bold">
-                          {format(getRangeTotal(paypalGross))}
-                        </td>
-                      </tr>
-
-                      {/* Row: Fee */}
-                      <tr>
-                        <td className="border p-2 font-semibold">Fee</td>
-                        {monthsInRange.map(({ year, month }) => {
-                          const key = `${year}-${month}`;
-                          return (
-                            <React.Fragment key={`fee-${year}-${month}`}>
-                              <td className="border p-2 text-right">
-                                {format(paypalFee[key] ?? 0)}
-                              </td>
-                            </React.Fragment>
-                          );
-                        })}
-                        <td className="border bg-green-50 p-2 text-right font-bold">
-                          {format(getRangeTotal(paypalFee))}
-                        </td>
-                      </tr>
-
-                      {/* Row: Payout */}
-                      <tr className="bg-gray-50 font-semibold">
-                        <td className="border p-2">Payout</td>
-
-                        {monthsInRange.map(({ year, month }) => {
-                          const key = `${year}-${month}`;
-                          return (
-                            <td
-                              key={`net-${year}-${month}`}
-                              className="border p-2 text-right"
-                            >
-                              {format(paypalPayout[key] ?? 0)}
-                            </td>
-                          );
-                        })}
-
-                        <td className="border bg-green-50 p-2 text-right font-bold">
-                          {format(getRangeTotal(paypalPayout))}
-                        </td>
-                      </tr>
-
-                      {/* Row: Bank Confirmation */}
-                      <tr className="bg-green-50 font-semibold">
-                        <td className="border p-2 font-semibold">
-                          Bank Confirmation
-                        </td>
-                        {monthsInRange.map(({ year, month }) => {
-                          const key = `${year}-${month}`;
-                          return (
-                            <React.Fragment key={`paypal-confirm-${year}-${month}`}>
-                              <td className="border p-2 text-center">
-                                <input type="checkbox" className="mt-1 h-4 w-4" />
-                              </td>
-                            </React.Fragment>
-                          );
-                        })}
-                        <td className="border bg-green-50 p-2 text-right font-bold"></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Stripe Section */}
-                <h2 className="mb-2 mt-8 text-xl font-bold">Stripe</h2>
-                <div className="mb-10 overflow-x-auto">
-                  <table className="min-w-full border-collapse border">
-                    <thead>
-                      {/* Row 1: Month headers + YTD */}
-                      <tr className="bg-green-100 text-center">
-                        <th className="border p-2">Category</th>
-                        {monthsInRange.map(({ year, month }) => (
-                          <th
-                            key={`stripe-head-${year}-${month}`}
-                            className="border p-2 text-center"
-                          >
-                            {new Date(year, month - 1).toLocaleString("default", {
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          </th>
-                        ))}
-                        <th className="border p-2 text-center">{getTotalLabel()}</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {/* Row: Gross */}
-                      <tr>
-                        <td className="border p-2 font-semibold">Gross</td>
-                        {monthsInRange.map(({ year, month }) => {
-                          const key = `${year}-${month}`;
-                          return (
-                            <React.Fragment key={`stripe-gross-${year}-${month}`}>
-                              <td className="border p-2 text-right">
-                                {format(stripeGross[key] ?? 0)}
-                              </td>
-                            </React.Fragment>
-                          );
-                        })}
-                        <td className="border bg-green-50 p-2 text-right font-bold">
-                          {format(getRangeTotal(stripeGross))}
-                        </td>
-                      </tr>
-
-                      {/* Row: Fee */}
-                      <tr>
-                        <td className="border p-2 font-semibold">Fee</td>
-                        {monthsInRange.map(({ year, month }) => {
-                          const key = `${year}-${month}`;
-                          return (
-                            <React.Fragment key={`stripe-fee-${year}-${month}`}>
-                              <td className="border p-2 text-right">
-                                {format(stripeFee[key] ?? 0)}
-                              </td>
-                            </React.Fragment>
-                          );
-                        })}
-                        <td className="border bg-green-50 p-2 text-right font-bold">
-                          {format(getRangeTotal(stripeFee))}
-                        </td>
-                      </tr>
-
-                      {/* Row: Payout */}
-                      <tr className="bg-gray-50 font-semibold">
-                        <td className="border p-2">Bank Deposit</td>
-                        {monthsInRange.map(({ year, month }) => {
-                          const key = `${year}-${month}`;
-                          return (
-                            <React.Fragment key={`stripe-net-${year}-${month}`}>
-                              <td className="border p-2 text-right">
-                                {format(stripePayout[key] ?? 0)}
-                              </td>
-                            </React.Fragment>
-                          );
-                        })}
-                        <td className="border bg-green-50 p-2 text-right font-bold">
-                          {format(getRangeTotal(stripePayout))}
-                        </td>
-                      </tr>
-
-                      {/* Row: Bank Confirmation */}
-                      <tr className="bg-green-50 font-semibold">
-                        <td className="border p-2">Bank Confirmation</td>
-                        {monthsInRange.map(({ year, month }) => {
-                          return (
-                            <React.Fragment key={`stripe-confirm-${year}-${month}`}>
-                              <td className="border p-2 text-center">
-                                <input type="checkbox" className="mt-1 h-4 w-4" />
-                              </td>
-                            </React.Fragment>
-                          );
-                        })}
-                        {/* YTD Total */}
-                        <td className="border bg-green-50 p-2 text-right font-bold"></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/*  Annual Donation Section */}
-
-                <div className="mt-12">
-                  <h2 className="mb-1 text-2xl font-bold"> Annual Donation</h2>
-                  <p className="mb-4 text-gray-600">
-                    Annual summary of donor contributions collected via Squarespace.
-                  </p>
-
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full border text-left text-sm">
-                      <thead>
-                        <tr className="bg-green-100">
-                          <th className="border p-2 font-bold">Donor</th>
-                          <th className="border p-2 font-bold">Gift Totals</th>
-                          <th className="border p-2 font-bold">Date</th>
-                          <th className="border p-2 font-bold">Amount</th>
-                          <th className="border p-2 font-bold">Total</th>
-                          <th className="border p-2 font-bold">Address</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {donors.length > 0 ? (
-                          donors.map((donor, idx) => {
-                            const fullName = `${donor.first_name} ${donor.last_name}`;
-                            const fullAddressParts = [
-                              donor.street_address,
-                              donor.city,
-                              donor.state,
-                              donor.zip_code,
-                            ].filter(Boolean);
-                            const fullAddress = fullAddressParts.join(", ");
-
-                            const total = new Intl.NumberFormat("en-US", {
-                              style: "currency",
-                              currency: "USD",
-                            }).format(donor.total_donation_amount || 0);
-
-                            return (
-                              <React.Fragment key={idx}>
-                                {/* Donor summary row */}
-                                <tr className="bg-gray-50 font-semibold">
-                                  <td className="border p-2">{fullName}</td>
-                                  <td className="border p-2 text-right">{total}</td>
-                                  <td className="border p-2"></td>
-                                  <td className="border p-2"></td>
-                                  <td className="border p-2 text-right">{total}</td>
-                                  <td className="border p-2">{fullAddress || "—"}</td>
-                                </tr>
-
-                                {/* Donation rows */}
-                                {console.log("🔍 donor.donations", donor.donations)}
-                                {donor.donations?.map((donation: { date: string; amount: number }, i: number) => (
-                                  <tr key={`${donor.member_id}-${i}`}>
-                                    <td className="border p-2"></td>
-                                    <td className="border p-2 text-right"></td>
-                                    <td className="border p-2 text-center">
-                                      {new Date(donation.date).toLocaleDateString()}
-                                    </td>
-                                    <td className="border p-2 text-right">
-                                      {new Intl.NumberFormat("en-US", {
-                                        style: "currency",
-                                        currency: "USD",
-                                      }).format(donation.amount || 0)}
-                                    </td>
-                                    <td className="border p-2 text-right"></td>
-                                    <td className="border p-2"></td>
-                                  </tr>
-                                ))}
-                              </React.Fragment>
-                            );
-                          })
-                        ) : (
+                          {/* Row: Fee */}
                           <tr>
-                            <td
-                              colSpan={6}
-                              className="border p-2 text-center text-gray-500"
-                            >
-                              No donor data found.
+                            <td className="border p-2 font-semibold">Fee</td>
+                            {monthsInRange.map(({ year, month }) => {
+                              const key = `${year}-${month}`;
+                              return (
+                                <React.Fragment key={`fee-${year}-${month}`}>
+                                  <td className="border p-2 text-right">
+                                    {format(paypalFee[key] ?? 0)}
+                                  </td>
+                                </React.Fragment>
+                              );
+                            })}
+                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                              {format(getRangeTotal(paypalFee))}
                             </td>
                           </tr>
-                        )}
-                      </tbody>
-                    </table>
+
+                          {/* Row: Payout */}
+                          <tr className="bg-gray-50 font-semibold">
+                            <td className="border p-2">Payout</td>
+
+                            {monthsInRange.map(({ year, month }) => {
+                              const key = `${year}-${month}`;
+                              return (
+                                <td
+                                  key={`net-${year}-${month}`}
+                                  className="border p-2 text-right"
+                                >
+                                  {format(paypalPayout[key] ?? 0)}
+                                </td>
+                              );
+                            })}
+
+                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                              {format(getRangeTotal(paypalPayout))}
+                            </td>
+                          </tr>
+
+                          {/* Row: Bank Confirmation */}
+                          <tr className="bg-gray-100 font-semibold">
+                            <td className="border p-2 font-semibold">
+                              Bank Confirmation
+                            </td>
+                            {monthsInRange.map(({ year, month }) => {
+                              const key = `${year}-${month}`;
+                              return (
+                                <React.Fragment key={`paypal-confirm-${year}-${month}`}>
+                                  <td className="border p-2 text-center">
+                                    <input type="checkbox" className="mt-1 h-4 w-4" />
+                                  </td>
+                                </React.Fragment>
+                              );
+                            })}
+                            <td className="border bg-gray-100 p-2 text-right font-bold"></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Stripe Section */}
+                    <h2 className="mt-8 mb-2 text-base font-semibold">Stripe</h2>
+
+                    <div className="mb-10 overflow-x-auto">
+                      <table className="table-fixed w-full border-collapse border">
+                        <thead>
+                          {/* Row 1: Month headers + YTD */}
+                          <tr className="bg-gray-100 text-center">
+                            <th className="border p-2 w-32">Category</th>
+                            {monthsInRange.map(({ year, month }) => (
+                              <th
+                                key={`stripe-head-${year}-${month}`}
+                                className="border p-2 text-center w-64"
+                              >
+                                {new Date(year, month - 1).toLocaleString("default", {
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </th>
+                            ))}
+                            <th className="border p-2 text-center">{getTotalLabel()}</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {/* Row: Gross */}
+                          <tr>
+                            <td className="border p-2 font-semibold">Gross</td>
+                            {monthsInRange.map(({ year, month }) => {
+                              const key = `${year}-${month}`;
+                              return (
+                                <React.Fragment key={`stripe-gross-${year}-${month}`}>
+                                  <td className="border p-2 text-right">
+                                    {format(stripeGross[key] ?? 0)}
+                                  </td>
+                                </React.Fragment>
+                              );
+                            })}
+                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                              {format(getRangeTotal(stripeGross))}
+                            </td>
+                          </tr>
+
+                          {/* Row: Fee */}
+                          <tr>
+                            <td className="border p-2 font-semibold">Fee</td>
+                            {monthsInRange.map(({ year, month }) => {
+                              const key = `${year}-${month}`;
+                              return (
+                                <React.Fragment key={`stripe-fee-${year}-${month}`}>
+                                  <td className="border p-2 text-right">
+                                    {format(stripeFee[key] ?? 0)}
+                                  </td>
+                                </React.Fragment>
+                              );
+                            })}
+                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                              {format(getRangeTotal(stripeFee))}
+                            </td>
+                          </tr>
+
+                          {/* Row: Payout */}
+                          <tr className="bg-gray-50 font-semibold">
+                            <td className="border p-2">Bank Deposit</td>
+                            {monthsInRange.map(({ year, month }) => {
+                              const key = `${year}-${month}`;
+                              return (
+                                <React.Fragment key={`stripe-net-${year}-${month}`}>
+                                  <td className="border p-2 text-right">
+                                    {format(stripePayout[key] ?? 0)}
+                                  </td>
+                                </React.Fragment>
+                              );
+                            })}
+                            <td className="border bg-gray-100 p-2 text-right font-bold">
+                              {format(getRangeTotal(stripePayout))}
+                            </td>
+                          </tr>
+
+                          {/* Row: Bank Confirmation */}
+                          <tr className="bg-gray-100 font-semibold">
+                            <td className="border p-2">Bank Confirmation</td>
+                            {monthsInRange.map(({ year, month }) => {
+                              return (
+                                <React.Fragment key={`stripe-confirm-${year}-${month}`}>
+                                  <td className="border p-2 text-center">
+                                    <input type="checkbox" className="mt-1 h-4 w-4" />
+                                  </td>
+                                </React.Fragment>
+                              );
+                            })}
+                            {/* YTD Total */}
+                            <td className="border bg-gray-100 p-2 text-right font-bold"></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/*  Annual Donation Section */}
+
+                    <div className="mt-12">
+                      <h2 className="mt-8 mb-2 text-base font-semibold">Annual Donation</h2>
+                      <div className="overflow-x-auto">
+                        <table className="table-fixed w-full border bg-white text-left text-sm">
+                          <thead>
+                            <tr className="bg-gray-100">
+                              <th className="border p-2 font-bold">Donor</th>
+                              <th className="border p-2 font-bold">Gift Totals</th>
+                              <th className="border p-2 font-bold">Date</th>
+                              <th className="border p-2 font-bold">Amount</th>
+                              <th className="border p-2 font-bold">Total</th>
+                              <th className="border p-2 font-bold">Address</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {donors.length > 0 ? (
+                              donors.map((donor, idx) => {
+                                const fullName = `${donor.first_name} ${donor.last_name}`;
+                                const fullAddressParts = [
+                                  donor.street_address,
+                                  donor.city,
+                                  donor.state,
+                                  donor.zip_code,
+                                ].filter(Boolean);
+                                const fullAddress = fullAddressParts.join(", ");
+
+                                const total = new Intl.NumberFormat("en-US", {
+                                  style: "currency",
+                                  currency: "USD",
+                                }).format(donor.total_donation_amount || 0);
+
+                                return (
+                                  <React.Fragment key={idx}>
+                                    {/* Donor summary row */}
+                                    <tr className="bg-gray-50 font-semibold">
+                                      <td className="border p-2">{fullName}</td>
+                                      <td className="border p-2 text-right">{total}</td>
+                                      <td className="border p-2"></td>
+                                      <td className="border p-2"></td>
+                                      <td className="border p-2 text-right">{total}</td>
+                                      <td className="border p-2">{fullAddress || "—"}</td>
+                                    </tr>
+
+                                    {/* Donation rows */}
+                                    {console.log("🔍 donor.donations", donor.donations)}
+                                    {donor.donations?.map((donation: { date: string; amount: number }, i: number) => (
+                                      <tr key={`${donor.member_id}-${i}`}>
+                                        <td className="border p-2"></td>
+                                        <td className="border p-2 text-right"></td>
+                                        <td className="border p-2 text-center">
+                                          {new Date(donation.date).toLocaleDateString()}
+                                        </td>
+                                        <td className="border p-2 text-right">
+                                          {new Intl.NumberFormat("en-US", {
+                                            style: "currency",
+                                            currency: "USD",
+                                          }).format(donation.amount || 0)}
+                                        </td>
+                                        <td className="border p-2 text-right"></td>
+                                        <td className="border p-2"></td>
+                                      </tr>
+                                    ))}
+                                  </React.Fragment>
+                                );
+                              })
+                            ) : (
+                              <tr>
+                                <td
+                                  colSpan={6}
+                                  className="border p-2 text-center text-gray-500"
+                                >
+                                  No donor data found.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                </div>
-              )}
+                )}
               </div>
             </div>
           </div>
