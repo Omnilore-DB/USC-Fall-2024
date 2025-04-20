@@ -52,6 +52,9 @@ const TableComponent = ({
       setLocalSelectedRow(row);
       handleRowSelection(row);
     }
+    if (localSelectedRow === row) {
+      setLocalSelectedRow(null);
+    }
   };
 
   useEffect(() => {
@@ -282,9 +285,9 @@ const TableComponent = ({
                                 : typeof item[columnName] === "object" &&
                                     item[columnName] !== null
                                   ? JSON.stringify(item[columnName])
-                                : typeof item[columnName] === "boolean"
+                                  : typeof item[columnName] === "boolean"
                                     ? item[columnName].toString()
-                                  : item[columnName]}
+                                    : item[columnName]}
                             </td>
                           ),
                         )}
