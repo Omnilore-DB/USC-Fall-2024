@@ -89,7 +89,7 @@ export default function MembershipReports() {
 
     const { data: products, error: productError } = await supabase
       .from("products")
-      .select("sku")
+      .select("sku, status")
       .eq("type", "MEMBERSHIP")
       .in("year", selectedYears);
 
@@ -97,7 +97,9 @@ export default function MembershipReports() {
       console.error("Failed to fetch membership SKUs", productError);
       return;
     }
-
+    const skuStatusMap = Object.fromEntries(
+      products.map((p) => [p.sku, p.status ?? ""])
+    );
     const validSkus = products.map((p) => p.sku).filter((sku) => sku !== "SQ-TEST");
 
     if (validSkus.length === 0) {
@@ -152,7 +154,7 @@ export default function MembershipReports() {
     const { data: membersData, error: membersError } = await supabase
       .from("members")
       .select(
-        "first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date"
+        "id, first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date"
       )
       .in("id", filteredMemberIds.map(Number));
 
@@ -161,17 +163,18 @@ export default function MembershipReports() {
       return;
     }
 
-    const formatted = membersData.map((m) => {
-      const addressParts = [m.street_address, m.city, [m.state, m.zip_code].filter(Boolean).join(" ")].filter(Boolean);
+    const formatted = mtt.map((row) => {
+      const m = membersData.find((mem) => mem.id === row.member_id);
+      const addressParts = [m?.street_address, m?.city, [m?.state, m?.zip_code].filter(Boolean).join(" ")].filter(Boolean);    
       return {
-        name: `${m.first_name} ${m.last_name}`,
+        name: `${m?.first_name} ${m?.last_name}`,
         address: addressParts.join(", "),
-        phone: formatPhoneNumber(m.phone ?? ""),
-        email: m.email ?? "",
-        emergency_contact: m.emergency_contact,
-        emergency_contact_phone: formatPhoneNumber(m.emergency_contact_phone ?? ""),
-        member_status: m.member_status,
-        expiration_date: m.expiration_date,
+        phone: formatPhoneNumber(m?.phone ?? ""),
+        email: m?.email ?? "",
+        emergency_contact: m?.emergency_contact,
+        emergency_contact_phone: formatPhoneNumber(m?.emergency_contact_phone ?? ""),
+        member_status: skuStatusMap[row.sku] ?? "",
+        expiration_date: m?.expiration_date,
       };
     });
 
