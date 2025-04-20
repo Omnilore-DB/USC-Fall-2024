@@ -335,7 +335,7 @@ const TreasurerReqs = () => {
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100 custom-scrollbar">
-      <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
+      <div className="flex w-full flex-grow flex-col items-center justify-center overflow-auto">
         <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
           <div className="flex h-full w-full flex-col items-center">
             <div className="flex h-full w-full flex-col gap-3">
@@ -410,20 +410,23 @@ const TreasurerReqs = () => {
                 </div>
               </div>
 
-              <div className="custom-scrollbar bg-white p-4 rounded-lg">
+              {/* <div className="relative custom-scrollbar bg-white p-4 rounded-lg overflow-auto"> */}
                 {showReport && (
-                  <div className="w-full flex-grow overflow-y-auto">
+                                <div className="relative w-full flex-grow custom-scrollbar bg-white p-4 rounded-lg overflow-auto">
+
                     <p className="mb-4">
                       {/* Showing report from <strong>{fromDate}</strong> to{" "}
                       <strong>{toDate}</strong> */}
                     </p>
-                    <h2 className="mb-2 text-base font-semibold">Squarespace</h2>
+                    <div className="sticky left-0  z-10 pb-2">
+                      <h2 className="mb-2 text-base font-semibold">Squarespace</h2>
+                    </div>
 
-                    <div className="overflow-x-auto">
+                    <div className="">
                     <table className="table-fixed w-full border-collapse rounded-lg bg-white text-sm shadow text-center">
                         <thead>
                           <tr className="bg-gray-100">
-                            <th rowSpan={2} className="border p-2 w-32">
+                            <th rowSpan={2} className="sticky left-0 bg-gray-100 z-20 border p-2 w-32">
                               Category
                             </th>
                             {monthsInRange.map(({ year, month }) => (
@@ -442,7 +445,7 @@ const TreasurerReqs = () => {
                           <tr className="bg-gray-100">
                             {monthsInRange.map(({ year, month }) => (
                               <React.Fragment key={`sub-${year}-${month}`}>
-                                <th className="border bg-gray-100 p-2">Gross</th>
+                                <th className="border bg-gray-100 p-2 ">Gross</th>
                                 <th className="border bg-gray-100 p-2">Fees</th>
                                 <th className="border bg-gray-100 p-2">Net</th>
                               </React.Fragment>
@@ -455,7 +458,7 @@ const TreasurerReqs = () => {
                             <React.Fragment key={cat}>
                               {/* Main data row */}
                               <tr>
-                                <td className="border p-2 text-left font-semibold">{cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}</td>
+                                <td className="border p-2 text-left font-semibold sticky left-0 bg-gray-100 z-20">{cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}</td>
                                 {monthsInRange.map(({ year, month }) => {
                                   // Convert category to uppercase for data lookup to match existing data keys
                                   const upperCat = cat.toUpperCase();
@@ -493,14 +496,16 @@ const TreasurerReqs = () => {
                     </div>
 
                     {/* Paypal Section */}
-                    <h2 className="mt-8 mb-2 text-base font-semibold">PayPal</h2>
+                    <div className="sticky left-0 bg-white z-10 pb-2">
+                      <h2 className="mt-8 mb-2 text-base font-semibold">PayPal</h2>
+                    </div>
 
-                    <div className="mb-10 overflow-x-auto">
+                    <div className="mb-10">
                     <table className="table-fixed w-full border-collapse rounded-lg bg-white text-sm shadow ">
                         <thead>
                           {/* Row 1: Month headers + YTD */}
                           <tr className="bg-gray-100 text-center">
-                            <th className="border bg-gray-100 p-2 w-32">Category</th>
+                          <th rowSpan={2} className="sticky left-0 bg-gray-100 z-20 border p-2 w-32">Category</th>
                             {monthsInRange.map(({ year, month }) => (
                               <th
                                 key={`paypal-head-${year}-${month}`}
@@ -519,7 +524,7 @@ const TreasurerReqs = () => {
                         <tbody>
                           {/* Row: Gross */}
                           <tr>
-                            <td className="border p-2 font-semibold">Gross</td>
+                            <td className="border p-2 font-semibold sticky left-0 bg-gray-100 z-20">Gross</td>
                             {monthsInRange.map(({ year, month }) => {
                               const key = `${year}-${month}`;
                               return (
@@ -537,7 +542,7 @@ const TreasurerReqs = () => {
 
                           {/* Row: Fee */}
                           <tr>
-                            <td className="border p-2 font-semibold">Fee</td>
+                            <td className="border p-2 font-semibold sticky left-0 bg-gray-100 z-20">Fee</td>
                             {monthsInRange.map(({ year, month }) => {
                               const key = `${year}-${month}`;
                               return (
@@ -555,7 +560,7 @@ const TreasurerReqs = () => {
 
                           {/* Row: Payout */}
                           <tr className="bg-gray-50 font-semibold">
-                            <td className="border p-2">Payout</td>
+                            <td className="border p-2 sticky left-0 bg-gray-100 z-20">Payout</td>
 
                             {monthsInRange.map(({ year, month }) => {
                               const key = `${year}-${month}`;
@@ -576,7 +581,7 @@ const TreasurerReqs = () => {
 
                           {/* Row: Bank Confirmation */}
                           <tr className="bg-gray-100 font-semibold">
-                            <td className="border p-2 font-semibold">
+                            <td className="border p-2 font-semibold sticky left-0 bg-gray-100 z-20">
                               Bank Confirmation
                             </td>
                             {monthsInRange.map(({ year, month }) => {
@@ -596,14 +601,16 @@ const TreasurerReqs = () => {
                     </div>
 
                     {/* Stripe Section */}
-                    <h2 className="mt-8 mb-2 text-base font-semibold">Stripe</h2>
+                    <div className="sticky left-0 bg-white z-10 pb-2">
+                      <h2 className="mt-8 mb-2 text-base font-semibold">Stripe</h2>
+                    </div>
 
-                    <div className="mb-10 overflow-x-auto">
+                    <div className="mb-10">
                       <table className="table-fixed w-full border-collapse border text-sm">
                         <thead>
                           {/* Row 1: Month headers + YTD */}
                           <tr className="bg-gray-100 text-center">
-                            <th className="border p-2 w-32 ">Category</th>
+                          <th rowSpan={2} className="sticky left-0 bg-gray-100 z-20 border p-2 w-32">Category</th>
                             {monthsInRange.map(({ year, month }) => (
                               <th
                                 key={`stripe-head-${year}-${month}`}
@@ -622,7 +629,7 @@ const TreasurerReqs = () => {
                         <tbody>
                           {/* Row: Gross */}
                           <tr>
-                            <td className="border p-2 font-semibold">Gross</td>
+                            <td className="border p-2 font-semibold sticky left-0 bg-gray-100 z-20">Gross</td>
                             {monthsInRange.map(({ year, month }) => {
                               const key = `${year}-${month}`;
                               return (
@@ -640,7 +647,7 @@ const TreasurerReqs = () => {
 
                           {/* Row: Fee */}
                           <tr>
-                            <td className="border p-2 font-semibold">Fee</td>
+                            <td className="border p-2 font-semibold sticky left-0 bg-gray-100 z-20">Fee</td>
                             {monthsInRange.map(({ year, month }) => {
                               const key = `${year}-${month}`;
                               return (
@@ -658,7 +665,7 @@ const TreasurerReqs = () => {
 
                           {/* Row: Payout */}
                           <tr className="bg-gray-50 font-semibold">
-                            <td className="border p-2">Bank Deposit</td>
+                            <td className="border p-2 sticky left-0 bg-gray-100 z-20">Bank Deposit</td>
                             {monthsInRange.map(({ year, month }) => {
                               const key = `${year}-${month}`;
                               return (
@@ -676,7 +683,7 @@ const TreasurerReqs = () => {
 
                           {/* Row: Bank Confirmation */}
                           <tr className="bg-gray-100 font-semibold">
-                            <td className="border p-2">Bank Confirmation</td>
+                            <td className="border p-2 sticky left-0 bg-gray-100 z-20">Bank Confirmation</td>
                             {monthsInRange.map(({ year, month }) => {
                               return (
                                 <React.Fragment key={`stripe-confirm-${year}-${month}`}>
@@ -696,8 +703,10 @@ const TreasurerReqs = () => {
                     {/*  Annual Donation Section */}
 
                     <div className="mt-12">
-                      <h2 className="mt-8 mb-2 text-base font-semibold">Annual Donation</h2>
-                      <div className="overflow-x-auto">
+                      <div className="sticky left-0 bg-white z-10 pb-2">
+                        <h2 className="mt-8 mb-2 text-base font-semibold">Annual Donation</h2>
+                      </div>
+                      <div className="overflow-auto">
                         <table className="table-fixed w-full border bg-white text-sm">
                           <thead>
                             <tr className="bg-gray-100">
@@ -776,7 +785,7 @@ const TreasurerReqs = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              {/* </div> */}
             </div>
           </div>
         </div>
