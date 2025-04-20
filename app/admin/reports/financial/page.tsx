@@ -412,13 +412,14 @@ const TreasurerReqs = () => {
 
               {/* <div className="relative custom-scrollbar bg-white p-4 rounded-lg overflow-auto"> */}
                 {showReport && (
-                                <div className="relative w-full flex-grow custom-scrollbar bg-white p-4 rounded-lg overflow-auto">
-
+                  <div className="w-full h-full custom-scrollbar bg-white rounded-lg px-6 p-4">
+                  
+                  <div className="relative w-full flex-grow custom-scrollbar bg-white rounded-lg overflow-auto">
                     <p className="mb-4">
                       {/* Showing report from <strong>{fromDate}</strong> to{" "}
                       <strong>{toDate}</strong> */}
                     </p>
-                    <div className="sticky left-0  z-10 pb-2">
+                    <div className="sticky left-0 z-10 pb-2">
                       <h2 className="mb-2 text-base font-semibold">Squarespace</h2>
                     </div>
 
@@ -784,6 +785,8 @@ const TreasurerReqs = () => {
                       </div>
                     </div>
                   </div>
+                  </div>
+
                 )}
               {/* </div> */}
             </div>
