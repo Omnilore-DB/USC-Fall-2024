@@ -74,7 +74,13 @@ export default function MembershipReports() {
     const fullEnd = end < 50 ? 2000 + end : 1900 + end;
     return `${fullStart}–${fullEnd}`;
   };
-
+  const formatPhoneNumber = (phone: string | null): string => {
+    if (!phone) return "";
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length !== 10) return phone;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+  
   const fetchMembershipMembers = async () => {
     if (customRange && (!startDate || !endDate)) {
       alert("Please select both start and end dates");
@@ -160,10 +166,10 @@ export default function MembershipReports() {
       return {
         name: `${m.first_name} ${m.last_name}`,
         address: addressParts.join(", "),
-        phone: m.phone ?? "",
+        phone: formatPhoneNumber(m.phone ?? ""),
         email: m.email ?? "",
         emergency_contact: m.emergency_contact,
-        emergency_contact_phone: m.emergency_contact_phone,
+        emergency_contact_phone: formatPhoneNumber(m.emergency_contact_phone ?? ""),
         member_status: m.member_status,
         expiration_date: m.expiration_date,
       };
