@@ -146,9 +146,11 @@ export default function ConflictsPage() {
           </div>
         ) : (
           <div className="flex h-full w-full flex-col items-center gap-3 px-4 pt-4">
-            <SearchInput query={query} setQuery={setQuery} />
+            {entries.length > 0 && (
+              <SearchInput query={query} setQuery={setQuery} />
+            )}
 
-            {primaryKeys && (
+            {primaryKeys && entries.length > 0 && (
               <div className="w-full flex-grow overflow-y-auto">
                 <TableComponent
                   entries={filteredEntries}
@@ -159,6 +161,14 @@ export default function ConflictsPage() {
                   adminTable={true}
                   showImages={false}
                 />
+              </div>
+            )}
+
+            {entries.length === 0 && (
+              <div className="flex h-full w-full items-center justify-center">
+                <div className="text-lg font-bold">
+                  No unresolved conflicts found
+                </div>
               </div>
             )}
 
