@@ -14,7 +14,14 @@ export default function ForumReports() {
   const [selectedTrimesters, setSelectedTrimesters] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [forumMembers, setForumMembers] = useState<{ name: string; email: string; phone: string; type: string }[]>([]);
+  const [forumMembers, setForumMembers] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    type: string;
+    date: string;
+    amount: number;
+  }[]>([]);
 
   useEffect(() => {
     const setup = async () => {
@@ -82,6 +89,23 @@ export default function ForumReports() {
 
     let filteredMemberIds: (string | number)[] = [];
 
+    const transactionIds = mtt.map((row) => row.transaction_id).filter(Boolean);
+
+    const { data: transactions, error: txError } = await supabase
+      .from("transactions")
+      .select("id, date, amount")
+      .in("id", transactionIds);
+
+    if (txError) {
+      console.error("Error fetching transactions", txError);
+      return;
+    }
+
+    // Build transaction map
+    const transactionMap = Object.fromEntries(
+      transactions.map((tx) => [tx.id, { date: tx.date, amount: tx.amount }])
+    );
+    
     if (customRange) {
       const { data: transactions, error: txError } = await supabase
         .from("transactions")
@@ -116,7 +140,7 @@ export default function ForumReports() {
 
     const { data: members, error: memberError } = await supabase
       .from("members")
-      .select("first_name, last_name, email, phone, type")
+      .select("id, first_name, last_name, email, phone, type")
       .in("id", filteredMemberIds.map(Number));
 
     if (memberError) {
@@ -124,12 +148,23 @@ export default function ForumReports() {
       return;
     }
 
-    const formatted = members.map((m) => ({
-      name: `${m.first_name} ${m.last_name}`,
-      email: m.email ?? "",
-      phone: m.phone ?? "",
-      type: m.type,
-    }));
+    const memberMap = Object.fromEntries(
+      members.map((m) => [String(m.id), m])
+    );
+    
+    const formatted = mtt.map((entry) => {
+      const member = memberMap[String(entry.member_id)];
+      const tx = transactionMap[entry.transaction_id];
+    
+      return {
+        name: `${member?.first_name ?? ""} ${member?.last_name ?? ""}`,
+        email: member?.email ?? "",
+        phone: member?.phone ?? "",
+        type: member?.type ?? "",
+        date: tx?.date ?? "",
+        amount: tx?.amount ?? 0,
+      };
+    });
 
     setForumMembers(formatted);
   };
@@ -146,6 +181,9 @@ export default function ForumReports() {
       m.email ?? "",
       m.phone ?? "",
       m.type ?? "",
+      new Date(m.date).toLocaleDateString(),
+      m.amount.toFixed(2),
+
     ]);
   
     const csvContent = [
@@ -284,6 +322,8 @@ export default function ForumReports() {
                         <th className="p-3 font-semibold">Email</th>
                         <th className="p-3 font-semibold">Phone</th>
                         <th className="p-3 font-semibold">Type</th>
+                        <th className="p-3 font-semibold">Date</th>
+                        <th className="p-3 font-semibold">Amount</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -300,6 +340,8 @@ export default function ForumReports() {
                             <td className="p-3">{m.email}</td>
                             <td className="p-3">{m.phone}</td>
                             <td className="p-3">{m.type}</td>
+                            <td className="p-3">{new Date(m.date).toLocaleDateString()}</td>
+                            <td className="p-3">${m.amount.toFixed(2)}</td>
                           </tr>
                         ))
                       )}

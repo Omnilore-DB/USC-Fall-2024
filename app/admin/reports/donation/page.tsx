@@ -12,7 +12,7 @@ export default function DonationReports() {
   const [availableYears] = useState(["2022", "2023", "2024", "2025"]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [donationTransactions, setDonationTransactions] = useState<
-    { transaction_email: string; date: string; amount: number; name: string; type: string }[]
+    { transaction_email: string; date: string; amount: number; name: string; type: string; address: string;}[]
   >([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -23,10 +23,11 @@ export default function DonationReports() {
       return;
     }
 
-    const headers = ["Name", "Email", "Type", "Date", "Amount"];
+    const headers = ["Name", "Email", "Address", "Type", "Date", "Amount"];
     const rows = donationTransactions.map((t) => [
       t.name ?? "",
       t.transaction_email ?? "",
+      t.address ?? "",
       t.type ?? "",
       new Date(t.date).toLocaleDateString("en-US", {
         year: "numeric",
@@ -119,7 +120,7 @@ export default function DonationReports() {
 
     const { data: memberInfo, error: memberError } = await supabase
       .from("members")
-      .select("id, first_name, last_name, type")
+      .select("id, first_name, last_name, type, street_address, city, state, zip_code")
       .in("id", memberIds);
 
     if (memberError) {
@@ -133,6 +134,10 @@ export default function DonationReports() {
         {
           name: `${m.first_name} ${m.last_name}`,
           type: m.type,
+          street_address: m.street_address,
+          city: m.city,
+          state: m.state,
+          zip_code: m.zip_code,
         },
       ])
     );
@@ -152,10 +157,15 @@ export default function DonationReports() {
       .map((t) => {
         const memberEntry = mtt.find((m) => m.transaction_id === t.id);
         const member = memberMap[memberEntry?.member_id ?? ""];
-
+        const addressParts = [
+          member?.street_address,
+          member?.city,
+          [member?.state, member?.zip_code].filter(Boolean).join(" "),
+        ].filter(Boolean);
         return {
           transaction_email: t.transaction_email,
           date: t.date,
+          address: addressParts.join(", "),
           amount: t.amount,
           name: member?.name ?? "Unknown",
           type: member?.type ?? "UNKNOWN",
@@ -256,6 +266,7 @@ export default function DonationReports() {
                       <tr>
                         <th className="p-3 font-semibold">Name</th>
                         <th className="p-3 font-semibold">Email</th>
+                        <th className="p-3 font-semibold">Address</th>
                         <th className="p-3 font-semibold">Type</th>
                         <th className="p-3 font-semibold">Date</th>
                         <th className="p-3 font-semibold">Amount</th>
@@ -273,6 +284,7 @@ export default function DonationReports() {
                           <tr key={i} className="border-t">
                             <td className="p-3">{t.name}</td>
                             <td className="p-3">{t.transaction_email}</td>
+                            <td className="p-3">{t.address}</td>
                             <td className="p-3">{t.type}</td>
                             <td className="p-3">
                               {new Date(t.date).toLocaleDateString("en-US", {
