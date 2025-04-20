@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/app/supabase";
+import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
 const TreasurerReqs = () => {
   const [fromDate, setFromDate] = useState("");
@@ -21,7 +22,13 @@ const TreasurerReqs = () => {
   const [stripePayout, setStripePayout] = useState<Record<string, number>>({});
 
   const [donors, setDonors] = useState<any[]>([]);
-
+  
+  const [customRange, setCustomRange] = useState(false);
+  const [availableYears] = useState(["2022", "2023", "2024", "2025"]);
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  
   const [triggerPresetReport, setTriggerPresetReport] = useState(false);
   const [monthsInRange, setMonthsInRange] = useState<{ year: number; month: number }[]>([]);
 
@@ -30,20 +37,119 @@ const TreasurerReqs = () => {
   const format = (v: number) =>
     v.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
+  // CSV export function
+  const exportToCSV = () => {
+    if (donors.length === 0) {
+      alert("No data to export");
+      return;
+    }
+    
+    const headers = ["Name", "Date", "Amount", "Address"];
+    const rows = donors.flatMap((donor) => {
+      const fullName = `${donor.first_name} ${donor.last_name}`;
+      const fullAddressParts = [
+        donor.street_address,
+        donor.city,
+        donor.state,
+        donor.zip_code,
+      ].filter(Boolean);
+      const fullAddress = fullAddressParts.join(", ");
+      
+      return donor.donations.map((donation: {date: string; amount: number}) => [
+        fullName,
+        new Date(donation.date).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }),
+        donation.amount.toFixed(2),
+        fullAddress
+      ]);
+    });
+    
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((r) =>
+        r.map((field: string | number) => `"${String(field).replace(/"/g, '""')}"`).join(","),
+      ),
+    ].join("\r\n");
+
+    let filename = "";
+    if (customRange && startDate && endDate) {
+      filename = `financial_report_${startDate}_to_${endDate}.csv`;
+    } else {
+      const yearsString =
+        selectedYears.length > 0 ? selectedYears.join("_") : "all";
+      filename = `financial_report_${yearsString}.csv`;
+    }
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+  
   const handleGenerateReport = async () => {
-    if (!fromDate || !toDate) return;
-    const start = new Date(fromDate);
-    const end = new Date(toDate);
-    const diffMonths = (end.getUTCFullYear() - start.getUTCFullYear()) * 12 + (end.getUTCMonth() - start.getUTCMonth());
+    let fromDateValue = "";
+    let toDateValue = "";
+    
+    // Set dates based on selection mode
+    if (customRange) {
+      if (!startDate || !endDate) {
+        alert("Please select both start and end dates");
+        return;
+      }
+      fromDateValue = startDate;
+      toDateValue = endDate;
+    } else {
+      if (selectedYears.length === 0) {
+        alert("Please select at least one calendar year");
+        return;
+      }
+      // Set fromDate and toDate based on selected years
+      if (selectedYears.length === 1) {
+        fromDateValue = `${selectedYears[0]}-01-01`;
+        toDateValue = `${selectedYears[0]}-12-31`;
+      } else {
+        // Sort years and take first and last
+        const sortedYears = [...selectedYears].sort();
+        fromDateValue = `${sortedYears[0]}-01-01`;
+        toDateValue = `${sortedYears[sortedYears.length - 1]}-12-31`;
+      }
+    }
+    
+    // Ensure we have valid dates before proceeding
+    if (!fromDateValue || !toDateValue) {
+      alert("Please select valid dates");
+      return;
+    }
+    
+    // Set the state values after validation
+    setFromDate(fromDateValue);
+    setToDate(toDateValue);
+    
+    // Check date range
+    const startDateObj = new Date(fromDateValue);
+    const endDateObj = new Date(toDateValue);
+    const diffMonths = (endDateObj.getUTCFullYear() - startDateObj.getUTCFullYear()) * 12 + 
+                      (endDateObj.getUTCMonth() - startDateObj.getUTCMonth());
+    
     if (diffMonths > 11) {
       alert("Please select a date range that is less than a year");
       return;
     }
+    
     setShowReport(true);
 
     const range: {year: number; month: number }[] = [];
-    const loop = new Date(start);
-    while (loop <= end) {
+    const loop = new Date(fromDateValue);
+    const endDateObj2 = new Date(toDateValue);
+    while (loop <= endDateObj2) {
       range.push({
         year: loop.getUTCFullYear(),
         month: loop.getUTCMonth() + 1,
@@ -56,6 +162,12 @@ const TreasurerReqs = () => {
     const feeResults: Record<string, number> = {};
 
     const fetchDonors = async () => {
+      // Only fetch donors if we have valid dates
+      if (!fromDate || !toDate) {
+        console.log("Skipping donor fetch due to missing dates");
+        return;
+      }
+
       const { data, error } = await supabase.rpc("get_donation_history", {
         start_date: fromDate,
         end_date: toDate,
@@ -99,7 +211,7 @@ const TreasurerReqs = () => {
       }
     };
 
-    const grossFeePromises = [];
+    const grossFeePromises: Promise<void>[] = [];
 
     for (const category of categories) {
       for (const { year, month } of range) {
@@ -220,60 +332,79 @@ const TreasurerReqs = () => {
   }, [triggerPresetReport, fromDate, toDate]);
 
   return (
-    <div className="p-8">
-      <h1 className="mb-6 bg-green-50 text-3xl font-bold">
-        Treasurer's Report
-      </h1>
-
-      <div className="mb-6 flex flex-wrap items-center gap-4 bg-green-50">
-        {/* From Date */}
-        <div>
-          <label className="mr-2 bg-green-50 font-medium">From:</label>
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="rounded border p-2"
-          />
-        </div>
-
-        {/* To Date */}
-        <div>
-          <label className="mr-2 bg-green-50 font-medium">To:</label>
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="rounded border p-2"
-          />
-        </div>
-
-        {/* Generate Report */}
-        <button
-          onClick={handleGenerateReport}
-          className="rounded bg-blue-600 px-4 py-2 text-white"
-        >
-          Generate Report
-        </button>
-
-        {/* Preset Buttons */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-600">Presets:</span>
-          <button
-            onClick={() => handlePresetRange(2023)}
-            className="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
-          >
-            2023
-          </button>
-          <button
-            onClick={() => handlePresetRange(2024)}
-            className="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
-          >
-            2024
-          </button>
+    <div>
+      <div className="mb-4 flex flex-col">
+        <div className="flex w-full flex-row items-end justify-between">
+          <div className="flex w-3/5 flex-row justify-between gap-2">
+            {customRange ? (
+              <>
+                <div className="flex w-1/3 flex-col">
+                  <label className="text-sm font-semibold">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
+                  />
+                </div>
+                <div className="flex w-1/3 flex-col">
+                  <label className="text-sm font-semibold">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex w-2/3 flex-col">
+                  <label className="text-sm font-semibold">
+                    Calendar Year
+                  </label>
+                  <MultiSelectDropdown
+                    options={availableYears}
+                    selectedOptions={selectedYears}
+                    setSelectedOptions={setSelectedYears}
+                    placeholder="Select Calendar Year(s)"
+                  />
+                </div>
+              </>
+            )}
+            <div className="flex w-1/3 items-end">
+              <button
+                className="h-10 w-full rounded-lg bg-gray-200 font-semibold"
+                onClick={() => setCustomRange((prev) => !prev)}
+              >
+                {customRange ? "Calendar Year" : "Custom Range"}
+              </button>
+            </div>
+          </div>
+          <div className="flex w-1/4 flex-row justify-between gap-2">
+            <div className="flex w-1/2 items-end">
+              <button
+                onClick={handleGenerateReport}
+                className="h-10 w-full rounded-lg bg-blue-500 font-semibold text-white"
+              >
+                Generate Report
+              </button>
+            </div>
+            <div className="flex w-1/2 items-end">
+              <button
+                className="h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
+                onClick={() => exportToCSV()}
+              >
+                Export as CSV
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-
 
       {showReport && (
         <>
@@ -281,7 +412,7 @@ const TreasurerReqs = () => {
             Showing report from <strong>{fromDate}</strong> to{" "}
             <strong>{toDate}</strong>
           </p>
-          <h2 className="mb-4 bg-green-50 text-2xl font-bold">Squarespace</h2>
+          <h2 className="mb-4 text-2xl font-bold">Squarespace</h2>
 
           <div className="overflow-x-auto">
             <table className="min-w-full border text-left text-sm">
@@ -297,7 +428,6 @@ const TreasurerReqs = () => {
                       className="border p-2 text-center"
                     >
                       {new Date(year, month - 1).toLocaleString("default", { month: "short", year: "numeric" })}
-                      {/* {month} */}
                     </th>
                   ))}
                   <th rowSpan={2} className="border p-2 text-center">
@@ -321,24 +451,15 @@ const TreasurerReqs = () => {
                     {/* Main data row */}
                     <tr>
                       <td className="border p-2">{cat}</td>
-                      {allMonths.map((month, i) => {
-                        const sampleDate = new Date(fromDate);
-                        const year = sampleDate.getUTCFullYear();
-                        const monthNum = i + 1;
-                        const key = `${cat}-${year}-${monthNum}`;
+                      {monthsInRange.map(({year, month}) => {
+                        const key = `${cat}-${year}-${month}`;
 
                         const gross = grossData[key] ?? 0;
                         const fee = feeData[key] ?? 0;
                         const net = gross - fee;
 
-                        const format = (v: number) =>
-                          v.toLocaleString("en-US", {
-                            style: "currency",
-                            currency: "USD",
-                          });
-
                         return (
-                          <React.Fragment key={`${cat}-${month}`}>
+                          <React.Fragment key={`${cat}-${year}-${month}`}>
                             <td className="border p-2 text-right">
                               {format(gross)}
                             </td>
@@ -353,27 +474,11 @@ const TreasurerReqs = () => {
                       })}
                       <td className="border bg-green-50 p-2 text-right">
                         {format(
-                          getYTDTotal(grossData, cat) -
-                            getYTDTotal(feeData, cat),
+                          getCatRangeTotal(grossData, cat) -
+                            getCatRangeTotal(feeData, cat)
                         )}
                       </td>
                     </tr>
-
-                    {cat === "DONATION" && (
-                      <tr className="bg-green-50">
-                        <td className="border p-2">Bank Confirmation</td>
-                        {allMonths.map((month) => (
-                          <td
-                            key={`confirm-${month}`}
-                            className="border p-2 text-center"
-                            colSpan={3}
-                          >
-                            <input type="checkbox" className="h-4 w-4" />
-                          </td>
-                        ))}
-                        <td className="border p-2"></td> {/* YTD cell */}
-                      </tr>
-                    )}
                   </React.Fragment>
                 ))}
               </tbody>
@@ -447,7 +552,7 @@ const TreasurerReqs = () => {
                     const key = `${year}-${month}`;
                     return (
                       <td
-                        key={`net-${month}`}
+                        key={`net-${year}-${month}`}
                         className="border p-2 text-right"
                       >
                         {format(paypalPayout[key] ?? 0)}
@@ -456,7 +561,7 @@ const TreasurerReqs = () => {
                   })}
 
                   <td className="border bg-green-50 p-2 text-right font-bold">
-                    {format(getYTDTotal(paypalPayout))}
+                    {format(getRangeTotal(paypalPayout))}
                   </td>
                 </tr>
 
@@ -529,7 +634,7 @@ const TreasurerReqs = () => {
                   {monthsInRange.map(({year, month}) => {
                     const key = `${year}-${month}`;
                     return (
-                      <React.Fragment key={`stripe-fee-${month}`}>
+                      <React.Fragment key={`stripe-fee-${year}-${month}`}>
                         <td className="border p-2 text-right">
                           {format(stripeFee[key] ?? 0)}
                         </td>
@@ -544,25 +649,25 @@ const TreasurerReqs = () => {
                 {/* Row: Payout */}
                 <tr className="bg-gray-50 font-semibold">
                   <td className="border p-2">Bank Deposit</td>
-                  {allMonths.map((month, i) => {
-                    const key = `${new Date(fromDate).getUTCFullYear()}-${i + 1}`;
+                  {monthsInRange.map(({year, month}) => {
+                    const key = `${year}-${month}`;
                     return (
-                      <React.Fragment key={`stripe-net-${month}`}>
+                      <React.Fragment key={`stripe-net-${year}-${month}`}>
                         <td className="border p-2 text-right">
-                          {format((stripePayout[key] ?? 0) / 100)}
+                          {format(stripePayout[key] ?? 0)}
                         </td>
                       </React.Fragment>
                     );
                   })}
                   <td className="border bg-green-50 p-2 text-right font-bold">
-                    {format(getYTDTotal(stripePayout))}
+                    {format(getRangeTotal(stripePayout))}
                   </td>
                 </tr>
 
                 {/* Row: Bank Confirmation */}
                 <tr className="bg-green-50 font-semibold">
                   <td className="border p-2">Bank Confirmation</td>
-                  {monthsInRange.map((year, month) => {
+                  {monthsInRange.map(({year, month}) => {
                     return (
                       <React.Fragment key={`stripe-confirm-${year}-${month}`}>
                         <td className="border p-2 text-center">
@@ -629,7 +734,7 @@ const TreasurerReqs = () => {
 
                           {/* Donation rows */}
                           {console.log("🔍 donor.donations", donor.donations)}
-                          {donor.donations?.map((donation, i) => (
+                          {donor.donations?.map((donation: {date: string; amount: number}, i: number) => (
                             <tr key={`${donor.member_id}-${i}`}>
                               <td className="border p-2"></td>
                               <td className="border p-2 text-right"></td>
