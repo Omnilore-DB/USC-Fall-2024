@@ -115,7 +115,7 @@ export const convert = {
       }
 
       order.fulfillment_status = data.fulfillmentStatus;
-
+      order.sqsp_id = parseInt(data.orderNumber.replace(/\D/g, ""));
       data.lineItems.forEach((p, idx) => {
         const form_data: [string, string][] = (p.customizations ?? []).map(
           (obj) => [obj.label, obj.value],

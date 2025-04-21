@@ -153,7 +153,7 @@ function Table() {
       for (const key of [
         "first_name",
         "last_name",
-        "sq_id",
+        "sqsp_id",
         "descriptor",
         "sku",
         "date",

@@ -1884,6 +1884,7 @@ export type Database = {
           raw_form_data: Json[];
           refunded_amount: number;
           skus: string[];
+          sqsp_id: number | null;
           sqsp_order_id: string | null;
           sqsp_transaction_id: string | null;
           transaction_email: string;
@@ -1903,6 +1904,7 @@ export type Database = {
           raw_form_data?: Json[];
           refunded_amount: number;
           skus: string[];
+          sqsp_id?: number | null;
           sqsp_order_id?: string | null;
           sqsp_transaction_id?: string | null;
           transaction_email: string;
@@ -1922,6 +1924,7 @@ export type Database = {
           raw_form_data?: Json[];
           refunded_amount?: number;
           skus?: string[];
+          sqsp_id?: number | null;
           sqsp_order_id?: string | null;
           sqsp_transaction_id?: string | null;
           transaction_email?: string;
@@ -2149,8 +2152,8 @@ export type Database = {
       };
       get_donation_transactions: {
         Args:
-          | { start_date: string; end_date: string }
-          | Record<PropertyKey, never>;
+          | Record<PropertyKey, never>
+          | { start_date: string; end_date: string };
         Returns: {
           transaction_id: number;
           transaction_amount: number;
@@ -2284,6 +2287,10 @@ export type Database = {
         Args: { p_year: number; p_month: number };
         Returns: number;
       };
+      get_paypal_gross_old: {
+        Args: { p_type: string; p_year: number; p_month: number };
+        Returns: number;
+      };
       get_paypal_net: {
         Args: { p_year: number; p_month: number };
         Returns: number;
@@ -2316,7 +2323,9 @@ export type Database = {
         Returns: number;
       };
       get_stripe_gross: {
-        Args: { p_year: number; p_month: number };
+        Args:
+          | { p_type: string; p_year: number; p_month: number }
+          | { p_year: number; p_month: number };
         Returns: number;
       };
       get_stripe_net: {
