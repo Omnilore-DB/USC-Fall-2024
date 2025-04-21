@@ -1,6 +1,6 @@
 "use client";
-import InputField from "@/components/ui/InputField";
 
+import MergeInputField from "@/components/ui/MergeInputField";
 import type { SupabaseMember } from "@/app/api/cron/src/supabase/types";
 import { useEffect, useRef, useState } from "react";
 import { getRowById, getTableSchema } from "@/app/supabase";
@@ -28,9 +28,9 @@ export default function ResolveConflictPanel({
   const [fields, setFields] = useState<any[]>([]);
   const [member1, setMember1] = useState<SupabaseMember | null>(null);
   const [member2, setMember2] = useState<SupabaseMember | null>(null);
-  const [resolvedValues, setResolvedValues] = useState<Record<string, string>>(
-    {},
-  );
+  const [resolvedValues, setResolvedValues] = useState<
+    Record<string, string | number | boolean | null>
+  >({});
   const [customFields, setCustomFields] = useState<Record<string, boolean>>({});
   const [resolvedFields, setResolvedFields] = useState<Record<string, boolean>>(
     {},
@@ -105,13 +105,13 @@ export default function ResolveConflictPanel({
         defaultOpenFields[key] = !isResolved;
         // console.log(`Field ${key}: isResolved=${isResolved}, val1=${val1}, val2=${val2}`);
       });
-      console.log("defaultResolved", defaultResolved);
-      console.log("defaultResolvedFields", defaultResolvedFields);
-      console.log("defaultOpenFields", defaultOpenFields);
+      // console.log("defaultResolved", defaultResolved);
+      // console.log("defaultResolvedFields", defaultResolvedFields);
+      // console.log("defaultOpenFields", defaultOpenFields);
 
       setResolvedValues(defaultResolved);
       setResolvedFields(defaultResolvedFields);
-      console.log("setResolvedFields in fetchMembers");
+      // console.log("setResolvedFields in fetchMembers");
       setOpenFields(defaultOpenFields);
     };
 
@@ -123,7 +123,7 @@ export default function ResolveConflictPanel({
       setResolvedValues({});
       setCustomFields({});
       setResolvedFields({});
-      console.log("setResolvedFields in fetchMembers isOpen");
+      // console.log("setResolvedFields in fetchMembers isOpen");
       setOpenFields({});
       setMergeView(false);
       setSplitView(false);
@@ -134,7 +134,10 @@ export default function ResolveConflictPanel({
     console.log("resolvedValues", resolvedValues);
   }, [resolvedValues]);
 
-  const handleSelection = (key: string, value: string) => {
+  const handleSelection = (
+    key: string,
+    value: string | number | boolean | null,
+  ) => {
     setResolvedValues((prev) => ({ ...prev, [key]: value }));
     setResolvedFields((prev) => ({ ...prev, [key]: true }));
     console.log("setResolvedFields in handleSelection");
@@ -151,7 +154,7 @@ export default function ResolveConflictPanel({
 
   const confirmCustom = (key: string) => {
     console.log("confirmCustom");
-    if (resolvedValues[key]?.trim()) {
+    if (resolvedValues[key]?.toString().trim()) {
       setOpenFields((prev) => ({ ...prev, [key]: false }));
     }
     setResolvedFields((prev) => ({ ...prev, [key]: true }));
@@ -254,11 +257,11 @@ export default function ResolveConflictPanel({
                             <label className="mb-2 block font-semibold capitalize">
                               {key}
                             </label>
-                            <InputField
+                            <MergeInputField
                               fieldName={key}
                               fieldType={field.type}
                               required={!field.nullable}
-                              value={val1}
+                              value={val1 ?? ""}
                               setFormValue={(name: string, value: any) =>
                                 setMember1(
                                   (prev) =>
@@ -282,11 +285,11 @@ export default function ResolveConflictPanel({
                             <label className="mb-2 block font-semibold capitalize">
                               {key}
                             </label>
-                            <InputField
+                            <MergeInputField
                               fieldName={key}
                               fieldType={field.type}
                               required={!field.nullable}
-                              value={val2}
+                              value={val2 ?? ""}
                               setFormValue={(name: string, value: any) =>
                                 setMember2(
                                   (prev) =>
@@ -363,7 +366,7 @@ export default function ResolveConflictPanel({
                     const key = field.name;
                     const val1 = member1[key as keyof SupabaseMember];
                     const val2 = member2[key as keyof SupabaseMember];
-                    const resolved = resolvedValues[key] ?? "";
+                    const resolved = resolvedValues[key];
                     const isResolved = resolvedFields[key];
                     const isOpenField = openFields[key];
 
@@ -389,14 +392,17 @@ export default function ResolveConflictPanel({
                                 <span className="max-w-[200px] truncate text-sm italic text-gray-600">
                                   {resolved === null ||
                                   resolved === "" ||
-                                  resolved === "null" ||
-                                  typeof resolved === "undefined"
-                                    ? "—"
-                                    : typeof resolved === "boolean"
-                                      ? String(resolved)
-                                      : isValidDate(resolved)
-                                        ? resolved.toLocaleDateString()
-                                        : resolved}
+                                  typeof resolved === "undefined" ? (
+                                    <span className="not-italic text-gray-400">
+                                      NULL
+                                    </span>
+                                  ) : typeof resolved === "boolean" ? (
+                                    String(resolved)
+                                  ) : isValidDate(resolved) ? (
+                                    resolved.toLocaleDateString()
+                                  ) : (
+                                    resolved
+                                  )}
                                 </span>
                               )}
                             </div>
@@ -405,13 +411,11 @@ export default function ResolveConflictPanel({
 
                           <div className="grid grid-cols-3 gap-2">
                             <button
-                              className={`rounded border p-1 ${resolved === String(val1) ? "bg-blue-100" : "bg-white"}`}
-                              onClick={() => handleSelection(key, String(val1))}
+                              className={`rounded border p-1 ${resolved === val1 ? "bg-blue-100" : "bg-white"}`}
+                              onClick={() => handleSelection(key, val1)}
                             >
-                              {val1 === null ||
-                              val1 === "" ||
-                              val1 === "null" ? (
-                                <span className="text-gray-500">NULL</span>
+                              {val1 === null || val1 === "" ? (
+                                <span className="text-gray-400">NULL</span>
                               ) : typeof val1 === "boolean" ? (
                                 String(val1)
                               ) : (
@@ -419,24 +423,22 @@ export default function ResolveConflictPanel({
                               )}
                             </button>
                             <button
-                              className={`rounded border p-1 ${resolved === String(val2) ? "bg-blue-100" : "bg-white"}`}
-                              onClick={() => handleSelection(key, String(val2))}
+                              className={`rounded border p-1 ${resolved === val2 ? "bg-blue-100" : "bg-white"}`}
+                              onClick={() => handleSelection(key, val2)}
                             >
-                              {val2 === null ||
-                              val2 === "" ||
-                              val2 === "null" ? (
-                                <span className="text-gray-500">NULL</span>
+                              {val2 === null || val2 === "" ? (
+                                <span className="text-gray-400">NULL</span>
                               ) : typeof val2 === "boolean" ? (
                                 String(val2)
                               ) : (
                                 (val2 ?? "—")
                               )}
                             </button>
-                            <InputField
+                            <MergeInputField
                               fieldName={key}
                               fieldType={field.type}
                               required={!field.nullable}
-                              value={resolvedValues[key] || ""}
+                              value={resolvedValues[key] ?? ""}
                               setFormValue={(name, value) =>
                                 setResolvedValues((prev) => ({
                                   ...prev,
@@ -549,10 +551,22 @@ export default function ResolveConflictPanel({
                         </label>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="rounded border bg-white p-1">
-                            {val1 ?? "—"}
+                            {val1 === null || val1 === "" ? (
+                              <span className="text-gray-400">NULL</span>
+                            ) : typeof val1 === "boolean" ? (
+                              String(val1)
+                            ) : (
+                              (val1 ?? "—")
+                            )}
                           </div>
                           <div className="rounded border bg-white p-1">
-                            {val2 ?? "—"}
+                            {val2 === null || val2 === "" ? (
+                              <span className="text-gray-400">NULL</span>
+                            ) : typeof val2 === "boolean" ? (
+                              String(val2)
+                            ) : (
+                              (val2 ?? "—")
+                            )}
                           </div>
                         </div>
                       </div>

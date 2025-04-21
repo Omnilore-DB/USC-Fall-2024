@@ -131,7 +131,7 @@ export const getTableSchema = async (table: string) => {
         enumValues: isEnum ? enumMap[baseType] : [],
       };
     });
-    console.log("schema ", schema);
+    // console.log("schema ", schema);
     return { columns: schema };
   } catch (error) {
     console.error(
