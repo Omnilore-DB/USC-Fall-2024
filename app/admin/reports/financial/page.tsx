@@ -570,13 +570,13 @@ const TreasurerReqs = () => {
                                   key={`net-${year}-${month}`}
                                   className="border p-2 text-center"
                                 >
-                                  {format(paypalPayout[key] ?? 0)}
+                                {format((paypalPayout[key] ?? 0)/100)}
                                 </td>
                               );
                             })}
 
                             <td className="border bg-gray-100 p-2  font-bold">
-                              {format(getRangeTotal(paypalPayout))}
+                            {format(getYTDTotal(paypalPayout)/100)}
                             </td>
                           </tr>
 
@@ -672,7 +672,7 @@ const TreasurerReqs = () => {
                               return (
                                 <React.Fragment key={`stripe-net-${year}-${month}`}>
                                   <td className="border p-2 text-center">
-                                    {format(stripePayout[key] ?? 0)}
+                                  {format((stripePayout[key] ?? 0)/100)}
                                   </td>
                                 </React.Fragment>
                               );
