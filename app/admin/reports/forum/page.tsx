@@ -21,6 +21,7 @@ export default function ForumReports() {
     type: string;
     date: string;
     amount: number;
+    descriptor: string;
   }[]>([]);
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function ForumReports() {
 
     const { data: products, error: productError } = await supabase
       .from("products")
-      .select("sku")
+      .select("sku, descriptor")
       .eq("type", "FORUM")
       .in("group_id", groupIds);
 
@@ -81,7 +82,9 @@ export default function ForumReports() {
       console.error("Error fetching FORUM SKUs", productError);
       return;
     }
-
+    const skuDescriptorMap = Object.fromEntries(
+      products.map((p) => [p.sku, p.descriptor ?? ""])
+    );
     const forumSkus = products.map((p) => p.sku).filter((sku) => sku !== "SQ-TEST");
 
     const { data: mtt, error: mttError } = await supabase
@@ -170,6 +173,7 @@ export default function ForumReports() {
         type: member?.type ?? "",
         date: tx?.date ?? "",
         amount: tx?.amount ?? 0,
+        descriptor: skuDescriptorMap[entry.sku] ?? "",
       };
     });
 
@@ -331,6 +335,7 @@ export default function ForumReports() {
                         <th className="p-3 font-semibold">Date</th>
                         <th className="p-3 font-semibold">Amount</th>
                         <th className="p-3 font-semibold">Type</th>
+                        <th className="p-3 font-semibold">Descriptor</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -349,6 +354,7 @@ export default function ForumReports() {
                             <td className="p-3">{new Date(m.date).toLocaleDateString()}</td>
                             <td className="p-3">${m.amount.toFixed(2)}</td>
                             <td className="p-3">{m.type}</td>
+                            <td className="p-3">{m.descriptor}</td>
                           </tr>
                         ))
                       )}
