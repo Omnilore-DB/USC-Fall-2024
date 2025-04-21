@@ -46,7 +46,7 @@ export default function MergeInputField({
 
   function getInitialValueByType(type: string) {
     if (type === "bool") return false;
-    if (type === "date" || type.includes("timestamp")) return new Date();
+    if (type.includes("timestamp")) return new Date();
     if (
       type.startsWith("int") ||
       type.startsWith("float") ||
@@ -68,9 +68,7 @@ export default function MergeInputField({
 
   useEffect(() => {
     if (
-      (fieldType.includes("timestamp") ||
-        fieldType.includes("timestampz") ||
-        fieldType === "date") &&
+      (fieldType.includes("timestamp") || fieldType.includes("timestampz")) &&
       value
     ) {
       if (value instanceof Date && !isNaN(value.getTime())) {
@@ -111,16 +109,14 @@ export default function MergeInputField({
 
       {/* Date (no time) */}
       {fieldType === "date" && (
-        <DatePicker
-          wrapperClassName="w-full"
+        <input
+          type="date"
           className="w-full rounded border border-gray-300 p-2"
-          selected={currentValue}
-          onChange={(date) => {
-            setCurrentValue(date);
-            console.log(date);
-            setFormValue(fieldName, date);
+          value={currentValue}
+          onChange={(e) => {
+            setCurrentValue(e.target.value);
+            setFormValue(fieldName, e.target.value);
           }}
-          dateFormat="yyyy-MM-dd"
         />
       )}
 

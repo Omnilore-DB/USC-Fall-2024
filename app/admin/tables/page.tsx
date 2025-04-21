@@ -78,16 +78,10 @@ function Table() {
           : dateB.getTime() - dateA.getTime();
       }
 
-      if (selectedSort === "first_name") {
+      if (selectedSort === "first_name" || selectedSort === "last_name") {
         return selectedSortWay === "asc"
-          ? a[selectedSort].localeCompare(b[selectedSort])
-          : b[selectedSort].localeCompare(a[selectedSort]);
-      }
-
-      if (selectedSort === "last_name") {
-        return selectedSortWay === "asc"
-          ? a[selectedSort].localeCompare(b[selectedSort])
-          : b[selectedSort].localeCompare(a[selectedSort]);
+          ? a[selectedSort]?.localeCompare(b[selectedSort])
+          : b[selectedSort]?.localeCompare(a[selectedSort]);
       }
 
       return selectedSortWay === "asc"

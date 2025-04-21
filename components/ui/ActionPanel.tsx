@@ -25,16 +25,19 @@ export default function ActionPanel({
   reloadData,
 }: ActionPanelProps) {
   const [fields, setFields] = useState<
-    {
-      name: string;
-      type: string;
-      nullable: boolean;
-      isAutoIncrement: boolean;
-      isArray: boolean;
-      isEnum: boolean;
-      enumValues: string[];
-    }[]
-  >([]);
+    Map<
+      string,
+      {
+        name: string;
+        type: string;
+        nullable: boolean;
+        isAutoIncrement: boolean;
+        isArray: boolean;
+        isEnum: boolean;
+        enumValues: string[];
+      }
+    >
+  >(new Map());
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [userFormData, setUserFormData] = useState<Record<string, any>>({});
   const [products, setProducts] = useState<SupabaseProduct[]>([]);
@@ -43,9 +46,13 @@ export default function ActionPanel({
 
   const strip_empty_fields = (obj: Record<string, any>) => {
     return Object.fromEntries(
-      Object.entries(obj).filter(
-        ([_, value]) => value !== null && value !== undefined,
-      ),
+      Object.entries(obj)
+        .filter(([_, value]) => value !== null && value !== undefined)
+        .map(([key, value]) => [
+          // sets date fields to null if empty string
+          key,
+          value === "" && fields.get(key)?.type === "date" ? null : value,
+        ]),
     );
   };
 
@@ -69,7 +76,6 @@ export default function ActionPanel({
         console.log("ADD MODE");
         setFormData({});
         setUserFormData({});
-        setFields([]);
         console.log("form data ", formData);
       }
     } else {
@@ -101,7 +107,7 @@ export default function ActionPanel({
           enumValues: details.enumValues || [],
         }),
       );
-      setFields(fieldList);
+      setFields(new Map(fieldList.map((field) => [field.name, field])));
     }
   };
 
@@ -149,7 +155,7 @@ export default function ActionPanel({
             ref={scrollContainerRef}
             className="custom-scrollbar flex h-full w-full flex-col gap-8 overflow-hidden overflow-y-auto p-8"
           >
-            {fields
+            {Array.from(fields.values())
               .filter(
                 (field) =>
                   field.name !== "created_at" &&
@@ -170,7 +176,7 @@ export default function ActionPanel({
                   enumValues,
                 }) => (
                   <InputField
-                    key={name}
+                    key={`${name}-${type}-${selectedRow?.[name]}`}
                     fieldName={name}
                     fieldType={type}
                     required={!nullable}

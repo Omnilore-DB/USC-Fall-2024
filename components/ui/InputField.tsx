@@ -56,22 +56,16 @@ export default function InputField({
         setCurrentValue(enumValues?.[0]);
       } else if (isArray) {
         setCurrentValue([]);
-      } else if (
-        fieldType === "timestamp" ||
-        fieldType === "timestamptz" ||
-        fieldType === "date"
-      ) {
+      } else if (fieldType === "timestamp" || fieldType === "timestamptz") {
         setCurrentValue(new Date());
       }
     } else {
       // On edit mode
       setCurrentValue(normalizedValue);
 
-      // If there's a timestamp/date in value, parse it
+      // If there's a timestamp in value, parse it
       if (
-        (fieldType.includes("timestamp") ||
-          fieldType.includes("timestampz") ||
-          fieldType === "date") &&
+        (fieldType.includes("timestamp") || fieldType.includes("timestampz")) &&
         value
       ) {
         setCurrentValue(new Date(value));
@@ -100,11 +94,11 @@ export default function InputField({
 
       {/* Date (no time) */}
       {fieldType === "date" && (
-        <DatePicker
-          selected={currentValue}
-          onChange={(date) => setCurrentValue(date)}
-          dateFormat="yyyy-MM-dd"
+        <input
+          type="date"
           className="w-full rounded border border-gray-300 p-2"
+          value={currentValue ?? ""}
+          onChange={(e) => setCurrentValue(e.target.value)}
         />
       )}
 
