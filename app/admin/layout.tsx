@@ -13,20 +13,20 @@ export default function AdminLayout({
 }) {
   useLoginRedirect();
   const router = useRouter();
+  const pathname = usePathname();
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [activeReportTab, setActiveReportTab] = useState<string>("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedTab = localStorage.getItem("activeReportTab");
-      if (storedTab) setActiveReportTab(storedTab);
+      if (storedTab && pathname === "/admin/reports")
+        setActiveReportTab(storedTab);
     }
   }, []);
 
   useEffect(() => {
-    if (activeReportTab) {
-      localStorage.setItem("activeReportTab", activeReportTab);
-    }
+    localStorage.setItem("activeReportTab", activeReportTab);
   }, [activeReportTab]);
 
   const handleReportTabClick = (tab: string) => {
