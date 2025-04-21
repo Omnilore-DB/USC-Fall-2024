@@ -35,6 +35,13 @@ export default function ForumReports() {
     setup().catch(console.error);
   }, []);
 
+  const formatPhoneNumber = (phone: string | null): string => {
+    if (!phone) return "";
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length !== 10) return phone;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+
   const getGroupIds = (years: string[], trimesters: string[]) => {
     const trimesterNumberMap: Record<string, string> = {
       "Trimester 1": "1",
@@ -159,7 +166,7 @@ export default function ForumReports() {
       return {
         name: `${member?.first_name ?? ""} ${member?.last_name ?? ""}`,
         email: member?.email ?? "",
-        phone: member?.phone ?? "",
+        phone: formatPhoneNumber(member?.phone ?? ""),
         type: member?.type ?? "",
         date: tx?.date ?? "",
         amount: tx?.amount ?? 0,

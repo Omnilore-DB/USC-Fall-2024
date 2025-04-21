@@ -74,7 +74,13 @@ export default function MembershipReports() {
     const fullEnd = end < 50 ? 2000 + end : 1900 + end;
     return `${fullStart}–${fullEnd}`;
   };
-
+  const formatPhoneNumber = (phone: string | null): string => {
+    if (!phone) return "";
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length !== 10) return phone;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+  
   const fetchMembershipMembers = async () => {
     if (customRange && (!startDate || !endDate)) {
       alert("Please select both start and end dates");
@@ -83,7 +89,7 @@ export default function MembershipReports() {
 
     const { data: products, error: productError } = await supabase
       .from("products")
-      .select("sku")
+      .select("sku, status")
       .eq("type", "MEMBERSHIP")
       .in("year", selectedYears);
 
@@ -91,7 +97,9 @@ export default function MembershipReports() {
       console.error("Failed to fetch membership SKUs", productError);
       return;
     }
-
+    const skuStatusMap = Object.fromEntries(
+      products.map((p) => [p.sku, p.status ?? ""])
+    );
     const validSkus = products.map((p) => p.sku).filter((sku) => sku !== "SQ-TEST");
 
     if (validSkus.length === 0) {
@@ -146,7 +154,7 @@ export default function MembershipReports() {
     const { data: membersData, error: membersError } = await supabase
       .from("members")
       .select(
-        "first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date"
+        "id, first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date"
       )
       .in("id", filteredMemberIds.map(Number));
 
@@ -155,17 +163,18 @@ export default function MembershipReports() {
       return;
     }
 
-    const formatted = membersData.map((m) => {
-      const addressParts = [m.street_address, m.city, [m.state, m.zip_code].filter(Boolean).join(" ")].filter(Boolean);
+    const formatted = mtt.map((row) => {
+      const m = membersData.find((mem) => mem.id === row.member_id);
+      const addressParts = [m?.street_address, m?.city, [m?.state, m?.zip_code].filter(Boolean).join(" ")].filter(Boolean);    
       return {
-        name: `${m.first_name} ${m.last_name}`,
+        name: `${m?.first_name} ${m?.last_name}`,
         address: addressParts.join(", "),
-        phone: m.phone ?? "",
-        email: m.email ?? "",
-        emergency_contact: m.emergency_contact,
-        emergency_contact_phone: m.emergency_contact_phone,
-        member_status: m.member_status,
-        expiration_date: m.expiration_date,
+        phone: formatPhoneNumber(m?.phone ?? ""),
+        email: m?.email ?? "",
+        emergency_contact: m?.emergency_contact,
+        emergency_contact_phone: formatPhoneNumber(m?.emergency_contact_phone ?? ""),
+        member_status: skuStatusMap[row.sku] ?? "",
+        expiration_date: m?.expiration_date,
       };
     });
 

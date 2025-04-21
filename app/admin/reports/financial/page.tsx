@@ -617,13 +617,13 @@ const TreasurerReqs = () => {
                                   key={`net-${year}-${month}`}
                                   className="border p-2 text-center"
                                 >
-                                  {format((paypalPayout[key] ?? 0) / 100)}
+                                  {format((paypalPayout[key] ?? 0)/100)}
                                 </td>
                               );
                             })}
 
                             <td className="border bg-gray-100 p-2  font-bold sticky right-0">
-                              {format(getRangeTotal(paypalPayout))}
+                            {format(getYTDTotal(paypalPayout)/100)}
                             </td>
                           </tr>
 
