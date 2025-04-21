@@ -8,6 +8,7 @@ interface TableComponentProps {
   roles: string[];
   selectedRow: Record<string, any> | null;
   handleRowSelection: (row: Record<string, any>) => void;
+  handleRowDeselection?: () => void;
   primaryKeys: string[];
   adminTable?: boolean;
   showImages?: boolean;
@@ -19,6 +20,7 @@ const TableComponent = ({
   roles,
   selectedRow,
   handleRowSelection,
+  handleRowDeselection,
   primaryKeys,
   adminTable = true,
   showImages = false,
@@ -54,6 +56,9 @@ const TableComponent = ({
     }
     if (localSelectedRow === row) {
       setLocalSelectedRow(null);
+      if (handleRowDeselection) {
+        handleRowDeselection();
+      }
     }
   };
 

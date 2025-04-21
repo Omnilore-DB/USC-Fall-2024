@@ -37,6 +37,15 @@ function Table() {
     "selected_table",
     "members",
   );
+  const [selectedSort, setSelectedSort] = useLocalStorage<string>(
+    `selected_sort_${selectedTable}`,
+    "default",
+  );
+  const [selectedSortWay, setSelectedSortWay] = useLocalStorage<"asc" | "desc">(
+    `selected_sort_way_${selectedTable}`,
+    "asc",
+  );
+  const [sortOptions, setSortOptions] = useState<string[]>(["default"]);
   const [primaryKeys, setPrimaryKeys] = useState<string[]>([]);
   const [isEntryPanelOpen, setIsEntryPanelOpen] = useState(false);
   const [isDeletePanelOpen, setIsDeletePanelOpen] = useState(false);
@@ -53,6 +62,39 @@ function Table() {
       ),
     );
   }, [query, entries]);
+
+  const sortedEntries = useMemo(() => {
+    if (selectedSort === "default") return filteredEntries;
+    return filteredEntries.sort((a, b) => {
+      if (
+        selectedSort === "date" ||
+        selectedSort === "updated_at" ||
+        selectedSort === "created_at"
+      ) {
+        const dateA = new Date(a[selectedSort]);
+        const dateB = new Date(b[selectedSort]);
+        return selectedSortWay === "asc"
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime();
+      }
+
+      if (selectedSort === "first_name") {
+        return selectedSortWay === "asc"
+          ? a[selectedSort].localeCompare(b[selectedSort])
+          : b[selectedSort].localeCompare(a[selectedSort]);
+      }
+
+      if (selectedSort === "last_name") {
+        return selectedSortWay === "asc"
+          ? a[selectedSort].localeCompare(b[selectedSort])
+          : b[selectedSort].localeCompare(a[selectedSort]);
+      }
+
+      return selectedSortWay === "asc"
+        ? a[selectedSort] - b[selectedSort]
+        : b[selectedSort] - a[selectedSort];
+    });
+  }, [filteredEntries, selectedSort, selectedSortWay]);
 
   useEffect(() => {
     const setup = async () => {
@@ -104,6 +146,29 @@ function Table() {
         await queryTableWithPrimaryKey(selectedTable);
       setEntries(data);
       setPrimaryKeys(primaryKeys ?? "");
+
+      const keys = new Set(Object.keys(data[0]));
+      const sortOptions = ["default"];
+
+      for (const key of [
+        "first_name",
+        "last_name",
+        "sq_id",
+        "descriptor",
+        "sku",
+        "date",
+        "amount",
+        "year",
+        "id",
+        "updated_at",
+        "created_at",
+      ]) {
+        if (keys.has(key)) {
+          sortOptions.push(key);
+        }
+      }
+
+      setSortOptions(sortOptions);
     } catch (error) {
       console.error(`Failed to fetch data for table ${selectedTable}`, error);
     }
@@ -173,6 +238,28 @@ function Table() {
                       }}
                     />
                   </div>
+                  <div className="flex w-2/5 gap-4">
+                    <div className="flex w-full items-center gap-2">
+                      <p className="min-w-fit">Sort by:</p>
+                      <SelectDropdown
+                        options={sortOptions}
+                        selectedOption={selectedSort}
+                        setSelectedOption={(sort) => {
+                          setSelectedSort(sort as string);
+                        }}
+                      />
+                    </div>
+                    <div className="flex w-full items-center gap-2">
+                      <p className="min-w-fit">Sort way:</p>
+                      <SelectDropdown
+                        options={["asc", "desc"]}
+                        selectedOption={selectedSortWay}
+                        setSelectedOption={(sort) => {
+                          setSelectedSortWay(sort as "asc" | "desc");
+                        }}
+                      />
+                    </div>
+                  </div>
                   <div className="flex gap-1">
                     {hasPermission("can_create") && (
                       <ActionButton
@@ -202,10 +289,11 @@ function Table() {
                 {primaryKeys && (
                   <div className="w-full flex-grow overflow-y-auto">
                     <TableComponent
-                      entries={filteredEntries}
+                      entries={sortedEntries}
                       roles={roles}
                       selectedRow={selectedRow}
                       handleRowSelection={(row) => setSelectedRow(row)}
+                      handleRowDeselection={() => setSelectedRow(null)}
                       primaryKeys={primaryKeys}
                       adminTable={true}
                       showImages={false}
