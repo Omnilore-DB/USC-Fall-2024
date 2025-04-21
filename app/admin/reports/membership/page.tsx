@@ -42,11 +42,10 @@ export default function MembershipReports() {
     const csvContent = [
       headers.join(","),
       ...rows.map((r) =>
-        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(","),
+        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(",")
       ),
     ].join("\r\n");
 
-    // Format academic years for filename
     let filename = "";
     if (customRange && startDate && endDate) {
       filename = `membership_report_${startDate}_to_${endDate}.csv`;
@@ -75,18 +74,22 @@ export default function MembershipReports() {
     const fullEnd = end < 50 ? 2000 + end : 1900 + end;
     return `${fullStart}–${fullEnd}`;
   };
-
+  const formatPhoneNumber = (phone: string | null): string => {
+    if (!phone) return "";
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length !== 10) return phone;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+  
   const fetchMembershipMembers = async () => {
     if (customRange && (!startDate || !endDate)) {
       alert("Please select both start and end dates");
       return;
     }
-    console.log("Custom Range is", customRange);
-    console.log("Start Date:", startDate);
-    console.log("End Date:", endDate);
+
     const { data: products, error: productError } = await supabase
       .from("products")
-      .select("sku")
+      .select("sku, status")
       .eq("type", "MEMBERSHIP")
       .in("year", selectedYears);
 
@@ -94,10 +97,11 @@ export default function MembershipReports() {
       console.error("Failed to fetch membership SKUs", productError);
       return;
     }
+    const skuStatusMap = Object.fromEntries(
+      products.map((p) => [p.sku, p.status ?? ""])
+    );
+    const validSkus = products.map((p) => p.sku).filter((sku) => sku !== "SQ-TEST");
 
-    const validSkus = products
-      .map((p) => p.sku)
-      .filter((sku) => sku !== "SQ-TEST");
     if (validSkus.length === 0) {
       setMembers([]);
       return;
@@ -134,7 +138,6 @@ export default function MembershipReports() {
           return txDate >= start && txDate <= end;
         })
         .map((tx) => tx.id);
-      console.log("Valid transaction IDs:", validTxIds);
 
       filteredMemberIds = mtt
         .filter((row) => validTxIds.includes(row.transaction_id))
@@ -151,7 +154,7 @@ export default function MembershipReports() {
     const { data: membersData, error: membersError } = await supabase
       .from("members")
       .select(
-        "first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date",
+        "id, first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date"
       )
       .in("id", filteredMemberIds.map(Number));
 
@@ -160,16 +163,20 @@ export default function MembershipReports() {
       return;
     }
 
-    const formatted = membersData.map((m) => ({
-      name: `${m.first_name} ${m.last_name}`,
-      address: `${m.street_address}, ${m.city}, ${m.state} ${m.zip_code}`,
-      phone: m.phone,
-      email: m.email,
-      emergency_contact: m.emergency_contact,
-      emergency_contact_phone: m.emergency_contact_phone,
-      member_status: m.member_status,
-      expiration_date: m.expiration_date,
-    }));
+    const formatted = mtt.map((row) => {
+      const m = membersData.find((mem) => mem.id === row.member_id);
+      const addressParts = [m?.street_address, m?.city, [m?.state, m?.zip_code].filter(Boolean).join(" ")].filter(Boolean);    
+      return {
+        name: `${m?.first_name} ${m?.last_name}`,
+        address: addressParts.join(", "),
+        phone: formatPhoneNumber(m?.phone ?? ""),
+        email: m?.email ?? "",
+        emergency_contact: m?.emergency_contact,
+        emergency_contact_phone: formatPhoneNumber(m?.emergency_contact_phone ?? ""),
+        member_status: skuStatusMap[row.sku] ?? "",
+        expiration_date: m?.expiration_date,
+      };
+    });
 
     setMembers(formatted);
   };
@@ -193,9 +200,10 @@ export default function MembershipReports() {
       }
 
       const uniqueYears = Array.from(
-        new Set(data.map((p) => p.year).filter((y): y is string => y !== null)),
+        new Set(data.map((p) => p.year).filter((y): y is string => y !== null))
       ).sort();
       setAvailableYears(uniqueYears);
+      setSelectedYears([uniqueYears[uniqueYears.length - 1]]);
     };
     setup().catch(console.error);
   }, []);
@@ -206,11 +214,9 @@ export default function MembershipReports() {
         {roles === null ? (
           <div>Don't have the necessary permission</div>
         ) : (
-          // {/* Select and add, delete, and edit buttons */ }
           <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
             <div className="flex h-full w-full flex-col items-center">
               <div className="flex h-full w-full flex-col gap-3">
-                {/* Select and add, delete, and edit buttons */}
                 <div className="flex w-full flex-row items-end justify-between">
                   <div className="flex w-3/5 flex-row justify-between gap-2">
                     {customRange ? (
@@ -246,17 +252,11 @@ export default function MembershipReports() {
                               Academic Year
                             </label>
                             <MultiSelectDropdown
-                              options={availableYears.map((year) =>
-                                formatAcademicYear(year),
-                              )}
-                              selectedOptions={selectedYears.map((y) =>
-                                formatAcademicYear(y),
-                              )}
+                              options={availableYears.map((year) => formatAcademicYear(year))}
+                              selectedOptions={selectedYears.map((y) => formatAcademicYear(y))}
                               setSelectedOptions={(formattedSelected) => {
                                 const rawSelected = availableYears.filter((y) =>
-                                  formattedSelected.includes(
-                                    formatAcademicYear(y),
-                                  ),
+                                  formattedSelected.includes(formatAcademicYear(y))
                                 );
                                 setSelectedYears(rawSelected);
                               }}
@@ -287,14 +287,13 @@ export default function MembershipReports() {
                     <div className="flex w-1/2 items-end">
                       <button
                         className="h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
-                        onClick={() => exportToCSV()}
+                        onClick={exportToCSV}
                       >
                         Export as CSV
                       </button>
                     </div>
                   </div>
                 </div>
-
                 <div className="w-full flex-grow overflow-y-auto">
                   <table className="w-full border-collapse rounded-lg bg-white text-left shadow">
                     <thead>
@@ -312,10 +311,7 @@ export default function MembershipReports() {
                     <tbody>
                       {members.length === 0 ? (
                         <tr>
-                          <td
-                            colSpan={8}
-                            className="p-3 text-center text-gray-500"
-                          >
+                          <td colSpan={8} className="p-3 text-center text-gray-500">
                             No members found
                           </td>
                         </tr>
@@ -340,45 +336,6 @@ export default function MembershipReports() {
             </div>
           </div>
         )}
-
-        {/* <div className="w-full flex-grow overflow-y-auto">
-              <table className="w-full text-left border-collapse bg-white rounded-lg shadow">
-                <thead>
-                  <tr>
-                    <th className="p-3 font-semibold">Name</th>
-                    <th className="p-3 font-semibold">Address</th>
-                    <th className="p-3 font-semibold">Phone</th>
-                    <th className="p-3 font-semibold">Email</th>
-                    <th className="p-3 font-semibold">Emergency Contact</th>
-                    <th className="p-3 font-semibold">Emergency Phone</th>
-                    <th className="p-3 font-semibold">Status</th>
-                    <th className="p-3 font-semibold">Expiration</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {members.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="p-3 text-center text-gray-500">
-                        No members found
-                      </td>
-                    </tr>
-                  ) : (
-                    members.map((m, i) => (
-                      <tr key={i} className="border-t">
-                        <td className="p-3">{m.name}</td>
-                        <td className="p-3">{m.address}</td>
-                        <td className="p-3">{m.phone}</td>
-                        <td className="p-3">{m.email}</td>
-                        <td className="p-3">{m.emergency_contact}</td>
-                        <td className="p-3">{m.emergency_contact_phone}</td>
-                        <td className="p-3">{m.member_status}</td>
-                        <td className="p-3">{m.expiration_date}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div> */}
       </div>
     </div>
   );
