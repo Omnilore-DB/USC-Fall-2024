@@ -23,18 +23,18 @@ export default function DonationReports() {
       return;
     }
 
-    const headers = ["Name", "Email", "Address", "Type", "Date", "Amount"];
+    const headers = ["Name", "Email", "Address", "Date", "Amount", "Type"];
     const rows = donationTransactions.map((t) => [
       t.name ?? "",
       t.transaction_email ?? "",
       t.address ?? "",
-      t.type ?? "",
       new Date(t.date).toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
       }),
       t.amount.toFixed(2),
+      t.type ?? "",
     ]);
     const csvContent = [
       headers.join(","),

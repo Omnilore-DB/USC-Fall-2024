@@ -186,15 +186,15 @@ export default function ForumReports() {
       return;
     }
   
-    const headers = ["Name", "Email", "Phone", "Type"];
+    const headers = ["Name", "Email", "Phone", "Date", "Amount", "Type", "Descriptor"];
     const rows = forumMembers.map((m) => [
       m.name ?? "",
       m.email ?? "",
       m.phone ?? "",
-      m.type ?? "",
       new Date(m.date).toLocaleDateString(),
       m.amount.toFixed(2),
-
+      m.type ?? "",
+      m.descriptor ?? "",
     ]);
   
     const csvContent = [
