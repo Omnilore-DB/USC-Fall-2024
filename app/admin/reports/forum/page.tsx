@@ -328,9 +328,9 @@ export default function ForumReports() {
                         <th className="p-3 font-semibold">Name</th>
                         <th className="p-3 font-semibold">Email</th>
                         <th className="p-3 font-semibold">Phone</th>
-                        <th className="p-3 font-semibold">Type</th>
                         <th className="p-3 font-semibold">Date</th>
                         <th className="p-3 font-semibold">Amount</th>
+                        <th className="p-3 font-semibold">Type</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -346,9 +346,9 @@ export default function ForumReports() {
                             <td className="p-3">{m.name}</td>
                             <td className="p-3">{m.email}</td>
                             <td className="p-3">{m.phone}</td>
-                            <td className="p-3">{m.type}</td>
                             <td className="p-3">{new Date(m.date).toLocaleDateString()}</td>
                             <td className="p-3">${m.amount.toFixed(2)}</td>
+                            <td className="p-3">{m.type}</td>
                           </tr>
                         ))
                       )}

@@ -267,9 +267,9 @@ export default function DonationReports() {
                         <th className="p-3 font-semibold">Name</th>
                         <th className="p-3 font-semibold">Email</th>
                         <th className="p-3 font-semibold">Address</th>
-                        <th className="p-3 font-semibold">Type</th>
                         <th className="p-3 font-semibold">Date</th>
                         <th className="p-3 font-semibold">Amount</th>
+                        <th className="p-3 font-semibold">Type</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -285,7 +285,6 @@ export default function DonationReports() {
                             <td className="p-3">{t.name}</td>
                             <td className="p-3">{t.transaction_email}</td>
                             <td className="p-3">{t.address}</td>
-                            <td className="p-3">{t.type}</td>
                             <td className="p-3">
                               {new Date(t.date).toLocaleDateString("en-US", {
                                 year: "numeric",
@@ -294,6 +293,7 @@ export default function DonationReports() {
                               })}
                             </td>
                             <td className="p-3">${t.amount.toFixed(2)}</td>
+                            <td className="p-3">{t.type}</td>
                           </tr>
                         ))
                       )}
