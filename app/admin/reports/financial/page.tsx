@@ -1,7 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { supabase, getRoles } from "@/app/supabase";
+import type { SupabasePayout } from "@/app/api/cron/src/supabase/types";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
+import { supabase, getRoles } from "@/app/supabase";
+import React, { useState, useEffect } from "react";
+import { Temporal } from "temporal-polyfill";
+import { updatePayout } from "./actions";
+import { toast } from "sonner";
 
 const TreasurerReqs = () => {
   const [roles, setRoles] = useState<string[]>([]);
@@ -33,6 +37,15 @@ const TreasurerReqs = () => {
   const [monthsInRange, setMonthsInRange] = useState<
     { year: number; month: number }[]
   >([]);
+
+  const [paypalPayouts, setPaypalPayouts] = useState<
+    Record<string, SupabasePayout>
+  >({});
+  const [stripePayouts, setStripePayouts] = useState<
+    Record<string, SupabasePayout>
+  >({});
+  const [fetchPayoutsErr, setFetchPayoutsErr] = useState<string | null>(null);
+
   // const [roles, setRoles] = useState<string[] | null>(null);
 
   const categories = ["MEMBERSHIP", "FORUM", "DONATION"];
@@ -104,6 +117,32 @@ const TreasurerReqs = () => {
     URL.revokeObjectURL(url);
   };
 
+  const fetchPayouts = async (fromDate: string, toDate: string) => {
+    const { data, error } = await supabase
+      .from("payouts")
+      .select("*")
+      .gte("date_adjusted", fromDate)
+      .lte("date_adjusted", toDate)
+      .order("date_adjusted", { ascending: true });
+
+    if (error) {
+      setFetchPayoutsErr(error.message);
+      return;
+    }
+
+    const paypal = data
+      .filter((p) => p.date_adjusted && p.payment_platform === "PAYPAL")
+      .map((p) => [p.date_adjusted!, p] as const);
+
+    const stripe = data
+      .filter((p) => p.date_adjusted && p.payment_platform === "STRIPE")
+      .map((p) => [p.date_adjusted!, p] as const);
+
+    setPaypalPayouts(Object.fromEntries(paypal));
+    setStripePayouts(Object.fromEntries(stripe));
+    setFetchPayoutsErr(null);
+  };
+
   const handleGenerateReport = async () => {
     let fromDateValue = "";
     let toDateValue = "";
@@ -168,6 +207,11 @@ const TreasurerReqs = () => {
       loop.setUTCMonth(loop.getUTCMonth() + 1);
     }
     setMonthsInRange(range);
+
+    fetchPayouts(
+      Temporal.PlainYearMonth.from(range[0]).toString(),
+      Temporal.PlainYearMonth.from(range.at(-1)!).toString(),
+    );
 
     const grossResults: Record<string, number> = {};
     const feeResults: Record<string, number> = {};
@@ -707,16 +751,57 @@ const TreasurerReqs = () => {
                               Bank Confirmation
                             </td>
                             {monthsInRange.map(({ year, month }) => {
-                              const key = `${year}-${month}`;
+                              const temporalKey = Temporal.PlainYearMonth.from({
+                                year,
+                                month,
+                              }).toString();
                               return (
                                 <React.Fragment
                                   key={`paypal-confirm-${year}-${month}`}
                                 >
                                   <td className="border bg-white p-2 text-center">
-                                    <input
-                                      type="checkbox"
-                                      className="mt-1 h-4 w-4"
-                                    />
+                                    <div className="flex flex-col items-center">
+                                      <input
+                                        type="checkbox"
+                                        className="mt-1 h-4 w-4"
+                                        disabled={!paypalPayouts[temporalKey]}
+                                        checked={
+                                          paypalPayouts[temporalKey]
+                                            ?.received ?? false
+                                        }
+                                        onChange={async (e) => {
+                                          const toAwait = updatePayout(
+                                            temporalKey,
+                                            e.target.checked,
+                                            "PAYPAL",
+                                          );
+
+                                          toast.promise(toAwait, {
+                                            loading: "Updating payout...",
+                                            success: (data) => {
+                                              setPaypalPayouts((prev) => ({
+                                                ...prev,
+                                                [temporalKey]: data,
+                                              }));
+                                              return `${temporalKey} PayPal Payout updated!`;
+                                            },
+                                            error: (error) =>
+                                              `Error updating PayPal payout for ${temporalKey}: ${error.message}`,
+                                          });
+                                        }}
+                                      />
+                                      {fetchPayoutsErr !== null ? (
+                                        <span className="text-xs text-red-400">
+                                          Error fetching payouts:{" "}
+                                          {fetchPayoutsErr}
+                                        </span>
+                                      ) : paypalPayouts[temporalKey] ? null : (
+                                        <span className="text-xs text-red-500">
+                                          'date_adjusted' not found for '
+                                          {temporalKey}'
+                                        </span>
+                                      )}
+                                    </div>
                                   </td>
                                 </React.Fragment>
                               );
@@ -843,15 +928,57 @@ const TreasurerReqs = () => {
                               Bank Confirmation
                             </td>
                             {monthsInRange.map(({ year, month }) => {
+                              const temporalKey = Temporal.PlainYearMonth.from({
+                                year,
+                                month,
+                              }).toString();
                               return (
                                 <React.Fragment
                                   key={`stripe-confirm-${year}-${month}`}
                                 >
                                   <td className="border bg-white p-2 text-center">
-                                    <input
-                                      type="checkbox"
-                                      className="mt-1 h-4 w-4"
-                                    />
+                                    <div className="flex flex-col items-center">
+                                      <input
+                                        type="checkbox"
+                                        className="mt-1 h-4 w-4"
+                                        disabled={!stripePayouts[temporalKey]}
+                                        checked={
+                                          stripePayouts[temporalKey]
+                                            ?.received ?? false
+                                        }
+                                        onChange={async (e) => {
+                                          const toAwait = updatePayout(
+                                            temporalKey,
+                                            e.target.checked,
+                                            "STRIPE",
+                                          );
+
+                                          toast.promise(toAwait, {
+                                            loading: "Updating payout...",
+                                            success: (data) => {
+                                              setStripePayouts((prev) => ({
+                                                ...prev,
+                                                [temporalKey]: data,
+                                              }));
+                                              return `${temporalKey} Stripe Payout updated!`;
+                                            },
+                                            error: (error) =>
+                                              `Error updating Stripe payout for ${temporalKey}: ${error.message}`,
+                                          });
+                                        }}
+                                      />
+                                      {fetchPayoutsErr !== null ? (
+                                        <span className="text-xs text-red-400">
+                                          Error fetching payouts:{" "}
+                                          {fetchPayoutsErr}
+                                        </span>
+                                      ) : stripePayouts[temporalKey] ? null : (
+                                        <span className="text-xs text-red-500">
+                                          'date_adjusted' not found for '
+                                          {temporalKey}'
+                                        </span>
+                                      )}
+                                    </div>
                                   </td>
                                 </React.Fragment>
                               );

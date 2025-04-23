@@ -316,6 +316,26 @@ export const update = {
 
     return data[0];
   },
+
+  payout: async (
+    date_adjusted: string,
+    received: boolean,
+    payment_platform: "PAYPAL" | "STRIPE",
+  ) => {
+    const { data, error } = await supabase
+      .from("payouts")
+      .update({ received })
+      .eq("date_adjusted", date_adjusted)
+      .eq("payment_platform", payment_platform)
+      .select();
+
+    if (error)
+      throw new Error(
+        `Failed to update payout. ${error.hint}. ${error.message}`,
+      );
+
+    return data[0];
+  },
 };
 
 export const insert = {

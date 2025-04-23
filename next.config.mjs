@@ -13,6 +13,7 @@ const nextConfig = {
   },
 
   experimental: {
+    reactCompiler: true,
     turbo: {
       rules: {
         "*.svg": {
