@@ -75,7 +75,7 @@ export const getMemberNamesByIds = async (memberIds: string[] | number[]) => {
   const { data, error } = await supabase
     .from("members")
     .select("id, first_name, last_name")
-    .in("id", memberIds);
+    .in("id", memberIds as any);
   if (error) {
     console.error("Failed to fetch member names:", error.message);
     return [];
