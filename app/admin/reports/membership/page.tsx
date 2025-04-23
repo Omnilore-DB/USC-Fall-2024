@@ -42,7 +42,7 @@ export default function MembershipReports() {
     const csvContent = [
       headers.join(","),
       ...rows.map((r) =>
-        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(",")
+        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(","),
       ),
     ].join("\r\n");
 
@@ -80,7 +80,7 @@ export default function MembershipReports() {
     if (digits.length !== 10) return phone;
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   };
-  
+
   const fetchMembershipMembers = async () => {
     if (customRange && (!startDate || !endDate)) {
       alert("Please select both start and end dates");
@@ -98,9 +98,11 @@ export default function MembershipReports() {
       return;
     }
     const skuStatusMap = Object.fromEntries(
-      products.map((p) => [p.sku, p.status ?? ""])
+      products.map((p) => [p.sku, p.status ?? ""]),
     );
-    const validSkus = products.map((p) => p.sku).filter((sku) => sku !== "SQ-TEST");
+    const validSkus = products
+      .map((p) => p.sku)
+      .filter((sku) => sku !== "SQ-TEST");
 
     if (validSkus.length === 0) {
       setMembers([]);
@@ -154,7 +156,7 @@ export default function MembershipReports() {
     const { data: membersData, error: membersError } = await supabase
       .from("members")
       .select(
-        "id, first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date"
+        "id, first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date",
       )
       .in("id", filteredMemberIds.map(Number));
 
@@ -165,14 +167,20 @@ export default function MembershipReports() {
 
     const formatted = mtt.map((row) => {
       const m = membersData.find((mem) => mem.id === row.member_id);
-      const addressParts = [m?.street_address, m?.city, [m?.state, m?.zip_code].filter(Boolean).join(" ")].filter(Boolean);    
+      const addressParts = [
+        m?.street_address,
+        m?.city,
+        [m?.state, m?.zip_code].filter(Boolean).join(" "),
+      ].filter(Boolean);
       return {
         name: `${m?.first_name} ${m?.last_name}`,
         address: addressParts.join(", "),
         phone: formatPhoneNumber(m?.phone ?? ""),
         email: m?.email ?? "",
         emergency_contact: m?.emergency_contact,
-        emergency_contact_phone: formatPhoneNumber(m?.emergency_contact_phone ?? ""),
+        emergency_contact_phone: formatPhoneNumber(
+          m?.emergency_contact_phone ?? "",
+        ),
         member_status: skuStatusMap[row.sku] ?? "",
         expiration_date: m?.expiration_date,
       };
@@ -200,7 +208,7 @@ export default function MembershipReports() {
       }
 
       const uniqueYears = Array.from(
-        new Set(data.map((p) => p.year).filter((y): y is string => y !== null))
+        new Set(data.map((p) => p.year).filter((y): y is string => y !== null)),
       ).sort();
       setAvailableYears(uniqueYears);
       setSelectedYears([uniqueYears[uniqueYears.length - 1]]);
@@ -252,11 +260,17 @@ export default function MembershipReports() {
                               Academic Year
                             </label>
                             <MultiSelectDropdown
-                              options={availableYears.map((year) => formatAcademicYear(year))}
-                              selectedOptions={selectedYears.map((y) => formatAcademicYear(y))}
+                              options={availableYears.map((year) =>
+                                formatAcademicYear(year),
+                              )}
+                              selectedOptions={selectedYears.map((y) =>
+                                formatAcademicYear(y),
+                              )}
                               setSelectedOptions={(formattedSelected) => {
                                 const rawSelected = availableYears.filter((y) =>
-                                  formattedSelected.includes(formatAcademicYear(y))
+                                  formattedSelected.includes(
+                                    formatAcademicYear(y),
+                                  ),
                                 );
                                 setSelectedYears(rawSelected);
                               }}
@@ -311,7 +325,10 @@ export default function MembershipReports() {
                     <tbody>
                       {members.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="p-3 text-center text-gray-500">
+                          <td
+                            colSpan={8}
+                            className="p-3 text-center text-gray-500"
+                          >
                             No members found
                           </td>
                         </tr>

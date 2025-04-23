@@ -7,12 +7,21 @@ import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
 export default function DonationReports() {
   const [roles, setRoles] = useState<string[]>([]);
-  const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(null);
+  const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(
+    null,
+  );
   const [customRange, setCustomRange] = useState(false);
   const [availableYears] = useState(["2022", "2023", "2024", "2025"]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [donationTransactions, setDonationTransactions] = useState<
-    { transaction_email: string; date: string; amount: number; name: string; type: string; address: string;}[]
+    {
+      transaction_email: string;
+      date: string;
+      amount: number;
+      name: string;
+      type: string;
+      address: string;
+    }[]
   >([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -39,11 +48,12 @@ export default function DonationReports() {
     const csvContent = [
       headers.join(","),
       ...rows.map((r) =>
-        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(",")
+        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(","),
       ),
     ].join("\r\n");
 
-    const yearsString = selectedYears.length > 0 ? selectedYears.join("_") : "all";
+    const yearsString =
+      selectedYears.length > 0 ? selectedYears.join("_") : "all";
     let filename = "";
 
     if (customRange && startDate && endDate) {
@@ -84,7 +94,9 @@ export default function DonationReports() {
       return;
     }
 
-    const donationSkus = products.map((p) => p.sku).filter((sku) => sku !== "SQ-TEST");
+    const donationSkus = products
+      .map((p) => p.sku)
+      .filter((sku) => sku !== "SQ-TEST");
     if (donationSkus.length === 0) {
       setDonationTransactions([]);
       return;
@@ -120,7 +132,9 @@ export default function DonationReports() {
 
     const { data: memberInfo, error: memberError } = await supabase
       .from("members")
-      .select("id, first_name, last_name, type, street_address, city, state, zip_code")
+      .select(
+        "id, first_name, last_name, type, street_address, city, state, zip_code",
+      )
       .in("id", memberIds);
 
     if (memberError) {
@@ -139,7 +153,7 @@ export default function DonationReports() {
           state: m.state,
           zip_code: m.zip_code,
         },
-      ])
+      ]),
     );
 
     const filtered = transactions
@@ -197,32 +211,38 @@ export default function DonationReports() {
           <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
             <div className="flex h-full w-full flex-col items-center">
               <div className="flex h-full w-full flex-col gap-3">
-                <div className="flex flex-row justify-between w-full items-end">
-                  <div className="flex flex-row justify-between w-3/5 gap-2">
+                <div className="flex w-full flex-row items-end justify-between">
+                  <div className="flex w-3/5 flex-row justify-between gap-2">
                     {customRange ? (
                       <>
-                        <div className="w-1/3 flex flex-col">
-                          <label className="text-sm font-semibold">Start Date</label>
+                        <div className="flex w-1/3 flex-col">
+                          <label className="text-sm font-semibold">
+                            Start Date
+                          </label>
                           <input
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
+                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
                           />
                         </div>
-                        <div className="w-1/3 flex flex-col">
-                          <label className="text-sm font-semibold">End Date</label>
+                        <div className="flex w-1/3 flex-col">
+                          <label className="text-sm font-semibold">
+                            End Date
+                          </label>
                           <input
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
+                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
                           />
                         </div>
                       </>
                     ) : (
-                      <div className="w-2/3 flex flex-col">
-                        <label className="text-sm font-semibold">Calendar Year(s)</label>
+                      <div className="flex w-2/3 flex-col">
+                        <label className="text-sm font-semibold">
+                          Calendar Year(s)
+                        </label>
                         <MultiSelectDropdown
                           options={availableYears}
                           selectedOptions={selectedYears}
@@ -231,27 +251,27 @@ export default function DonationReports() {
                         />
                       </div>
                     )}
-                    <div className="w-1/3 flex items-end">
+                    <div className="flex w-1/3 items-end">
                       <button
-                        className="w-full h-10 rounded-lg bg-gray-200 font-semibold"
+                        className="h-10 w-full rounded-lg bg-gray-200 font-semibold"
                         onClick={() => setCustomRange((prev) => !prev)}
                       >
                         {customRange ? "Calendar Year" : "Custom Range"}
                       </button>
                     </div>
                   </div>
-                  <div className="flex flex-row justify-between w-1/4 gap-2">
-                    <div className="flex items-end w-1/2">
+                  <div className="flex w-1/4 flex-row justify-between gap-2">
+                    <div className="flex w-1/2 items-end">
                       <button
                         onClick={fetchDonationTransactions}
-                        className="w-full bg-blue-500 h-10 rounded-lg font-semibold text-white"
+                        className="h-10 w-full rounded-lg bg-blue-500 font-semibold text-white"
                       >
                         Generate Report
                       </button>
                     </div>
-                    <div className="flex items-end w-1/2">
+                    <div className="flex w-1/2 items-end">
                       <button
-                        className="w-full bg-green-500 h-10 rounded-lg font-semibold text-white"
+                        className="h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
                         onClick={exportToCSV}
                       >
                         Export as CSV
@@ -261,7 +281,7 @@ export default function DonationReports() {
                 </div>
 
                 <div className="w-full flex-grow overflow-y-auto">
-                  <table className="w-full text-left border-collapse bg-white rounded-lg shadow">
+                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow">
                     <thead>
                       <tr>
                         <th className="p-3 font-semibold">Name</th>
@@ -275,7 +295,10 @@ export default function DonationReports() {
                     <tbody>
                       {donationTransactions.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="p-3 text-center text-gray-500">
+                          <td
+                            colSpan={5}
+                            className="p-3 text-center text-gray-500"
+                          >
                             No donations found
                           </td>
                         </tr>

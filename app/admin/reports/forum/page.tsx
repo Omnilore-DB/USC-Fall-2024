@@ -9,20 +9,26 @@ export default function ForumReports() {
   const [roles, setRoles] = useState<string[]>([]);
   const [customRange, setCustomRange] = useState(false);
   const [availableYears] = useState(["2022", "2023", "2024", "2025"]);
-  const [availableTrimesters] = useState(["Trimester 1", "Trimester 2", "Trimester 3"]);
+  const [availableTrimesters] = useState([
+    "Trimester 1",
+    "Trimester 2",
+    "Trimester 3",
+  ]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [selectedTrimesters, setSelectedTrimesters] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [forumMembers, setForumMembers] = useState<{
-    name: string;
-    email: string;
-    phone: string;
-    type: string;
-    date: string;
-    amount: number;
-    descriptor: string;
-  }[]>([]);
+  const [forumMembers, setForumMembers] = useState<
+    {
+      name: string;
+      email: string;
+      phone: string;
+      type: string;
+      date: string;
+      amount: number;
+      descriptor: string;
+    }[]
+  >([]);
 
   useEffect(() => {
     const setup = async () => {
@@ -65,7 +71,10 @@ export default function ForumReports() {
       return;
     }
 
-    if (!customRange && (selectedYears.length === 0 || selectedTrimesters.length === 0)) {
+    if (
+      !customRange &&
+      (selectedYears.length === 0 || selectedTrimesters.length === 0)
+    ) {
       alert("Please select at least one calendar year and one trimester");
       return;
     }
@@ -83,9 +92,11 @@ export default function ForumReports() {
       return;
     }
     const skuDescriptorMap = Object.fromEntries(
-      products.map((p) => [p.sku, p.descriptor ?? ""])
+      products.map((p) => [p.sku, p.descriptor ?? ""]),
     );
-    const forumSkus = products.map((p) => p.sku).filter((sku) => sku !== "SQ-TEST");
+    const forumSkus = products
+      .map((p) => p.sku)
+      .filter((sku) => sku !== "SQ-TEST");
 
     const { data: mtt, error: mttError } = await supabase
       .from("members_to_transactions")
@@ -113,9 +124,9 @@ export default function ForumReports() {
 
     // Build transaction map
     const transactionMap = Object.fromEntries(
-      transactions.map((tx) => [tx.id, { date: tx.date, amount: tx.amount }])
+      transactions.map((tx) => [tx.id, { date: tx.date, amount: tx.amount }]),
     );
-    
+
     if (customRange) {
       const { data: transactions, error: txError } = await supabase
         .from("transactions")
@@ -158,14 +169,12 @@ export default function ForumReports() {
       return;
     }
 
-    const memberMap = Object.fromEntries(
-      members.map((m) => [String(m.id), m])
-    );
-    
+    const memberMap = Object.fromEntries(members.map((m) => [String(m.id), m]));
+
     const formatted = mtt.map((entry) => {
       const member = memberMap[String(entry.member_id)];
       const tx = transactionMap[entry.transaction_id];
-    
+
       return {
         name: `${member?.first_name ?? ""} ${member?.last_name ?? ""}`,
         email: member?.email ?? "",
@@ -185,8 +194,16 @@ export default function ForumReports() {
       alert("No data to export");
       return;
     }
-  
-    const headers = ["Name", "Email", "Phone", "Date", "Amount", "Type", "Descriptor"];
+
+    const headers = [
+      "Name",
+      "Email",
+      "Phone",
+      "Date",
+      "Amount",
+      "Type",
+      "Descriptor",
+    ];
     const rows = forumMembers.map((m) => [
       m.name ?? "",
       m.email ?? "",
@@ -196,23 +213,23 @@ export default function ForumReports() {
       m.type ?? "",
       m.descriptor ?? "",
     ]);
-  
+
     const csvContent = [
       headers.join(","),
       ...rows.map((r) =>
-        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(",")
+        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(","),
       ),
     ].join("\r\n");
-  
+
     const trimesterMap: Record<string, string> = {
       "Trimester 1": "t1",
       "Trimester 2": "t2",
       "Trimester 3": "t3",
     };
-  
+
     const yearsString =
       selectedYears.length > 0 ? selectedYears.join("_") : "all";
-  
+
     let filename = "";
     if (customRange && startDate && endDate) {
       filename = `forum_report_${startDate}_to_${endDate}.csv`;
@@ -227,7 +244,7 @@ export default function ForumReports() {
         ? `forum_report_${yearsString}_${trimestersString}.csv`
         : `forum_report_${yearsString}.csv`;
     }
-  
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -238,7 +255,6 @@ export default function ForumReports() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
-  
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
@@ -249,33 +265,39 @@ export default function ForumReports() {
           <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
             <div className="flex h-full w-full flex-col items-center">
               <div className="flex h-full w-full flex-col gap-3">
-                <div className="flex flex-row justify-between w-full items-end">
-                  <div className="flex flex-row justify-between w-3/5 gap-2">
+                <div className="flex w-full flex-row items-end justify-between">
+                  <div className="flex w-3/5 flex-row justify-between gap-2">
                     {customRange ? (
                       <>
-                        <div className="w-1/3 flex flex-col">
-                          <label className="text-sm font-semibold">Start Date</label>
+                        <div className="flex w-1/3 flex-col">
+                          <label className="text-sm font-semibold">
+                            Start Date
+                          </label>
                           <input
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
+                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
                           />
                         </div>
-                        <div className="w-1/3 flex flex-col">
-                          <label className="text-sm font-semibold">End Date</label>
+                        <div className="flex w-1/3 flex-col">
+                          <label className="text-sm font-semibold">
+                            End Date
+                          </label>
                           <input
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full h-10 rounded-lg border-gray-200 bg-white p-2"
+                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
                           />
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="w-1/3 flex flex-col">
-                          <label className="text-sm font-semibold">Calendar Year(s)</label>
+                        <div className="flex w-1/3 flex-col">
+                          <label className="text-sm font-semibold">
+                            Calendar Year(s)
+                          </label>
                           <MultiSelectDropdown
                             options={availableYears}
                             selectedOptions={selectedYears}
@@ -283,8 +305,10 @@ export default function ForumReports() {
                             placeholder="Select Calendar Year(s)"
                           />
                         </div>
-                        <div className="w-1/3 flex flex-col">
-                          <label className="text-sm font-semibold">Trimester(s)</label>
+                        <div className="flex w-1/3 flex-col">
+                          <label className="text-sm font-semibold">
+                            Trimester(s)
+                          </label>
                           <MultiSelectDropdown
                             options={availableTrimesters}
                             selectedOptions={selectedTrimesters}
@@ -294,9 +318,9 @@ export default function ForumReports() {
                         </div>
                       </>
                     )}
-                    <div className="w-1/3 flex items-end">
+                    <div className="flex w-1/3 items-end">
                       <button
-                        className="w-full h-10 rounded-lg bg-gray-200 font-semibold"
+                        className="h-10 w-full rounded-lg bg-gray-200 font-semibold"
                         onClick={() => {
                           setCustomRange((prev) => !prev);
                           setForumMembers([]);
@@ -306,18 +330,18 @@ export default function ForumReports() {
                       </button>
                     </div>
                   </div>
-                  <div className="flex flex-row justify-between w-1/4 gap-2">
-                    <div className="flex items-end w-1/2">
+                  <div className="flex w-1/4 flex-row justify-between gap-2">
+                    <div className="flex w-1/2 items-end">
                       <button
                         onClick={fetchForumReport}
-                        className="w-full bg-blue-500 h-10 rounded-lg font-semibold text-white"
+                        className="h-10 w-full rounded-lg bg-blue-500 font-semibold text-white"
                       >
                         Generate Report
                       </button>
                     </div>
-                    <div className="flex items-end w-1/2">
+                    <div className="flex w-1/2 items-end">
                       <button
-                        className="w-full bg-green-500 h-10 rounded-lg font-semibold text-white"
+                        className="h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
                         onClick={exportToCSV}
                       >
                         Export as CSV
@@ -326,7 +350,7 @@ export default function ForumReports() {
                   </div>
                 </div>
                 <div className="w-full flex-grow overflow-y-auto">
-                  <table className="w-full text-left border-collapse bg-white rounded-lg shadow">
+                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow">
                     <thead>
                       <tr>
                         <th className="p-3 font-semibold">Name</th>
@@ -341,7 +365,10 @@ export default function ForumReports() {
                     <tbody>
                       {forumMembers.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="p-3 text-center text-gray-500">
+                          <td
+                            colSpan={4}
+                            className="p-3 text-center text-gray-500"
+                          >
                             No forum participants found
                           </td>
                         </tr>
@@ -351,7 +378,9 @@ export default function ForumReports() {
                             <td className="p-3">{m.name}</td>
                             <td className="p-3">{m.email}</td>
                             <td className="p-3">{m.phone}</td>
-                            <td className="p-3">{new Date(m.date).toLocaleDateString()}</td>
+                            <td className="p-3">
+                              {new Date(m.date).toLocaleDateString()}
+                            </td>
                             <td className="p-3">${m.amount.toFixed(2)}</td>
                             <td className="p-3">{m.type}</td>
                             <td className="p-3">{m.descriptor}</td>
