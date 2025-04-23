@@ -3,6 +3,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/i,
@@ -12,16 +13,17 @@ const nextConfig = {
     return config;
   },
 
-  experimental: {
-    reactCompiler: true,
-    turbo: {
-      rules: {
-        "*.svg": {
-          loaders: ["@svgr/webpack"],
-          as: "*.[js,jsx,ts,tsx]",
-        },
+  turbopack: {
+    rules: {
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.[js,jsx,ts,tsx]",
       },
     },
+  },
+
+  experimental: {
+    reactCompiler: true,
   },
 };
 
