@@ -23,13 +23,21 @@ import { Button } from "@/components/ui/button";
 import { CommandInput } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
-import { state, zip_code } from "@/app/api/cron/src/validations/schemas";
+import {
+  state as states,
+  zip_code,
+} from "@/app/api/cron/src/validations/schemas";
 import type { MailInOrderData } from "@/app/api/cron/src/types";
 import { toast } from "sonner";
 import { insertMailInOrder } from "./actions";
 
 export default function Table() {
-  const { Field, handleSubmit, Subscribe } = useForm({
+  const {
+    Field,
+    handleSubmit,
+    Subscribe,
+    state: formState,
+  } = useForm({
     defaultValues: {
       date: new Date(),
       first_name: "",
@@ -40,6 +48,7 @@ export default function Table() {
       city: "",
       state: "CA",
       zip_code: "",
+      public: true,
       sku: "",
       amount: "",
       fee: "0",
@@ -54,7 +63,10 @@ export default function Table() {
         ]),
       ) as MailInOrderData;
 
-      const toAwait = insertMailInOrder(cleanedData);
+      const toAwait = insertMailInOrder(
+        cleanedData,
+        products.find((p) => p.sku === cleanedData.sku)?.type ?? "UNKNOWN",
+      );
 
       toast.promise(toAwait, {
         loading: "Creating mail-in order...",
@@ -104,7 +116,7 @@ export default function Table() {
         }
 
         setPermissions(allPermissions);
-        setProducts(await skus);
+        setProducts((await skus).filter((p) => p.type !== "HIDDEN"));
       } catch (error) {
         console.error("Error during setup", error);
       } finally {
@@ -228,6 +240,88 @@ export default function Table() {
                     )}
                   </Field>
                   <Field
+                    name="sku"
+                    validators={{
+                      onChange: z.enum(
+                        products.map((p) => p.sku) as [string, ...string[]],
+                        { message: "Invalid SKU" },
+                      ),
+                    }}
+                  >
+                    {(field) => (
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          SKU<span className="text-red-600">*</span>
+                        </label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between rounded-md border border-gray-300 px-3 py-2 text-left focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
+                                !field.state.value && "text-muted-foreground",
+                              )}
+                            >
+                              {field.state.value
+                                ? products.find(
+                                    (p) => p.sku === field.state.value,
+                                  )?.sku +
+                                  " - " +
+                                  products.find(
+                                    (p) => p.sku === field.state.value,
+                                  )?.descriptor
+                                : "Select SKU"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[200px] p-0 md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px]">
+                            <Command>
+                              <CommandInput placeholder="Search product..." />
+                              <CommandList>
+                                <CommandEmpty>No product found.</CommandEmpty>
+                                <CommandGroup>
+                                  {products.map((p) => (
+                                    <CommandItem
+                                      value={p.sku}
+                                      key={p.sku}
+                                      keywords={[
+                                        p.sku,
+                                        p.descriptor,
+                                        p.year ?? "",
+                                        p.type,
+                                      ]}
+                                      onSelect={() => {
+                                        field.handleChange(p.sku);
+                                      }}
+                                    >
+                                      {p.sku} - {p.descriptor}
+                                      <Check
+                                        className={cn(
+                                          "ml-auto",
+                                          p.sku === field.state.value
+                                            ? "opacity-100"
+                                            : "opacity-0",
+                                        )}
+                                      />
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        {field.state.meta.errors ? (
+                          <p className="text-sm text-red-600">
+                            {field.state.meta.errors
+                              .map((e) => e?.message)
+                              .join(", ")}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                  </Field>
+                  <Field
                     name="email"
                     validators={{
                       onChangeListenTo: ["phone"],
@@ -335,201 +429,140 @@ export default function Table() {
                       </div>
                     )}
                   </Field>
-                  <Field
-                    name="street_address"
-                    validators={{
-                      onChange: z
-                        .string()
-                        .min(1, "Street address cannot be empty"),
-                    }}
-                  >
-                    {(field) => (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Street Address<span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors
-                              .map((e) => e?.message)
-                              .join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  </Field>
-                  <Field
-                    name="city"
-                    validators={{
-                      onChange: z.string().min(1, "City cannot be empty"),
-                    }}
-                  >
-                    {(field) => (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          City<span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors
-                              .map((e) => e?.message)
-                              .join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  </Field>
-                  <Field
-                    name="state"
-                    validators={{
-                      onChange: state.schema,
-                    }}
-                  >
-                    {(field) => (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          State<span className="text-red-600">*</span>
-                        </label>
-                        <select
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        >
-                          {state.schema.options.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors
-                              .map((e) => e?.message)
-                              .join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  </Field>
-                  <Field
-                    name="zip_code"
-                    validators={{
-                      onBlur: zip_code.schema,
-                    }}
-                  >
-                    {(field) => (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Zip Code<span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors
-                              .map((e) => e?.message)
-                              .join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  </Field>
-                  <Field
-                    name="sku"
-                    validators={{
-                      onChange: z.enum(
-                        products.map((p) => p.sku) as [string, ...string[]],
-                        { message: "Invalid SKU" },
-                      ),
-                    }}
-                  >
-                    {(field) => (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          SKU<span className="text-red-600">*</span>
-                        </label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              className={cn(
-                                "w-full justify-between rounded-md border border-gray-300 px-3 py-2 text-left focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
-                                !field.state.value && "text-muted-foreground",
-                              )}
-                            >
-                              {field.state.value
-                                ? products.find(
-                                    (p) => p.sku === field.state.value,
-                                  )?.sku +
-                                  " - " +
-                                  products.find(
-                                    (p) => p.sku === field.state.value,
-                                  )?.descriptor
-                                : "Select SKU"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[200px] p-0 md:w-[300px] lg:w-[400px] xl:w-[500px] 2xl:w-[600px]">
-                            <Command>
-                              <CommandInput placeholder="Search product..." />
-                              <CommandList>
-                                <CommandEmpty>No product found.</CommandEmpty>
-                                <CommandGroup>
-                                  {products.map((p) => (
-                                    <CommandItem
-                                      value={p.sku}
-                                      key={p.sku}
-                                      keywords={[
-                                        p.sku,
-                                        p.descriptor,
-                                        p.year ?? "",
-                                        p.type,
-                                      ]}
-                                      onSelect={() => {
-                                        field.handleChange(p.sku);
-                                      }}
-                                    >
-                                      {p.sku} - {p.descriptor}
-                                      <Check
-                                        className={cn(
-                                          "ml-auto",
-                                          p.sku === field.state.value
-                                            ? "opacity-100"
-                                            : "opacity-0",
-                                        )}
-                                      />
-                                    </CommandItem>
+                  <Subscribe selector={(state) => [state.values.sku]}>
+                    {([sku]) => {
+                      const sku_type = products.find(
+                        (p) => p.sku === sku,
+                      )?.type;
+                      return sku_type === "MEMBERSHIP" ? (
+                        <>
+                          <Field
+                            name="street_address"
+                            validators={{
+                              onChange: z
+                                .string()
+                                .min(1, "Street address cannot be empty"),
+                            }}
+                          >
+                            {(field) => (
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  Street Address
+                                </label>
+                                <input
+                                  value={field.state.value ?? ""}
+                                  onChange={(e) =>
+                                    field.handleChange(e.target.value)
+                                  }
+                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                                {field.state.meta.errors ? (
+                                  <p className="text-sm text-red-600">
+                                    {field.state.meta.errors
+                                      .map((e) => e?.message)
+                                      .join(", ")}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          </Field>
+                          <Field
+                            name="city"
+                            validators={{
+                              onChange: z
+                                .string()
+                                .min(1, "City cannot be empty"),
+                            }}
+                          >
+                            {(field) => (
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  City
+                                </label>
+                                <input
+                                  value={field.state.value ?? ""}
+                                  onChange={(e) =>
+                                    field.handleChange(e.target.value)
+                                  }
+                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                                {field.state.meta.errors ? (
+                                  <p className="text-sm text-red-600">
+                                    {field.state.meta.errors
+                                      .map((e) => e?.message)
+                                      .join(", ")}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          </Field>
+                          <Field
+                            name="state"
+                            validators={{
+                              onChange: states.schema,
+                            }}
+                          >
+                            {(field) => (
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  State
+                                </label>
+                                <select
+                                  value={field.state.value ?? ""}
+                                  onChange={(e) =>
+                                    field.handleChange(e.target.value)
+                                  }
+                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                >
+                                  {states.schema.options.map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
                                   ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors
-                              .map((e) => e?.message)
-                              .join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  </Field>
+                                </select>
+                                {field.state.meta.errors ? (
+                                  <p className="text-sm text-red-600">
+                                    {field.state.meta.errors
+                                      .map((e) => e?.message)
+                                      .join(", ")}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          </Field>
+                          <Field
+                            name="zip_code"
+                            validators={{
+                              onChange: zip_code.schema,
+                            }}
+                          >
+                            {(field) => (
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  Zip Code
+                                </label>
+                                <input
+                                  value={field.state.value ?? ""}
+                                  onChange={(e) =>
+                                    field.handleChange(e.target.value)
+                                  }
+                                  onBlur={field.handleBlur}
+                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                                {field.state.meta.errors ? (
+                                  <p className="text-sm text-red-600">
+                                    {field.state.meta.errors
+                                      .map((e) => e?.message)
+                                      .join(", ")}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
+                          </Field>
+                        </>
+                      ) : null;
+                    }}
+                  </Subscribe>
                   <Field
                     name="amount"
                     validators={{
@@ -589,110 +622,147 @@ export default function Table() {
                       </div>
                     )}
                   </Field>
-                  <Field
-                    name="emergency_contact"
-                    validators={{
-                      onBlurListenTo: ["emergency_contact_phone"],
-                      onBlur: ({ value, fieldApi }) => {
-                        if (
-                          (
-                            fieldApi.form.getFieldValue(
-                              "emergency_contact_phone",
-                            ) ?? ""
-                          ).length > 0 &&
-                          (value ?? "").length === 0
-                        ) {
-                          return {
-                            message:
-                              "Name is required if emergency contact phone is provided",
-                          };
-                        }
-                        return undefined;
-                      },
+
+                  <Subscribe selector={(state) => [state.values.sku]}>
+                    {([sku]) => {
+                      return (
+                        products.find((p) => p.sku === sku)?.type ===
+                          "MEMBERSHIP" && (
+                          <>
+                            <Field
+                              name="emergency_contact"
+                              validators={{
+                                onBlurListenTo: ["emergency_contact_phone"],
+                                onBlur: ({ value, fieldApi }) => {
+                                  if (
+                                    (
+                                      fieldApi.form.getFieldValue(
+                                        "emergency_contact_phone",
+                                      ) ?? ""
+                                    ).length > 0 &&
+                                    (value ?? "").length === 0
+                                  ) {
+                                    return {
+                                      message:
+                                        "Name is required if emergency contact phone is provided",
+                                    };
+                                  }
+                                  return undefined;
+                                },
+                              }}
+                            >
+                              {(field) => (
+                                <div className="space-y-2">
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    Emergency Contact
+                                  </label>
+                                  <input
+                                    value={field.state.value ?? ""}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    onBlur={field.handleBlur}
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  />
+                                  {field.state.meta.errors ? (
+                                    <p className="text-sm text-red-600">
+                                      {field.state.meta.errors
+                                        .map((e) => e?.message)
+                                        .join(", ")}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              )}
+                            </Field>
+                            <Field
+                              name="emergency_contact_phone"
+                              validators={{
+                                onBlurListenTo: ["emergency_contact"],
+                                onBlur: ({ value, fieldApi }) => {
+                                  if (
+                                    (
+                                      fieldApi.form.getFieldValue(
+                                        "emergency_contact",
+                                      ) ?? ""
+                                    ).length > 0 &&
+                                    (value ?? "").length === 0
+                                  ) {
+                                    return {
+                                      message:
+                                        "Phone is required if emergency contact is provided",
+                                    };
+                                  }
+
+                                  const result = z
+                                    .string()
+                                    .length(
+                                      10,
+                                      "Phone number must be 10 digits",
+                                    )
+                                    .regex(
+                                      /^\d+$/,
+                                      "Phone number must only contain digits",
+                                    )
+                                    .or(z.literal(""))
+                                    .safeParse(value);
+
+                                  if (!result.success) {
+                                    return {
+                                      message: result.error
+                                        .flatten()
+                                        .formErrors.join(", "),
+                                    };
+                                  }
+
+                                  return undefined;
+                                },
+                              }}
+                            >
+                              {(field) => (
+                                <div className="space-y-2">
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    Emergency Contact Phone
+                                  </label>
+                                  <input
+                                    value={field.state.value ?? ""}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    onBlur={field.handleBlur}
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  />
+                                  {field.state.meta.errors ? (
+                                    <p className="text-sm text-red-600">
+                                      {field.state.meta.errors
+                                        .map((e) => e?.message)
+                                        .join(", ")}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              )}
+                            </Field>
+                            <Field name="public">
+                              {(field) => (
+                                <div className="space-y-2">
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    Display User Publicly
+                                  </label>
+                                  <input
+                                    type="checkbox"
+                                    checked={field.state.value ?? true}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.checked)
+                                    }
+                                    className="rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  />
+                                </div>
+                              )}
+                            </Field>
+                          </>
+                        )
+                      );
                     }}
-                  >
-                    {(field) => (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Emergency Contact
-                        </label>
-                        <input
-                          value={field.state.value ?? ""}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors
-                              .map((e) => e?.message)
-                              .join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  </Field>
-                  <Field
-                    name="emergency_contact_phone"
-                    validators={{
-                      onBlurListenTo: ["emergency_contact"],
-                      onBlur: ({ value, fieldApi }) => {
-                        if (
-                          (
-                            fieldApi.form.getFieldValue("emergency_contact") ??
-                            ""
-                          ).length > 0 &&
-                          (value ?? "").length === 0
-                        ) {
-                          return {
-                            message:
-                              "Phone is required if emergency contact is provided",
-                          };
-                        }
-
-                        const result = z
-                          .string()
-                          .length(10, "Phone number must be 10 digits")
-                          .regex(
-                            /^\d+$/,
-                            "Phone number must only contain digits",
-                          )
-                          .or(z.literal(""))
-                          .safeParse(value);
-
-                        if (!result.success) {
-                          return {
-                            message: result.error
-                              .flatten()
-                              .formErrors.join(", "),
-                          };
-                        }
-
-                        return undefined;
-                      },
-                    }}
-                  >
-                    {(field) => (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Emergency Contact Phone
-                        </label>
-                        <input
-                          value={field.state.value ?? ""}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors
-                              .map((e) => e?.message)
-                              .join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  </Field>
+                  </Subscribe>
                   <div className="col-span-2 flex justify-end">
                     <Subscribe
                       selector={(state) => [

@@ -64,10 +64,11 @@ export type MailInOrderData = {
   email: string | null;
   phone: string | null;
 
-  street_address: string;
-  city: string;
-  state: string;
-  zip_code: string;
+  street_address: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  public: boolean;
 
   sku: string;
   amount: string;
