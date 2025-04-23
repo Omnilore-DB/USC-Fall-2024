@@ -8,7 +8,7 @@ import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 export default function ForumReports() {
   const [roles, setRoles] = useState<string[]>([]);
   const [customRange, setCustomRange] = useState(false);
-  const [availableYears] = useState(["2022", "2023", "2024", "2025"]);
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [availableTrimesters] = useState([
     "Trimester 1",
     "Trimester 2",
@@ -38,6 +38,25 @@ export default function ForumReports() {
         return;
       }
       setRoles(userRoles);
+      // fetch years
+      const { data, error } = await supabase
+      .from("products")
+      .select("year")
+      .eq("type", "FORUM");
+  
+      if (error) {
+        console.error("Failed to fetch FORUM years", error);
+        return;
+      }
+  
+      const uniqueYears = Array.from(
+        new Set(data.map((p) => p.year).filter((y): y is string => y !== null))
+      ).sort();
+    
+      setAvailableYears(uniqueYears);
+      if (uniqueYears.length > 0) {
+        setSelectedYears([uniqueYears[uniqueYears.length - 1]]);
+      }
     };
     setup().catch(console.error);
   }, []);

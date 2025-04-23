@@ -11,7 +11,8 @@ export default function DonationReports() {
     null,
   );
   const [customRange, setCustomRange] = useState(false);
-  const [availableYears] = useState(["2022", "2023", "2024", "2025"]);
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
+
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [donationTransactions, setDonationTransactions] = useState<
     {
@@ -198,6 +199,12 @@ export default function DonationReports() {
         return;
       }
       setRoles(userRoles);
+      const currentYear = new Date().getFullYear();
+      const years = [];
+      for (let y = 2023; y <= currentYear; y++) {
+        years.push(y.toString());
+      }
+      setAvailableYears(years);
     };
     setup();
   }, []);
