@@ -137,7 +137,7 @@ export default function Table() {
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
-      <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
+      <div className="flex w-full grow flex-col items-center justify-center overflow-y-auto">
         {roles === null ? (
           <div>Don't have the necessary permission</div>
         ) : isLoading ? (
@@ -173,7 +173,7 @@ export default function Table() {
                         <input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
                           <p className="text-sm text-red-600">
@@ -199,7 +199,7 @@ export default function Table() {
                         <input
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
                           <p className="text-sm text-red-600">
@@ -227,7 +227,7 @@ export default function Table() {
                           onChange={(date) => date && field.handleChange(date)}
                           dateFormat="yyyy-MM-dd"
                           wrapperClassName="w-full"
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
                           <p className="text-sm text-red-600">
@@ -259,7 +259,7 @@ export default function Table() {
                               variant="outline"
                               role="combobox"
                               className={cn(
-                                "w-full justify-between rounded-md border border-gray-300 px-3 py-2 text-left focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
+                                "w-full justify-between rounded-md border border-gray-300 px-3 py-2 text-left focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500",
                                 !field.state.value && "text-muted-foreground",
                               )}
                             >
@@ -360,7 +360,7 @@ export default function Table() {
                         <input
                           value={field.state.value ?? ""}
                           onChange={(e) => field.handleChange(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
                           <p className="text-sm text-red-600">
@@ -417,7 +417,7 @@ export default function Table() {
                           type="tel"
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
                           <p className="text-sm text-red-600">
@@ -454,7 +454,7 @@ export default function Table() {
                                   onChange={(e) =>
                                     field.handleChange(e.target.value)
                                   }
-                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                                 />
                                 {field.state.meta.errors ? (
                                   <p className="text-sm text-red-600">
@@ -484,7 +484,7 @@ export default function Table() {
                                   onChange={(e) =>
                                     field.handleChange(e.target.value)
                                   }
-                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                                 />
                                 {field.state.meta.errors ? (
                                   <p className="text-sm text-red-600">
@@ -512,7 +512,7 @@ export default function Table() {
                                   onChange={(e) =>
                                     field.handleChange(e.target.value)
                                   }
-                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                                 >
                                   {states.schema.options.map((option) => (
                                     <option key={option} value={option}>
@@ -547,7 +547,7 @@ export default function Table() {
                                     field.handleChange(e.target.value)
                                   }
                                   onBlur={field.handleBlur}
-                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                                 />
                                 {field.state.meta.errors ? (
                                   <p className="text-sm text-red-600">
@@ -581,7 +581,7 @@ export default function Table() {
                           type="number"
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
                           <p className="text-sm text-red-600">
@@ -610,7 +610,7 @@ export default function Table() {
                           value={field.state.value}
                           type="number"
                           onChange={(e) => field.handleChange(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                         />
                         {field.state.meta.errors ? (
                           <p className="text-sm text-red-600">
@@ -662,7 +662,7 @@ export default function Table() {
                                       field.handleChange(e.target.value)
                                     }
                                     onBlur={field.handleBlur}
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                                   />
                                   {field.state.meta.errors ? (
                                     <p className="text-sm text-red-600">
@@ -729,7 +729,7 @@ export default function Table() {
                                       field.handleChange(e.target.value)
                                     }
                                     onBlur={field.handleBlur}
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                                   />
                                   {field.state.meta.errors ? (
                                     <p className="text-sm text-red-600">
@@ -753,7 +753,7 @@ export default function Table() {
                                     onChange={(e) =>
                                       field.handleChange(e.target.checked)
                                     }
-                                    className="rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                                   />
                                 </div>
                               )}
@@ -772,7 +772,7 @@ export default function Table() {
                       children={([canSubmit, isSubmitting]) => (
                         <button
                           type="submit"
-                          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           disabled={!canSubmit}
                         >
                           {isSubmitting ? "Adding..." : "Add Mail-In Order"}

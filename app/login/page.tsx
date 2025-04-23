@@ -145,7 +145,7 @@ function LoginPage() {
           </Button>
         </div>
 
-        <div className="flex h-full w-[57%] items-end justify-end bg-gradient-to-t from-[#FAF0EA] to-[#EDF2FD]">
+        <div className="flex h-full w-[57%] items-end justify-end bg-linear-to-t from-[#FAF0EA] to-[#EDF2FD]">
           <Image
             src={LandingPageImage}
             alt="landing page image"

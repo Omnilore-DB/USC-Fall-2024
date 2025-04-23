@@ -16,7 +16,7 @@ const SearchInput = ({ query, setQuery }: SearchInputProps) => {
         placeholder="Search..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="w-full rounded-md border border-gray-300 py-4 pl-12 pr-2 text-gray-700 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-100"
+        className="w-full rounded-md border border-gray-300 py-4 pl-12 pr-2 text-gray-700 focus:border-gray-400 focus:outline-hidden focus:ring-1 focus:ring-gray-100"
       />
     </div>
   );

@@ -402,7 +402,7 @@ const TreasurerReqs = () => {
 
   return (
     <div className="custom-scrollbar flex h-full w-full flex-col bg-gray-100">
-      <div className="flex w-full flex-grow flex-col items-center justify-center overflow-auto">
+      <div className="flex w-full grow flex-col items-center justify-center overflow-auto">
         <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
           <div className="flex h-full w-full flex-col items-center">
             <div className="flex h-full w-full flex-col gap-3">
@@ -480,7 +480,7 @@ const TreasurerReqs = () => {
               {/* <div className="relative custom-scrollbar bg-white p-4 rounded-lg overflow-auto"> */}
               {showReport && (
                 <div className="custom-scrollbar h-full w-full rounded-lg bg-white p-4 px-6">
-                  <div className="custom-scrollbar relative w-full flex-grow overflow-auto rounded-lg bg-white">
+                  <div className="custom-scrollbar relative w-full grow overflow-auto rounded-lg bg-white">
                     <p className="mb-4">
                       {/* Showing report from <strong>{fromDate}</strong> to{" "}
                       <strong>{toDate}</strong> */}
@@ -492,7 +492,7 @@ const TreasurerReqs = () => {
                     </div>
 
                     <div className="">
-                      <table className="w-full table-fixed border-collapse rounded-lg bg-white text-center text-sm shadow">
+                      <table className="w-full table-fixed border-collapse rounded-lg bg-white text-center text-sm shadow-sm">
                         <thead>
                           <tr className="bg-gray-100">
                             <th
@@ -647,7 +647,7 @@ const TreasurerReqs = () => {
                     </div>
 
                     <div className="mb-10">
-                      <table className="w-full table-fixed border-collapse rounded-lg bg-white text-sm shadow">
+                      <table className="w-full table-fixed border-collapse rounded-lg bg-white text-sm shadow-sm">
                         <thead>
                           {/* Row 1: Month headers + YTD */}
                           <tr className="bg-gray-100 text-center">

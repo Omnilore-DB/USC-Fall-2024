@@ -92,7 +92,7 @@ export default function SignUpPage() {
       {showAlert && (
         <AlertBox message={alertMessage} onClose={() => setShowAlert(false)} />
       )}
-      <main className="flex flex-grow flex-col justify-center p-4 pt-10 md:flex-row">
+      <main className="flex grow flex-col justify-center p-4 pt-10 md:flex-row">
         <div className="w-full max-w-md space-y-8 md:pr-8">
           <div className="space-y-2 text-center">
             <h2 className="text-3xl font-semibold">Create your account</h2>

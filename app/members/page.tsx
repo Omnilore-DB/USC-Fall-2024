@@ -133,7 +133,7 @@ export default function Search() {
       {/* Nav Bar */}
       <NavBar />
 
-      <div className="flex w-full flex-grow flex-col overflow-y-auto">
+      <div className="flex w-full grow flex-col overflow-y-auto">
         {roles === null ? (
           <div>Loading...</div>
         ) : (
@@ -155,10 +155,10 @@ export default function Search() {
                   placeholder="Search by name or nickname..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 py-4 pl-12 pr-2 text-gray-700 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-300"
+                  className="w-full rounded-md border border-gray-300 py-4 pl-12 pr-2 text-gray-700 focus:border-gray-500 focus:outline-hidden focus:ring-1 focus:ring-gray-300"
                 />
               </div>
-              <div className="mb-4 w-full flex-grow overflow-y-auto">
+              <div className="mb-4 w-full grow overflow-y-auto">
                 <TableComponent
                   entries={formattedData}
                   roles={roles}

@@ -49,7 +49,7 @@ export default function AdminLayout({
 
   return (
     <div className="flex h-screen w-full flex-col bg-gray-100">
-      <div className="flex w-full flex-grow flex-row items-center justify-center overflow-y-auto">
+      <div className="flex w-full grow flex-row items-center justify-center overflow-y-auto">
         <div className="relative h-full w-1/6 gap-4 rounded-xl bg-white p-4">
           <div className="flex flex-row items-center gap-3">
             <img src={Logo.src} className="h-fit w-12" alt="Omnilore Logo" />

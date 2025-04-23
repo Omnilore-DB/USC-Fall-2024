@@ -210,7 +210,7 @@ function Table() {
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
-      <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
+      <div className="flex w-full grow flex-col items-center justify-center overflow-y-auto">
         {roles === null ? (
           <div>Don't have the necessary permission</div>
         ) : isLoading ? (
@@ -281,7 +281,7 @@ function Table() {
 
                 {/* Table Component */}
                 {primaryKeys && (
-                  <div className="w-full flex-grow overflow-y-auto">
+                  <div className="w-full grow overflow-y-auto">
                     <TableComponent
                       entries={sortedEntries}
                       roles={roles}

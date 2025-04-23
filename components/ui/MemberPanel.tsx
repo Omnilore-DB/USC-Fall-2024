@@ -66,7 +66,7 @@ export default function MemberPanel({
 
           <div
             ref={scrollContainerRef}
-            className="custom-scrollbar flex-grow overflow-y-auto px-6 py-8"
+            className="custom-scrollbar grow overflow-y-auto px-6 py-8"
           >
             {selectedRow ? (
               <div className="text-medium space-y-4 text-[#616161]">
@@ -75,7 +75,7 @@ export default function MemberPanel({
                     <img
                       src={selectedRow.Photo}
                       alt="Member Photo"
-                      className="h-24 w-24 rounded-full object-cover shadow"
+                      className="h-24 w-24 rounded-full object-cover shadow-sm"
                     />
                   </div>
                 )}

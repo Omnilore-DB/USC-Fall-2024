@@ -135,7 +135,7 @@ export default function ConflictsPage() {
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
-      <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
+      <div className="flex w-full grow flex-col items-center justify-center overflow-y-auto">
         {roles.length === 0 ? (
           <div>Don't have the necessary permission</div>
         ) : isLoading ? (
@@ -151,7 +151,7 @@ export default function ConflictsPage() {
             )}
 
             {primaryKeys && entries.length > 0 && (
-              <div className="w-full flex-grow overflow-y-auto">
+              <div className="w-full grow overflow-y-auto">
                 <TableComponent
                   entries={filteredEntries}
                   roles={roles}

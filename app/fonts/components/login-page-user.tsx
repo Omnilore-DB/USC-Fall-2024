@@ -8,7 +8,7 @@ export function LoginPage() {
       <header className="p-4">
         <h1 className="text-2xl font-bold text-blue-600">Omnilore</h1>
       </header>
-      <main className="flex flex-grow flex-col items-center justify-center p-4 md:flex-row">
+      <main className="flex grow flex-col items-center justify-center p-4 md:flex-row">
         <div className="w-full max-w-md space-y-8 md:pr-8">
           <div className="space-y-2 text-center">
             <h2 className="text-3xl font-semibold">

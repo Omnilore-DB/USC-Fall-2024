@@ -258,7 +258,7 @@ export default function ForumReports() {
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
-      <div className="flex w-full flex-grow flex-col items-center justify-center overflow-y-auto">
+      <div className="flex w-full grow flex-col items-center justify-center overflow-y-auto">
         {roles === null ? (
           <div>Don't have the necessary permission</div>
         ) : (
@@ -349,8 +349,8 @@ export default function ForumReports() {
                     </div>
                   </div>
                 </div>
-                <div className="w-full flex-grow overflow-y-auto">
-                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow">
+                <div className="w-full grow overflow-y-auto">
+                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow-sm">
                     <thead>
                       <tr>
                         <th className="p-3 font-semibold">Name</th>

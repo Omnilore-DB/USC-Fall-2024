@@ -89,7 +89,7 @@ const TableComponent = ({
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="overflow-x:visible custom-scrollbar h-full w-full flex-grow overflow-x-auto overflow-y-auto">
+      <div className="overflow-x:visible custom-scrollbar h-full w-full grow overflow-x-auto overflow-y-auto">
         <div className="h-full min-h-full w-full min-w-full">
           <table className="w-full border-collapse border border-gray-200">
             <thead className="bg-gray-100">
@@ -104,7 +104,7 @@ const TableComponent = ({
                           ref={(el) => {
                             headerRefs.current[0] = el;
                           }}
-                          className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-none"
+                          className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-hidden"
                           style={{
                             left: `${leftOffset}px`,
                             boxShadow: "inset 0 0 0 0.5px #e5e7eb",
@@ -124,7 +124,7 @@ const TableComponent = ({
                               ref={(el) => {
                                 headerRefs.current[colIndex + 1] = el;
                               }}
-                              className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-none"
+                              className="sticky top-0 z-20 bg-gray-100 px-4 py-2 outline-hidden"
                               style={{
                                 left: `${leftOffset}px`,
                                 boxShadow: "inset 0 0 0 0.5px #e5e7eb",
@@ -144,7 +144,7 @@ const TableComponent = ({
                     .map((columnName) => (
                       <th
                         key={columnName}
-                        className="sticky top-0 z-10 bg-gray-100 px-4 py-2 outline-none"
+                        className="sticky top-0 z-10 bg-gray-100 px-4 py-2 outline-hidden"
                         style={{ boxShadow: "inset 0 0 0 0.5px #e5e7eb" }}
                       >
                         {columnName}

@@ -48,7 +48,7 @@ const MultiSelectDropdown = ({
   return (
     <div ref={dropdownRef} className="relative w-full">
       <div
-        className="border-1 group flex h-10 w-full cursor-pointer items-center justify-between rounded-lg border-gray-200 bg-white px-2 py-0 font-semibold text-gray-800 shadow-sm transition focus:outline-none"
+        className="border-1 group flex h-10 w-full cursor-pointer items-center justify-between rounded-lg border-gray-200 bg-white px-2 py-0 font-semibold text-gray-800 shadow-xs transition focus:outline-hidden"
         onClick={() => setOpen((prev) => !prev)}
       >
         <div className="invisible-scrollbar flex items-center gap-1 overflow-x-auto whitespace-nowrap">
