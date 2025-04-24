@@ -6,6 +6,8 @@ import React, { useState, useEffect } from "react";
 import { Temporal } from "temporal-polyfill";
 import { updatePayout } from "./actions";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
+
 
 const TreasurerReqs = () => {
   const [roles, setRoles] = useState<string[]>([]);
@@ -53,12 +55,54 @@ const TreasurerReqs = () => {
   const format = (v: number) =>
     v.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
+  
+  const exportFullReportToCSV = () => {
+    const reportSections = [
+      {
+        title: "Squarespace",
+        headers: ["Category", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "YTD"],
+        rows: squarespaceRows, 
+      },
+      {
+        title: "PayPal",
+        headers: ["Category", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "YTD"],
+        rows: paypalRows,
+      },
+      {
+        title: "Stripe",
+        headers: ["Category", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "YTD"],
+        rows: stripeRows,
+      },
+      {
+        title: "Donation",
+        headers: ["Category", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "YTD"],
+        rows: donationRows,
+      },
+    ];
+  
+    let allData: any[][] = [];
+  
+    reportSections.forEach(({ title, headers, rows }) => {
+      allData.push([title]);
+      allData.push(headers);
+      allData.push(...rows);
+      allData.push([]);
+    });
+  
+    const worksheet = XLSX.utils.aoa_to_sheet(allData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "FinancialReport");
+    XLSX.writeFile(workbook, "FinancialReport.csv");
+  };
+
   // CSV export function
   const exportToCSV = () => {
     if (donors.length === 0) {
       alert("No data to export");
       return;
     }
+   
+    
 
     const headers = ["Name", "Date", "Amount", "Address"];
     const rows = donors.flatMap((donor) => {
@@ -399,6 +443,52 @@ const TreasurerReqs = () => {
       setTriggerPresetReport(false); // reset the flag
     }
   }, [triggerPresetReport, fromDate, toDate]);
+// Generate Squarespace rows
+const squarespaceRows = categories.map((cat) => {
+  const row: string[] = [cat];
+  let ytdGross = 0;
+  let ytdFee = 0;
+
+  monthsInRange.forEach(({ year, month }) => {
+    const key = `${cat}-${year}-${month}`;
+    const gross = grossData[key] ?? 0;
+    const fee = feeData[key] ?? 0;
+    ytdGross += gross;
+    ytdFee += fee;
+    row.push((gross - fee).toFixed(2));
+  });
+
+  row.push((ytdGross - ytdFee).toFixed(2));
+  return row;
+});
+
+// PayPal rows
+const paypalRows = [
+  ["Gross", ...monthsInRange.map(({ year, month }) => (paypalGross[`${year}-${month}`] ?? 0).toFixed(2)), getRangeTotal(paypalGross).toFixed(2)],
+  ["Fee", ...monthsInRange.map(({ year, month }) => (paypalFee[`${year}-${month}`] ?? 0).toFixed(2)), getRangeTotal(paypalFee).toFixed(2)],
+  ["Payout", ...monthsInRange.map(({ year, month }) => ((paypalPayout[`${year}-${month}`] ?? 0) / 100).toFixed(2)), (getRangeTotal(paypalPayout) / 100).toFixed(2)],
+];
+
+// Stripe rows
+const stripeRows = [
+  ["Gross", ...monthsInRange.map(({ year, month }) => (stripeGross[`${year}-${month}`] ?? 0).toFixed(2)), getRangeTotal(stripeGross).toFixed(2)],
+  ["Fee", ...monthsInRange.map(({ year, month }) => (stripeFee[`${year}-${month}`] ?? 0).toFixed(2)), getRangeTotal(stripeFee).toFixed(2)],
+  ["Payout", ...monthsInRange.map(({ year, month }) => ((stripePayout[`${year}-${month}`] ?? 0) / 100).toFixed(2)), (getRangeTotal(stripePayout) / 100).toFixed(2)],
+];
+
+// Donation rows
+const donationRows = donors.flatMap((donor) => {
+  const fullName = `${donor.first_name} ${donor.last_name}`;
+  const address = [donor.street_address, donor.city, donor.state, donor.zip_code]
+    .filter(Boolean)
+    .join(", ");
+  return donor.donations.map((donation) => [
+    fullName,
+    new Date(donation.date).toLocaleDateString(),
+    donation.amount.toFixed(2),
+    address,
+  ]);
+});
 
   return (
     <div className="custom-scrollbar flex h-full w-full flex-col bg-gray-100">
@@ -458,22 +548,24 @@ const TreasurerReqs = () => {
                   </div>
                 </div>
                 <div className="flex w-1/4 flex-row justify-between gap-2">
-                  <div className="flex w-1/2 items-end">
-                    <button
-                      onClick={handleGenerateReport}
-                      className="h-10 w-full rounded-lg bg-blue-500 font-semibold text-white"
-                    >
-                      Generate Report
-                    </button>
-                  </div>
-                  <div className="flex w-1/2 items-end">
-                    <button
-                      className="h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
-                      onClick={() => exportToCSV()}
-                    >
-                      Export as CSV
-                    </button>
-                  </div>
+                <div className="flex w-1/2 items-end">
+                <button
+                  onClick={handleGenerateReport}
+                  className="h-10 w-full rounded-lg bg-blue-500 font-semibold text-white"
+                >
+                  Generate Report
+                </button>
+              </div>
+
+              <div className="flex w-1/2 items-end">
+                <button
+                  onClick={exportFullReportToCSV}
+                  className="h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
+                >
+                  Export Full Report as CSV
+                </button>
+              </div>
+
                 </div>
               </div>
 
