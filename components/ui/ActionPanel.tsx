@@ -4,6 +4,7 @@ import { getTableSchema, supabase } from "@/app/supabase";
 import { SupabaseProduct } from "@/app/api/cron/src/supabase/types";
 import { getProducts, TableName } from "@/app/queryFunctions";
 import { toast } from "sonner";
+import UserIcon from "@/components/assets/user-icon.png";
 
 interface ActionPanelProps {
   isOpen: boolean;
@@ -174,23 +175,77 @@ export default function ActionPanel({
                   isArray,
                   isEnum,
                   enumValues,
-                }) => (
-                  <InputField
-                    key={`${name}-${type}-${selectedRow?.[name]}`}
-                    fieldName={name}
-                    fieldType={type}
-                    required={!nullable}
-                    value={formData[name]}
-                    isAutoIncrement={isAutoIncrement}
-                    isArray={isArray}
-                    isEnum={isEnum}
-                    isSKU={["sku", "skus"].includes(name)}
-                    products={products}
-                    setFormValue={setUserFormData}
-                    enumValues={enumValues}
-                    mode={mode}
-                  />
-                ),
+                }) => {
+                  // Check if this is a photo field
+                  if (name === "photo_path" || name === "photo_link") {
+                    return (
+                      <div key={`${name}-${type}-${selectedRow?.[name]}`} className="flex flex-col gap-3">
+                        <label className="font-medium capitalize">{name.replace(/_/g, " ")}</label>
+                        <div className="flex flex-col gap-4">
+                          {/* Image preview */}
+                          <div className="flex items-center justify-center">
+                            <div className="h-48 w-48 overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                              {formData[name] ? (
+                                <img 
+                                  src={formData[name]}
+                                  alt="Photo preview"
+                                  className="h-full w-full object-cover"
+                                  onError={(e) => {
+                                    // Fallback to placeholder if image loading fails
+                                    e.currentTarget.src = UserIcon.src;
+                                  }}
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center bg-gray-50">
+                                  <img
+                                    src={UserIcon.src}
+                                    alt="No photo"
+                                    className="h-24 w-24 opacity-30"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Input field for the URL */}
+                          <InputField
+                            fieldName={name}
+                            fieldType={type}
+                            required={!nullable}
+                            value={formData[name]}
+                            isAutoIncrement={isAutoIncrement}
+                            isArray={isArray}
+                            isEnum={isEnum}
+                            isSKU={false}
+                            products={products}
+                            setFormValue={setUserFormData}
+                            enumValues={enumValues}
+                            mode={mode}
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  // Regular fields
+                  return (
+                    <InputField
+                      key={`${name}-${type}-${selectedRow?.[name]}`}
+                      fieldName={name}
+                      fieldType={type}
+                      required={!nullable}
+                      value={formData[name]}
+                      isAutoIncrement={isAutoIncrement}
+                      isArray={isArray}
+                      isEnum={isEnum}
+                      isSKU={["sku", "skus"].includes(name)}
+                      products={products}
+                      setFormValue={setUserFormData}
+                      enumValues={enumValues}
+                      mode={mode}
+                    />
+                  );
+                },
               )}
             <div className="flex w-full justify-start gap-2">
               <button
