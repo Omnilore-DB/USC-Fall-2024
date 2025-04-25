@@ -174,6 +174,7 @@ export default function MembershipReports() {
       ].filter(Boolean);
       return {
         first_name: m?.first_name ?? "",
+        last_name: m?.last_name ?? "",
         name: `${m?.first_name} ${m?.last_name}`,
         address: addressParts.join(", "),
         phone: formatPhoneNumber(m?.phone ?? ""),
@@ -185,8 +186,12 @@ export default function MembershipReports() {
         member_status: skuStatusMap[row.sku] ?? "",
         expiration_date: m?.expiration_date,
       };
-    }).sort((a, b) => a.first_name.localeCompare(b.first_name))
-    .map(({ first_name, ...rest }) => rest);
+    }).sort((a, b) => {
+      const lastNameCompare = a.last_name.localeCompare(b.last_name);
+      if (lastNameCompare !== 0) return lastNameCompare;
+      return a.first_name.localeCompare(b.first_name);
+    })
+    .map(({ first_name, last_name, ...rest }) => rest);
 
     setMembers(formatted);
   };
