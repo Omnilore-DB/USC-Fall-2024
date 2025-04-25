@@ -203,7 +203,7 @@ export default function ForumReports() {
         amount: tx?.amount ?? 0,
         descriptor: skuDescriptorMap[entry.sku] ?? "",
       };
-    });
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     setForumMembers(formatted);
   };
