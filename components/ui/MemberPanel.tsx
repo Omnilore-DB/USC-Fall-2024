@@ -48,7 +48,7 @@ export default function MemberPanel({
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-white bg-opacity-50"
+          className="fixed inset-0 z-40 bg-white/50"
           onClick={onClose}
         />
       )}

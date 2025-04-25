@@ -175,12 +175,12 @@ export default function ResolveConflictPanel({
 
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-white bg-opacity-50 transition-opacity"
-          onClick={onClose}
-        ></div>
-      )}
+          {isOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-white/50 transition-opacity"
+              onClick={onClose}
+            ></div>
+          )}
 
       <div
         className={`fixed bottom-0 right-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${
@@ -230,7 +230,7 @@ export default function ResolveConflictPanel({
                     Member {secondMemberId}
                   </div>
                 </div>
-                <div className="grid gap-4">
+                <div className="flex flex-col w-full gap-4">
                   {fields
                     .filter(
                       (field) =>
@@ -250,13 +250,14 @@ export default function ResolveConflictPanel({
                       const bgColor = isEqual ? "bg-[#DAFBC9]" : "bg-[#FAD9D9]";
 
                       return (
-                        <div key={key} className="flex gap-4">
+                        <div key={key} className="flex w-full gap-2">
                           <div
-                            className={`rounded p-3 ${bgColor} flex w-full flex-col`}
+                            className={`rounded p-2 ${bgColor} flex flex-col w-1/2 box-border overflow-hidden`}
                           >
-                            <label className="mb-2 block font-semibold capitalize">
-                              {key}
-                            </label>
+                              <div className="text-sm font-medium truncate">{key}</div>
+                            {/* <label className="mb-2 block font-semibold capitalize">
+                              <div className="text-sm font-medium truncate">{key}</div>
+                            </label> */}
                             <MergeInputField
                               fieldName={key}
                               fieldType={field.type}
@@ -280,11 +281,12 @@ export default function ResolveConflictPanel({
                             />
                           </div>
                           <div
-                            className={`rounded p-3 ${bgColor} flex w-full flex-col`}
+                            className={`rounded p-2 ${bgColor} flex flex-col w-1/2 box-border overflow-hidden`}
                           >
-                            <label className="mb-2 block font-semibold capitalize">
-                              {key}
-                            </label>
+                              <div className="text-sm font-medium truncate">{key}</div>
+                            {/* <label className="mb-2 block font-semibold capitalize">
+                              <div className="text-sm font-medium truncate">{key}</div>
+                            </label> */}
                             <MergeInputField
                               fieldName={key}
                               fieldType={field.type}
