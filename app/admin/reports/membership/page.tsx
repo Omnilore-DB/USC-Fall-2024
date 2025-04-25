@@ -69,11 +69,14 @@ export default function MembershipReports() {
   };
 
   const formatAcademicYear = (shortYear: string): string => {
+    if (!shortYear || !shortYear.includes("-")) return shortYear;
     const [start, end] = shortYear.split("-").map((y) => parseInt(y, 10));
     const fullStart = start < 50 ? 2000 + start : 1900 + start;
     const fullEnd = end < 50 ? 2000 + end : 1900 + end;
     return `${fullStart}–${fullEnd}`;
   };
+  
+
   const formatPhoneNumber = (phone: string | null): string => {
     if (!phone) return "";
     const digits = phone.replace(/\D/g, "");

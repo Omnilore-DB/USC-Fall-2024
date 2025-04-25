@@ -165,6 +165,7 @@ function Table() {
       setSortOptions(sortOptions);
     } catch (error) {
       console.error(`Failed to fetch data for table ${selectedTable}`, error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
     }
   };
 
