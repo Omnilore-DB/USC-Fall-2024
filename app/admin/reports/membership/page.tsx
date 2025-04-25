@@ -315,18 +315,18 @@ export default function MembershipReports() {
                     </div>
                   </div>
                 </div>
-                <div className="w-full grow overflow-y-auto">
-                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow-sm">
+                <div className="w-full grow overflow-y-auto rounded-xl">
+                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow-sm custom-scrollbar">
                     <thead>
                       <tr>
-                        <th className="p-3 font-semibold">Name</th>
-                        <th className="p-3 font-semibold">Address</th>
-                        <th className="p-3 font-semibold">Phone</th>
-                        <th className="p-3 font-semibold">Email</th>
-                        <th className="p-3 font-semibold">Emergency Contact</th>
-                        <th className="p-3 font-semibold">Emergency Phone</th>
-                        <th className="p-3 font-semibold">Status</th>
-                        <th className="p-3 font-semibold">Expiration</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white rounded-xl">Name</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Address</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Phone</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Email</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Emergency Contact</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Emergency Phone</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Status</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white rounded-xl">Expiration</th>
                       </tr>
                     </thead>
                     <tbody>

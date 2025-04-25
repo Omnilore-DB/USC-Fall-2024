@@ -291,15 +291,15 @@ export default function DonationReports() {
                 </div>
 
                 <div className="w-full grow overflow-y-auto">
-                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow-sm">
+                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow-sm rounded-xl">
                     <thead>
                       <tr>
-                        <th className="p-3 font-semibold">Name</th>
-                        <th className="p-3 font-semibold">Email</th>
-                        <th className="p-3 font-semibold">Address</th>
-                        <th className="p-3 font-semibold">Date</th>
-                        <th className="p-3 font-semibold">Amount</th>
-                        <th className="p-3 font-semibold">Type</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white rounded-xl">Name</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Email</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Address</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Date</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Amount</th>
+                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white rounded-xl">Type</th>
                       </tr>
                     </thead>
                     <tbody>

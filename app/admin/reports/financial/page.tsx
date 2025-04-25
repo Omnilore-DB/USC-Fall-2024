@@ -562,7 +562,7 @@ const donationRows = donors.flatMap((donor) => {
                   onClick={exportFullReportToCSV}
                   className="h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
                 >
-                  Export Full Report as CSV
+                  Export as CSV
                 </button>
               </div>
 
