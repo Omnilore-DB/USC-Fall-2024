@@ -157,9 +157,12 @@ export default function DonationReports() {
       ]),
     );
 
+    const cutoff = new Date("2023-07-01");
+
     const filtered = transactions
       .filter((t) => {
         const txDate = new Date(t.date);
+        if (txDate < cutoff) return false;
         if (customRange) {
           const start = new Date(startDate);
           const end = new Date(endDate);
