@@ -4,7 +4,8 @@ import { useLoginRedirect } from "@/hooks/use-login-redirect";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import Logo from "@/components/assets/logo.png";
-import { MailIcon } from "lucide-react";
+import { LogOut, MailIcon } from "lucide-react";
+import { signOut } from "@/app/supabase";
 
 export default function AdminLayout({
   children,
@@ -50,7 +51,7 @@ export default function AdminLayout({
   return (
     <div className="flex h-screen w-full flex-col bg-gray-100">
       <div className="flex w-full grow flex-row items-center justify-center overflow-y-auto">
-        <div className="relative h-full w-1/6 gap-4 rounded-xl bg-white p-4">
+        <div className="relative h-full w-1/6 flex flex-col gap-4 rounded-xl bg-white p-4">
           <div className="flex flex-row items-center gap-3">
             <img src={Logo.src} className="h-fit w-12" alt="Omnilore Logo" />
             <div>
@@ -58,7 +59,7 @@ export default function AdminLayout({
               <div className="text-xs">Learning-in-Retirement, Inc</div>
             </div>
           </div>
-          <div className="mt-6 flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
             <div onClick={() => handleOtherTabClick("/admin/tables")}>
               {" "}
               <TableButton />{" "}
@@ -97,6 +98,25 @@ export default function AdminLayout({
               {" "}
               <MailInButton />{" "}
             </div>
+          </div>
+          
+          {/* Spacer to push logout to bottom */}
+          <div className="flex-grow"></div>
+          
+          {/* Logout button positioned at bottom */}
+          <div className="pt-2 border-t border-gray-100">
+            <button
+              onClick={async () => {
+                await signOut();
+                router.push("/login");
+              }}
+              className="group flex w-full items-center gap-2 p-2 text-[#85849E]"
+            >
+              <LogOut className="group-hover:stroke-red-500" size={20} />
+              <span className="text-left group-hover:text-red-500">
+                Logout
+              </span>
+            </button>
           </div>
         </div>
 
