@@ -41,7 +41,7 @@ export async function signOut() {
 
 export const getPermissions = async (role: string): Promise<Permission[]> => {
   const { data, error } = await supabase
-    .from("permissions_by_role")
+    .from("permissions_by_role" as any)
     .select("table_name, can_create, can_read, can_write, can_delete")
     .eq("role_name", role);
 
