@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { getRoles } from "@/app/supabase";
+import { getRoles, signOut } from "@/app/supabase";
 import UserIcon from "@/components/assets/user-icon.png";
 import { queryTableWithFields } from "@/app/queryFunctions";
 import NavBar from "@/components/ui/NavBar";
@@ -8,6 +8,8 @@ import TableComponent from "@/components/ui/TableComponent";
 import MemberPanel from "@/components/ui/MemberPanel";
 import { FormattedKeysMember } from "@/app/types";
 import { useLoginRedirect } from "@/hooks/use-login-redirect";
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const memberSchema = {
   id: { type: "basic", name: "int", nullable: false },
@@ -26,6 +28,7 @@ const memberSchema = {
 export default function Search() {
   useLoginRedirect();
   const [query, setQuery] = useState("");
+  const router = useRouter();
   const [entries, setEntries] = useState<Record<string, any>[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
   const [selectedTable, setSelectedTable] = useState<string | null>("members");
@@ -130,8 +133,21 @@ export default function Search() {
 
   return (
     <div className="flex h-screen w-full flex-col">
-      {/* Nav Bar */}
-      <NavBar />
+      <div className="flex items-center">
+        {/* Nav Bar */}
+        <NavBar />
+        {/* Logout button */}
+        <button
+          onClick={async () => {
+            await signOut();
+            router.push("/login");
+          }}
+          className="group flex w-full items-center justify-end gap-2 p-2 pr-12 text-[#85849E]"
+        >
+          <LogOut className="group-hover:stroke-red-500" size={20} />
+          <span className="text-left group-hover:text-red-500">Logout</span>
+        </button>
+      </div>
 
       <div className="flex w-full grow flex-col overflow-y-auto">
         {roles === null ? (

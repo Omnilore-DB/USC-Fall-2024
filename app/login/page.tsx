@@ -96,6 +96,7 @@ function LoginPage() {
 
       // Redirect based on role
       if (
+        roles.includes("dba") ||
         roles.includes("bioadmin") ||
         roles.includes("registrar") ||
         roles.includes("treasurer") ||
