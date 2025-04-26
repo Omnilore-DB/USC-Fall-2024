@@ -178,7 +178,7 @@ export default function SignUpPage() {
             Cancel
           </Button>
         </div>
-        <div className="ml-10 mt-4 flex justify-center">
+        <div className="mt-4 ml-10 flex justify-center">
           {" "}
           {/* New div for logo */}
           <img src={Logo.src} className="h-fit w-64" />

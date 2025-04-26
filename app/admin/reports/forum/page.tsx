@@ -40,19 +40,19 @@ export default function ForumReports() {
       setRoles(userRoles);
       // fetch years
       const { data, error } = await supabase
-      .from("products")
-      .select("year")
-      .eq("type", "FORUM");
-  
+        .from("products")
+        .select("year")
+        .eq("type", "FORUM");
+
       if (error) {
         console.error("Failed to fetch FORUM years", error);
         return;
       }
-  
+
       const uniqueYears = Array.from(
-        new Set(data.map((p) => p.year).filter((y): y is string => y !== null))
+        new Set(data.map((p) => p.year).filter((y): y is string => y !== null)),
       ).sort();
-    
+
       setAvailableYears(uniqueYears);
       if (uniqueYears.length > 0) {
         setSelectedYears([uniqueYears[uniqueYears.length - 1]]);
@@ -190,20 +190,22 @@ export default function ForumReports() {
 
     const memberMap = Object.fromEntries(members.map((m) => [String(m.id), m]));
 
-    const formatted = mtt.map((entry) => {
-      const member = memberMap[String(entry.member_id)];
-      const tx = transactionMap[entry.transaction_id];
+    const formatted = mtt
+      .map((entry) => {
+        const member = memberMap[String(entry.member_id)];
+        const tx = transactionMap[entry.transaction_id];
 
-      return {
-        name: `${member?.first_name ?? ""} ${member?.last_name ?? ""}`,
-        email: member?.email ?? "",
-        phone: formatPhoneNumber(member?.phone ?? ""),
-        type: member?.type ?? "",
-        date: tx?.date ?? "",
-        amount: tx?.amount ?? 0,
-        descriptor: skuDescriptorMap[entry.sku] ?? "",
-      };
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return {
+          name: `${member?.first_name ?? ""} ${member?.last_name ?? ""}`,
+          email: member?.email ?? "",
+          phone: formatPhoneNumber(member?.phone ?? ""),
+          type: member?.type ?? "",
+          date: tx?.date ?? "",
+          amount: tx?.amount ?? 0,
+          descriptor: skuDescriptorMap[entry.sku] ?? "",
+        };
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     setForumMembers(formatted);
   };
@@ -369,16 +371,30 @@ export default function ForumReports() {
                   </div>
                 </div>
                 <div className="w-full grow overflow-y-auto rounded-xl">
-                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow-sm custom-scrollbar">
+                  <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
                     <thead>
                       <tr>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white rounded-xl">Name</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Email</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Phone</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Date</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Amount</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Type</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white rounded-xl">Descriptor</th>
+                        <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                          Name
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Email
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Phone
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Date
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Amount
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Type
+                        </th>
+                        <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                          Descriptor
+                        </th>
                       </tr>
                     </thead>
                     <tbody>

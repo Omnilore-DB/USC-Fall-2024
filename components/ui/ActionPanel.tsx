@@ -122,9 +122,9 @@ export default function ActionPanel({
       )}
 
       <div
-        className={`fixed bottom-0 right-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${
+        className={`fixed right-0 bottom-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${
           isOpen ? "translate-x-0" : "translate-x-full"
-        } duration-250 transition-transform`}
+        } transition-transform duration-250`}
       >
         <div className="flex h-full flex-col">
           <div className="flex flex-col border-b p-4">
@@ -179,14 +179,19 @@ export default function ActionPanel({
                   // Check if this is a photo field
                   if (name === "photo_path" || name === "photo_link") {
                     return (
-                      <div key={`${name}-${type}-${selectedRow?.[name]}`} className="flex flex-col gap-3">
-                        <label className="font-medium capitalize">{name.replace(/_/g, " ")}</label>
+                      <div
+                        key={`${name}-${type}-${selectedRow?.[name]}`}
+                        className="flex flex-col gap-3"
+                      >
+                        <label className="font-medium capitalize">
+                          {name.replace(/_/g, " ")}
+                        </label>
                         <div className="flex flex-col gap-4">
                           {/* Image preview */}
                           <div className="flex items-center justify-center">
                             <div className="h-48 w-48 overflow-hidden rounded-lg border border-gray-200 shadow-sm">
                               {formData[name] ? (
-                                <img 
+                                <img
                                   src={formData[name]}
                                   alt="Photo preview"
                                   className="h-full w-full object-cover"
@@ -206,7 +211,7 @@ export default function ActionPanel({
                               )}
                             </div>
                           </div>
-                          
+
                           {/* Input field for the URL */}
                           <InputField
                             fieldName={name}
@@ -226,7 +231,7 @@ export default function ActionPanel({
                       </div>
                     );
                   }
-                  
+
                   // Regular fields
                   return (
                     <InputField

@@ -95,7 +95,12 @@ function LoginPage() {
       console.log("Roles:", roles);
 
       // Redirect based on role
-      if (roles.includes("bioadmin") || roles.includes("registrar") || roles.includes("treasurer") || roles.includes("membership")) {
+      if (
+        roles.includes("bioadmin") ||
+        roles.includes("registrar") ||
+        roles.includes("treasurer") ||
+        roles.includes("membership")
+      ) {
         router.push("/admin");
       } else {
         router.push("/members");

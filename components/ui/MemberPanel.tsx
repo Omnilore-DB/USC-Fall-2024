@@ -47,14 +47,11 @@ export default function MemberPanel({
   return (
     <>
       {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-white/50"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 z-40 bg-white/50" onClick={onClose} />
       )}
 
       <div
-        className={`fixed bottom-0 right-0 z-50 h-[90%] w-1/4 transform rounded-tl-xl border bg-white shadow-lg ${isOpen ? "translate-x-0" : "translate-x-full"} duration-250 transition-transform`}
+        className={`fixed right-0 bottom-0 z-50 h-[90%] w-1/4 transform rounded-tl-xl border bg-white shadow-lg ${isOpen ? "translate-x-0" : "translate-x-full"} transition-transform duration-250`}
       >
         <div className="flex h-full flex-col overflow-hidden">
           <div className="flex items-center justify-between border-b px-6 py-4">

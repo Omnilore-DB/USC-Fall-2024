@@ -175,17 +175,17 @@ export default function ResolveConflictPanel({
 
   return (
     <>
-          {isOpen && (
-            <div
-              className="fixed inset-0 z-40 bg-white/50 transition-opacity"
-              onClick={onClose}
-            ></div>
-          )}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-white/50 transition-opacity"
+          onClick={onClose}
+        ></div>
+      )}
 
       <div
-        className={`fixed bottom-0 right-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${
+        className={`fixed right-0 bottom-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${
           isOpen ? "translate-x-0" : "translate-x-full"
-        } duration-250 transition-transform`}
+        } transition-transform duration-250`}
       >
         <div className="flex h-full flex-col">
           <div className="flex flex-col border-b p-4">
@@ -230,7 +230,7 @@ export default function ResolveConflictPanel({
                     Member {secondMemberId}
                   </div>
                 </div>
-                <div className="flex flex-col w-full gap-4">
+                <div className="flex w-full flex-col gap-4">
                   {fields
                     .filter(
                       (field) =>
@@ -252,9 +252,11 @@ export default function ResolveConflictPanel({
                       return (
                         <div key={key} className="flex w-full gap-2">
                           <div
-                            className={`rounded p-2 ${bgColor} flex flex-col w-1/2 box-border overflow-hidden`}
+                            className={`rounded p-2 ${bgColor} box-border flex w-1/2 flex-col overflow-hidden`}
                           >
-                              <div className="text-sm font-medium truncate">{key}</div>
+                            <div className="truncate text-sm font-medium">
+                              {key}
+                            </div>
                             {/* <label className="mb-2 block font-semibold capitalize">
                               <div className="text-sm font-medium truncate">{key}</div>
                             </label> */}
@@ -281,9 +283,11 @@ export default function ResolveConflictPanel({
                             />
                           </div>
                           <div
-                            className={`rounded p-2 ${bgColor} flex flex-col w-1/2 box-border overflow-hidden`}
+                            className={`rounded p-2 ${bgColor} box-border flex w-1/2 flex-col overflow-hidden`}
                           >
-                              <div className="text-sm font-medium truncate">{key}</div>
+                            <div className="truncate text-sm font-medium">
+                              {key}
+                            </div>
                             {/* <label className="mb-2 block font-semibold capitalize">
                               <div className="text-sm font-medium truncate">{key}</div>
                             </label> */}
@@ -391,11 +395,11 @@ export default function ResolveConflictPanel({
                                 {key}:
                               </span>
                               {!isOpenField && (
-                                <span className="max-w-[200px] truncate text-sm italic text-gray-600">
+                                <span className="max-w-[200px] truncate text-sm text-gray-600 italic">
                                   {resolved === null ||
                                   resolved === "" ||
                                   typeof resolved === "undefined" ? (
-                                    <span className="not-italic text-gray-400">
+                                    <span className="text-gray-400 not-italic">
                                       NULL
                                     </span>
                                   ) : typeof resolved === "boolean" ? (

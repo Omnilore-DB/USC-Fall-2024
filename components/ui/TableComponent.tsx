@@ -18,15 +18,15 @@ interface TableComponentProps {
 // Function to format phone number as (xxx)xxx-xxxx
 const formatPhoneNumber = (phoneNumberString: string) => {
   // Remove all non-digit characters
-  const cleaned = String(phoneNumberString).replace(/\D/g, '');
-  
+  const cleaned = String(phoneNumberString).replace(/\D/g, "");
+
   // Check if the input is of correct length
   const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-  
+
   if (match) {
     return `(${match[1]}) ${match[2]}-${match[3]}`;
   }
-  
+
   // Return the original value if it doesn't match the expected format
   return phoneNumberString;
 };
@@ -218,7 +218,7 @@ const TableComponent = ({
                               }}
                             >
                               <span
-                                className="absolute -left-[1px] top-0 h-full w-[1px] bg-gray-200"
+                                className="absolute top-0 -left-[1px] h-full w-[1px] bg-gray-200"
                                 aria-hidden="true"
                               />
 
@@ -308,7 +308,9 @@ const TableComponent = ({
                                   ? JSON.stringify(item[columnName])
                                   : typeof item[columnName] === "boolean"
                                     ? item[columnName].toString()
-                                    : columnName.toLowerCase().includes('phone') && item[columnName]
+                                    : columnName
+                                          .toLowerCase()
+                                          .includes("phone") && item[columnName]
                                       ? formatPhoneNumber(item[columnName])
                                       : item[columnName]}
                             </td>

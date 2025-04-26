@@ -147,7 +147,7 @@ export default function Search() {
                 <img
                   src="/search-icon.svg"
                   alt="Search Icon"
-                  className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 transform"
+                  className="absolute top-1/2 left-5 h-5 w-5 -translate-y-1/2 transform"
                 />
 
                 <input
@@ -155,7 +155,7 @@ export default function Search() {
                   placeholder="Search by name or nickname..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 py-4 pl-12 pr-2 text-gray-700 focus:border-gray-500 focus:outline-hidden focus:ring-1 focus:ring-gray-300"
+                  className="w-full rounded-md border border-gray-300 py-4 pr-2 pl-12 text-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-300 focus:outline-hidden"
                 />
               </div>
               <div className="mb-4 w-full grow overflow-y-auto">

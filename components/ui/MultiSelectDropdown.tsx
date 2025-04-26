@@ -48,7 +48,7 @@ const MultiSelectDropdown = ({
   return (
     <div ref={dropdownRef} className="relative w-full">
       <div
-        className="border-1 group flex h-10 w-full cursor-pointer items-center justify-between rounded-lg border-gray-200 bg-white px-2 py-0 font-semibold text-gray-800 shadow-xs transition focus:outline-hidden"
+        className="group flex h-10 w-full cursor-pointer items-center justify-between rounded-lg border-1 border-gray-200 bg-white px-2 py-0 font-semibold text-gray-800 shadow-xs transition focus:outline-hidden"
         onClick={() => setOpen((prev) => !prev)}
       >
         <div className="invisible-scrollbar flex items-center gap-1 overflow-x-auto whitespace-nowrap">
@@ -57,7 +57,7 @@ const MultiSelectDropdown = ({
               {selectedOptions.map((option) => (
                 <div
                   key={option}
-                  className="flex items-center whitespace-nowrap rounded-full bg-blue-200 px-2 py-0.5 text-sm text-blue-800"
+                  className="flex items-center rounded-full bg-blue-200 px-2 py-0.5 text-sm whitespace-nowrap text-blue-800"
                 >
                   {option}
                   <X
@@ -77,7 +77,7 @@ const MultiSelectDropdown = ({
         <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
       </div>
       {open && (
-        <div className="absolute left-0 top-12 z-30 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
+        <div className="absolute top-12 left-0 z-30 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
           <div className="max-h-60 overflow-y-auto p-1">
             {options.length > 0 ? (
               options.map((option) => (

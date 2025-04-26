@@ -36,14 +36,14 @@ export default function DeletePanel({
     <>
       {isOpen && (
         <div
-          className="fixed bottom-0 left-0 top-0 z-40 w-full bg-white bg-opacity-50 transition-opacity"
+          className="bg-opacity-50 fixed top-0 bottom-0 left-0 z-40 w-full bg-white transition-opacity"
           onClick={onClose}
         ></div>
       )}
       <div
-        className={`fixed bottom-0 right-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${
+        className={`fixed right-0 bottom-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${
           isOpen ? "translate-x-0" : "translate-x-full"
-        } duration-250 transition-transform`}
+        } transition-transform duration-250`}
       >
         <div className="flex h-full flex-col">
           <div className="flex flex-col border-b p-4">
@@ -67,7 +67,7 @@ export default function DeletePanel({
           >
             <p>Are you sure you want to delete the following row?</p>
             <div className="custom-scrollbar mt-2 h-2/3 overflow-auto rounded bg-gray-100 p-2">
-              <pre className="whitespace-pre-wrap break-words">
+              <pre className="break-words whitespace-pre-wrap">
                 {JSON.stringify(selectedRow, null, 2)}
               </pre>
             </div>

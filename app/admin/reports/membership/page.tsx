@@ -75,7 +75,6 @@ export default function MembershipReports() {
     const fullEnd = end < 50 ? 2000 + end : 1900 + end;
     return `${fullStart}–${fullEnd}`;
   };
-  
 
   const formatPhoneNumber = (phone: string | null): string => {
     if (!phone) return "";
@@ -168,33 +167,35 @@ export default function MembershipReports() {
       return;
     }
 
-    const formatted = mtt.map((row) => {
-      const m = membersData.find((mem) => mem.id === row.member_id);
-      const addressParts = [
-        m?.street_address,
-        m?.city,
-        [m?.state, m?.zip_code].filter(Boolean).join(" "),
-      ].filter(Boolean);
-      return {
-        first_name: m?.first_name ?? "",
-        last_name: m?.last_name ?? "",
-        name: `${m?.first_name} ${m?.last_name}`,
-        address: addressParts.join(", "),
-        phone: formatPhoneNumber(m?.phone ?? ""),
-        email: m?.email ?? "",
-        emergency_contact: m?.emergency_contact,
-        emergency_contact_phone: formatPhoneNumber(
-          m?.emergency_contact_phone ?? "",
-        ),
-        member_status: skuStatusMap[row.sku] ?? "",
-        expiration_date: m?.expiration_date,
-      };
-    }).sort((a, b) => {
-      const lastNameCompare = a.last_name.localeCompare(b.last_name);
-      if (lastNameCompare !== 0) return lastNameCompare;
-      return a.first_name.localeCompare(b.first_name);
-    })
-    .map(({ first_name, last_name, ...rest }) => rest);
+    const formatted = mtt
+      .map((row) => {
+        const m = membersData.find((mem) => mem.id === row.member_id);
+        const addressParts = [
+          m?.street_address,
+          m?.city,
+          [m?.state, m?.zip_code].filter(Boolean).join(" "),
+        ].filter(Boolean);
+        return {
+          first_name: m?.first_name ?? "",
+          last_name: m?.last_name ?? "",
+          name: `${m?.first_name} ${m?.last_name}`,
+          address: addressParts.join(", "),
+          phone: formatPhoneNumber(m?.phone ?? ""),
+          email: m?.email ?? "",
+          emergency_contact: m?.emergency_contact,
+          emergency_contact_phone: formatPhoneNumber(
+            m?.emergency_contact_phone ?? "",
+          ),
+          member_status: skuStatusMap[row.sku] ?? "",
+          expiration_date: m?.expiration_date,
+        };
+      })
+      .sort((a, b) => {
+        const lastNameCompare = a.last_name.localeCompare(b.last_name);
+        if (lastNameCompare !== 0) return lastNameCompare;
+        return a.first_name.localeCompare(b.first_name);
+      })
+      .map(({ first_name, last_name, ...rest }) => rest);
 
     setMembers(formatted);
   };
@@ -319,17 +320,33 @@ export default function MembershipReports() {
                   </div>
                 </div>
                 <div className="w-full grow overflow-y-auto rounded-xl">
-                  <table className="w-full border-collapse rounded-lg bg-white text-left shadow-sm custom-scrollbar">
+                  <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
                     <thead>
                       <tr>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white rounded-xl">Name</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Address</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Phone</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Email</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Emergency Contact</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Emergency Phone</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white">Status</th>
-                        <th className="p-3 font-semibold sticky top-0 z-20 bg-white rounded-xl">Expiration</th>
+                        <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                          Name
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Address
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Phone
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Email
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Emergency Contact
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Emergency Phone
+                        </th>
+                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                          Status
+                        </th>
+                        <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                          Expiration
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
