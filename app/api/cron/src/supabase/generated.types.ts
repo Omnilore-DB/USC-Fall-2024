@@ -915,38 +915,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      mail_orders: {
-        Row: {
-          member_id: number | null;
-          order_date: string;
-          order_id: number;
-          order_status: string | null;
-          shipping_address: string;
-        };
-        Insert: {
-          member_id?: number | null;
-          order_date: string;
-          order_id?: number;
-          order_status?: string | null;
-          shipping_address: string;
-        };
-        Update: {
-          member_id?: number | null;
-          order_date?: string;
-          order_id?: number;
-          order_status?: string | null;
-          shipping_address?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "mail_orders_member_id_fkey";
-            columns: ["member_id"];
-            isOneToOne: false;
-            referencedRelation: "members";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       member_conflicts: {
         Row: {
           created_at: string;
@@ -1569,6 +1537,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      permissions_by_role: {
+        Row: {
+          can_create: boolean | null;
+          can_delete: boolean | null;
+          can_read: boolean | null;
+          can_write: boolean | null;
+          id: number;
+          role_name: string;
+          table_name: string;
+        };
+        Insert: {
+          can_create?: boolean | null;
+          can_delete?: boolean | null;
+          can_read?: boolean | null;
+          can_write?: boolean | null;
+          id?: number;
+          role_name: string;
+          table_name: string;
+        };
+        Update: {
+          can_create?: boolean | null;
+          can_delete?: boolean | null;
+          can_read?: boolean | null;
+          can_write?: boolean | null;
+          id?: number;
+          role_name?: string;
+          table_name?: string;
+        };
+        Relationships: [];
+      };
       product_analytics: {
         Row: {
           created_at: string | null;
@@ -1627,6 +1625,7 @@ export type Database = {
           created_at: string;
           descriptor: string;
           group_id: string | null;
+          notes: string | null;
           sku: string;
           sq_id: string | null;
           status: string | null;
@@ -1638,6 +1637,7 @@ export type Database = {
           created_at?: string;
           descriptor: string;
           group_id?: string | null;
+          notes?: string | null;
           sku: string;
           sq_id?: string | null;
           status?: string | null;
@@ -1649,6 +1649,7 @@ export type Database = {
           created_at?: string;
           descriptor?: string;
           group_id?: string | null;
+          notes?: string | null;
           sku?: string;
           sq_id?: string | null;
           status?: string | null;
@@ -1725,36 +1726,6 @@ export type Database = {
             referencedColumns: ["role"];
           },
         ];
-      };
-      role_permissions_test: {
-        Row: {
-          can_create: boolean | null;
-          can_delete: boolean | null;
-          can_read: boolean | null;
-          can_write: boolean | null;
-          id: number;
-          role_name: string;
-          table_name: string;
-        };
-        Insert: {
-          can_create?: boolean | null;
-          can_delete?: boolean | null;
-          can_read?: boolean | null;
-          can_write?: boolean | null;
-          id?: number;
-          role_name: string;
-          table_name: string;
-        };
-        Update: {
-          can_create?: boolean | null;
-          can_delete?: boolean | null;
-          can_read?: boolean | null;
-          can_write?: boolean | null;
-          id?: number;
-          role_name?: string;
-          table_name?: string;
-        };
-        Relationships: [];
       };
       roles: {
         Row: {
@@ -2482,6 +2453,7 @@ export type Database = {
           created_at: string;
           descriptor: string;
           group_id: string | null;
+          notes: string | null;
           sku: string;
           sq_id: string | null;
           status: string | null;
