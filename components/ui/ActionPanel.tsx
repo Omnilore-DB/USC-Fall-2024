@@ -263,7 +263,8 @@ export default function ActionPanel({
               <button
                 className={`text-medium inline-block max-h-fit max-w-fit rounded-lg px-3 py-1 font-semibold ${mode === "add" ? "bg-[#C9FFAE]" : "bg-[#E5E7EB]"} items-center justify-center`}
                 onClick={async () => {
-                  console.log("form data", { ...formData, ...userFormData });
+                  // console.log("form data", { ...formData, ...userFormData });
+                  // console.log("insert data", strip_empty_fields(userFormData));
 
                   if (mode === "add") {
                     const { error } = await supabase

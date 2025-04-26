@@ -281,31 +281,42 @@ export default function Table() {
                               <CommandList>
                                 <CommandEmpty>No product found.</CommandEmpty>
                                 <CommandGroup>
-                                  {products.map((p) => (
-                                    <CommandItem
-                                      value={p.sku}
-                                      key={p.sku}
-                                      keywords={[
-                                        p.sku,
-                                        p.descriptor,
-                                        p.year ?? "",
-                                        p.type,
-                                      ]}
-                                      onSelect={() => {
-                                        field.handleChange(p.sku);
-                                      }}
-                                    >
-                                      {p.sku} - {p.descriptor}
-                                      <Check
-                                        className={cn(
-                                          "ml-auto",
-                                          p.sku === field.state.value
-                                            ? "opacity-100"
-                                            : "opacity-0",
-                                        )}
-                                      />
-                                    </CommandItem>
-                                  ))}
+                                  {products
+                                    .toSorted(
+                                      (a, b) =>
+                                        -(
+                                          (a.year ?? "") + (a.group_id ?? "")
+                                        ).localeCompare(
+                                          (b.year ?? "") + (b.group_id ?? ""),
+                                        ) ||
+                                        new Date(b.updated_at).getTime() -
+                                          new Date(a.updated_at).getTime(),
+                                    )
+                                    .map((p) => (
+                                      <CommandItem
+                                        value={p.sku}
+                                        key={p.sku}
+                                        keywords={[
+                                          p.sku,
+                                          p.descriptor,
+                                          p.year ?? "",
+                                          p.type,
+                                        ]}
+                                        onSelect={() => {
+                                          field.handleChange(p.sku);
+                                        }}
+                                      >
+                                        {p.sku} - {p.descriptor}
+                                        <Check
+                                          className={cn(
+                                            "ml-auto",
+                                            p.sku === field.state.value
+                                              ? "opacity-100"
+                                              : "opacity-0",
+                                          )}
+                                        />
+                                      </CommandItem>
+                                    ))}
                                 </CommandGroup>
                               </CommandList>
                             </Command>

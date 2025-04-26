@@ -65,7 +65,7 @@ function Table() {
 
   const sortedEntries = useMemo(() => {
     if (selectedSort === "default") return filteredEntries;
-    return filteredEntries.sort((a, b) => {
+    return filteredEntries.toSorted((a, b) => {
       if (
         selectedSort === "date" ||
         selectedSort === "updated_at" ||
@@ -78,15 +78,53 @@ function Table() {
           : dateB.getTime() - dateA.getTime();
       }
 
-      if (selectedSort === "first_name" || selectedSort === "last_name") {
+      if (selectedSort === "first_name" && a["last_name"] && b["last_name"]) {
+        const aName = a[selectedSort] + " " + a["last_name"];
+        const bName = b[selectedSort] + " " + b["last_name"];
         return selectedSortWay === "asc"
-          ? a[selectedSort]?.localeCompare(b[selectedSort])
-          : b[selectedSort]?.localeCompare(a[selectedSort]);
+          ? aName.localeCompare(bName)
+          : bName.localeCompare(aName);
+      }
+
+      if (selectedSort === "last_name" && a["first_name"] && b["first_name"]) {
+        const aName = a[selectedSort] + " " + a["first_name"];
+        const bName = b[selectedSort] + " " + b["first_name"];
+        return selectedSortWay === "asc"
+          ? aName.localeCompare(bName)
+          : bName.localeCompare(aName);
+      }
+
+      if (selectedSort === "year") {
+        if (a["year"] === null) return 1;
+        if (b["year"] === null) return -1;
+        const aYear = a[selectedSort] + " " + a["group_id"];
+        const bYear = b[selectedSort] + " " + b["group_id"];
+        return selectedSortWay === "asc"
+          ? aYear.localeCompare(bYear)
+          : bYear.localeCompare(aYear);
+      }
+
+      if (
+        typeof a[selectedSort] === "number" ||
+        typeof b[selectedSort] === "number"
+      ) {
+        return selectedSortWay === "asc"
+          ? (a[selectedSort] ?? 0) - (b[selectedSort] ?? 0)
+          : (b[selectedSort] ?? 0) - (a[selectedSort] ?? 0);
+      }
+
+      if (
+        typeof a[selectedSort] === "string" ||
+        typeof b[selectedSort] === "string"
+      ) {
+        return selectedSortWay === "asc"
+          ? (a[selectedSort] ?? "").localeCompare(b[selectedSort] ?? "")
+          : (b[selectedSort] ?? "").localeCompare(a[selectedSort] ?? "");
       }
 
       return selectedSortWay === "asc"
-        ? a[selectedSort] - b[selectedSort]
-        : b[selectedSort] - a[selectedSort];
+        ? (a[selectedSort] ?? "").localeCompare(b[selectedSort] ?? "")
+        : (b[selectedSort] ?? "").localeCompare(a[selectedSort] ?? "");
     });
   }, [filteredEntries, selectedSort, selectedSortWay]);
 

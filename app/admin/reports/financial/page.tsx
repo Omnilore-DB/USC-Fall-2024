@@ -984,10 +984,11 @@ const TreasurerReqs = () => {
                                           {fetchPayoutsErr}
                                         </span>
                                       ) : paypalPayouts[temporalKey] ? null : (
-                                        <span className="text-xs text-red-500">
-                                          'date_adjusted' not found for '
-                                          {temporalKey}'
-                                        </span>
+                                        // <span className="text-xs text-red-500">
+                                        //   'date_adjusted' not found for '
+                                        //   {temporalKey}'
+                                        // </span>
+                                        <></>
                                       )}
                                     </div>
                                   </td>
@@ -1161,10 +1162,11 @@ const TreasurerReqs = () => {
                                           {fetchPayoutsErr}
                                         </span>
                                       ) : stripePayouts[temporalKey] ? null : (
-                                        <span className="text-xs text-red-500">
-                                          'date_adjusted' not found for '
-                                          {temporalKey}'
-                                        </span>
+                                        // <span className="text-xs text-red-500">
+                                        //   'date_adjusted' not found for '
+                                        //   {temporalKey}'
+                                        // </span>
+                                        <></>
                                       )}
                                     </div>
                                   </td>

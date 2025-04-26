@@ -291,28 +291,37 @@ const TableComponent = ({
                                   : isSelected
                                     ? "bg-gray-100"
                                     : "bg-white group-hover:bg-gray-50"
-                              }`}
+                              } relative ${typeof item[columnName] === "object" ? "max-w-60 overflow-scroll" : ""}`}
                               style={{
                                 boxShadow: "inset 0 0 0 0.5px #e5e7eb",
                                 outline: "none",
                               }}
                             >
-                              {columnName === "issues" &&
-                              Array.isArray(item[columnName]) &&
-                              item[columnName].length > 0
-                                ? item[columnName]
-                                    .map((issue) => issue.message)
-                                    .join(", ")
-                                : typeof item[columnName] === "object" &&
-                                    item[columnName] !== null
-                                  ? JSON.stringify(item[columnName])
-                                  : typeof item[columnName] === "boolean"
-                                    ? item[columnName].toString()
-                                    : columnName
-                                          .toLowerCase()
-                                          .includes("phone") && item[columnName]
-                                      ? formatPhoneNumber(item[columnName])
-                                      : item[columnName]}
+                              <div
+                                className={`${typeof item[columnName] === "object" ? "max-h-20" : ""}`}
+                              >
+                                {columnName === "issues" &&
+                                Array.isArray(item[columnName]) &&
+                                item[columnName].length > 0
+                                  ? item[columnName]
+                                      .map((issue) => issue.message)
+                                      .join(", ")
+                                  : typeof item[columnName] === "object" &&
+                                      item[columnName] !== null
+                                    ? JSON.stringify(
+                                        item[columnName],
+                                        undefined,
+                                        1,
+                                      )
+                                    : typeof item[columnName] === "boolean"
+                                      ? item[columnName].toString()
+                                      : columnName
+                                            .toLowerCase()
+                                            .includes("phone") &&
+                                          item[columnName]
+                                        ? formatPhoneNumber(item[columnName])
+                                        : item[columnName]}
+                              </div>
                             </td>
                           ),
                         )}

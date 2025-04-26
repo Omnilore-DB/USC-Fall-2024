@@ -170,8 +170,8 @@ export default function InputField({
               type="checkbox"
               className="rounded border border-gray-300 p-2"
               required={required}
-              defaultChecked={normalizedValue === "true"}
-              onChange={(e) => setCurrentValue(e.target.value)}
+              defaultChecked={normalizedValue ?? true}
+              onChange={(e) => setCurrentValue(e.target.checked)}
             />
           )}
 
