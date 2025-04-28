@@ -82,7 +82,7 @@ const TableComponent = ({
     console.log("UPDATED ROW OBJECT: ", localSelectedRow);
   }, [localSelectedRow]);
 
-  const validRoles = ["dba", "registrar", "treasurer", "bioadmin", "member"];
+  const validRoles = ["dba", "membership", "treasurer", "bioadmin", "member"];
   const hasValidRole = roles.some((role) => validRoles.includes(role));
 
   if (!hasValidRole) {
