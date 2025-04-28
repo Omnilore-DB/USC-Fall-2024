@@ -102,7 +102,7 @@ function LoginPage() {
         roles.includes("treasurer") ||
         roles.includes("membership")
       ) {
-        router.push("/admin");
+        router.push("/admin/tables");
       } else {
         router.push("/members");
       }
