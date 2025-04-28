@@ -15,7 +15,7 @@ const SelectDropdown = ({
 }: SelectDropdownProps) => {
   return (
     <Select.Root value={selectedOption || ""} onValueChange={setSelectedOption}>
-      <Select.Trigger className="group flex w-full items-center justify-between rounded-lg border-1 border-gray-200 bg-white px-3 py-1 font-semibold text-gray-800 shadow-xs transition focus:ring-0 focus:outline-hidden data-[state=open]:border-transparent">
+      <Select.Trigger className="cursor-pointer group flex w-full items-center justify-between rounded-lg border-1 border-gray-200 bg-white px-3 py-1 font-semibold text-gray-800 shadow-xs transition focus:ring-0 focus:outline-hidden data-[state=open]:border-transparent">
         <Select.Value placeholder="Select a view" />
         <ChevronDown className="h-4 w-4 text-gray-500" />
       </Select.Trigger>

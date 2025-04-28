@@ -248,7 +248,7 @@ export default function MembershipReports() {
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
+                            className="cursor-pointer h-10 w-full rounded-lg border-gray-200 bg-white p-2"
                           />
                         </div>
                         <div className="flex w-1/3 flex-col">
@@ -259,7 +259,7 @@ export default function MembershipReports() {
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
+                            className="cursor-pointer h-10 w-full rounded-lg border-gray-200 bg-white p-2"
                           />
                         </div>
                       </>
@@ -293,7 +293,7 @@ export default function MembershipReports() {
                     )}
                     <div className="flex w-1/3 items-end">
                       <button
-                        className="h-10 w-full rounded-lg bg-gray-200 font-semibold"
+                        className="cursor-pointer h-10 w-full rounded-lg bg-gray-200 font-semibold"
                         onClick={() => setCustomRange((prev) => !prev)}
                       >
                         {customRange ? "Academic Year" : "Custom Range"}
@@ -304,14 +304,14 @@ export default function MembershipReports() {
                     <div className="flex w-1/2 items-end">
                       <button
                         onClick={fetchMembershipMembers}
-                        className="h-10 w-full rounded-lg bg-blue-500 font-semibold text-white"
+                        className="cursor-pointer h-10 w-full rounded-lg bg-blue-500 font-semibold text-white"
                       >
                         Generate Report
                       </button>
                     </div>
                     <div className="flex w-1/2 items-end">
                       <button
-                        className="h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
+                        className="cursor-pointer h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
                         onClick={exportToCSV}
                       >
                         Export as CSV
