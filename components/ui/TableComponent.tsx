@@ -291,7 +291,7 @@ const TableComponent = ({
                                   : isSelected
                                     ? "bg-gray-100"
                                     : "bg-white group-hover:bg-gray-50"
-                              } relative ${typeof item[columnName] === "object" ? "max-w-60 overflow-scroll" : ""}`}
+                              } relative ${typeof item[columnName] === "object" ? "max-w-60 overflow-auto" : ""}`}
                               style={{
                                 boxShadow: "inset 0 0 0 0.5px #e5e7eb",
                                 outline: "none",
