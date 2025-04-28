@@ -96,7 +96,7 @@ export default function AdminLayout({
                       <button
                         key={tab}
                         onClick={() => handleReportTabClick(tab)}
-                        className={`group flex w-full items-center gap-2 rounded-lg p-2 ${activeReportTab === tab ? "bg-[#F6F6F6] text-[#000000]" : "bg-white text-[#85849E]"} hover:bg-[#F6F6F6]`}
+                        className={`cursor-pointer group flex w-full items-center gap-2 rounded-lg p-2 ${activeReportTab === tab ? "bg-[#F6F6F6] text-[#000000]" : "bg-white text-[#85849E]"} hover:bg-[#F6F6F6]`}
                       >
                         <span
                           className={`group-hover:text-[#000000] ${activeReportTab === tab ? "text-[#000000]" : "text-[#85849E]"}`}
@@ -109,7 +109,7 @@ export default function AdminLayout({
                 </div>
               )}
             </div>
-            <div onClick={() => handleOtherTabClick("/admin/conflicts")}>
+            <div className="cursor-pointer" onClick={() => handleOtherTabClick("/admin/conflicts")}>
               {" "}
               <ConflictsButton />{" "}
             </div>
@@ -175,7 +175,7 @@ const TableButton = () => {
 
   return (
     <button
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+      className={`cursor-pointer group flex w-full items-center gap-2 rounded-lg p-2 ${
         isActive ? "bg-[#F6F6F6]" : "bg-white"
       } hover:bg-[#F6F6F6]`}
     >
@@ -212,7 +212,7 @@ const ReportsButton = () => {
 
   return (
     <button
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+      className={`cursor-pointer group flex w-full items-center gap-2 rounded-lg p-2 ${
         isActive ? "bg-[#F6F6F6]" : "bg-white"
       } hover:bg-[#F6F6F6]`}
     >
@@ -270,7 +270,7 @@ const ConflictsButton = () => {
   return (
     <button
       onClick={() => router.push("/admin/conflicts")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+      className={`cursor-pointer group flex w-full items-center gap-2 rounded-lg p-2 ${
         isActive ? "bg-[#F6F6F6]" : "bg-white"
       } hover:bg-[#F6F6F6]`}
     >
@@ -298,7 +298,7 @@ const MailInButton = () => {
   return (
     <button
       onClick={() => router.push("/admin/mail-in")}
-      className={`group flex w-full items-center gap-2 rounded-lg p-2 ${
+      className={`cursor-pointer group flex w-full items-center gap-2 rounded-lg p-2 ${
         isActive ? "bg-[#F6F6F6]" : "bg-white"
       } hover:bg-[#F6F6F6]`}
     >
@@ -311,6 +311,7 @@ const MailInButton = () => {
     </button>
   );
 };
+
 const HelpIcon = ({ className, size = 20 }: { className?: string; size?: number }) => (
   <svg
     width={size}
