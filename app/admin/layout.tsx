@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import Logo from "@/components/assets/logo.png";
 import { LogOut, MailIcon } from "lucide-react";
 import { signOut } from "@/app/supabase";
+import { getRoles } from "@/app/supabase";
 
 export default function AdminLayout({
   children,
@@ -17,6 +18,24 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [activeReportTab, setActiveReportTab] = useState<string>("");
+  const [roles, setRoles] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const setup = async () => {
+      try {
+        const userRoles = await getRoles();
+        if (!userRoles) {
+          console.error("Failed to fetch roles");
+          return;
+        }
+        setRoles(userRoles);
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+      }
+    };
+
+    setup();
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -102,15 +121,21 @@ export default function AdminLayout({
 
           {/* Spacer to push logout to bottom */}
           <div className="flex-grow"></div>
-
+          
+          <div className="w-full px-3 py-2 rounded-md bg-gradient-to-r from-gray-100 to-gray-200 text-center text-[11px] font-medium text-gray-600 tracking-wide">{roles}</div>
+          
           {/* Logout button positioned at bottom */}
-          <div className="border-t border-gray-100 pt-2">
+          <div className="flex flex-col items-start justify-center border-t border-gray-100 pt-2">
             <button
-              onClick={async () => {
-                await signOut();
-                router.push("/login");
-              }}
-              className="group flex w-full items-center gap-2 p-2 text-[#85849E]"
+              onClick={async () => {}}
+              className="group flex w-full items-center gap-2 p-2 text-[#85849E] cursor-pointer"
+            >
+              <HelpIcon className="group-hover:bg-blue-500" />
+              <span className="text-left group-hover:text-blue-500">Help</span>
+            </button>
+            <button
+              onClick={async () => { }}
+              className="group flex w-full items-center gap-2 p-2 text-[#85849E] cursor-pointer"
             >
               <LogOut className="group-hover:stroke-red-500" size={20} />
               <span className="text-left group-hover:text-red-500">Logout</span>
@@ -286,3 +311,27 @@ const MailInButton = () => {
     </button>
   );
 };
+const HelpIcon = ({ className, size = 20 }: { className?: string; size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M8.3335 7.50065C8.3335 7.01151 8.51594 6.69868 8.75546 6.49545C9.01309 6.27685 9.3863 6.14648 9.79183 6.14648C10.1974 6.14648 10.5706 6.27685 10.8282 6.49545C11.0677 6.69868 11.2502 7.01151 11.2502 7.50065C11.2502 7.86496 11.1643 8.06721 11.0646 8.21679C10.9483 8.3913 10.7952 8.52891 10.5363 8.76163L10.4844 8.80832C10.218 9.04802 9.86764 9.37207 9.60047 9.84406C9.32514 10.3305 9.16683 10.9182 9.16683 11.6673C9.16683 12.1276 9.53993 12.5007 10.0002 12.5007C10.4604 12.5007 10.8335 12.1276 10.8335 11.6673C10.8335 11.1664 10.9356 10.8687 11.0509 10.6651C11.1744 10.4469 11.3448 10.2762 11.5993 10.0471C11.6222 10.0265 11.6464 10.005 11.6715 9.98255C11.8993 9.77957 12.2112 9.50152 12.4514 9.14129C12.7423 8.70493 12.9168 8.17801 12.9168 7.50065C12.9168 6.53146 12.5264 5.75054 11.9065 5.2246C11.3048 4.71403 10.5321 4.47982 9.79183 4.47982C9.05153 4.47982 8.2789 4.71403 7.67716 5.2246C7.0573 5.75054 6.66683 6.53146 6.66683 7.50065C6.66683 7.96089 7.03993 8.33398 7.50016 8.33398C7.9604 8.33398 8.3335 7.96089 8.3335 7.50065Z"
+      className="fill-[#757575] group-hover:fill-blue-500"
+    />
+    <path
+      d="M10.6251 15.5604C10.9347 15.2199 10.9096 14.6928 10.5691 14.3832C10.2285 14.0736 9.70149 14.0987 9.39189 14.4392L9.38356 14.4484C9.07396 14.7889 9.09905 15.316 9.43959 15.6256C9.78013 15.9352 10.3072 15.9101 10.6168 15.5696L10.6251 15.5604Z"
+      className="fill-[#757575] group-hover:fill-blue-500"
+    />
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M10.0002 0.833984C4.93743 0.833984 0.833496 4.93791 0.833496 10.0007C0.833496 15.0634 4.93743 19.1673 10.0002 19.1673C15.0629 19.1673 19.1668 15.0634 19.1668 10.0007C19.1668 4.93791 15.0629 0.833984 10.0002 0.833984ZM2.50016 10.0007C2.50016 5.85839 5.8579 2.50065 10.0002 2.50065C14.1424 2.50065 17.5002 5.85839 17.5002 10.0007C17.5002 14.1429 14.1424 17.5007 10.0002 17.5007C5.8579 17.5007 2.50016 14.1429 2.50016 10.0007Z"
+      className="fill-[#757575] group-hover:fill-blue-500"
+    />
+  </svg>
+);
