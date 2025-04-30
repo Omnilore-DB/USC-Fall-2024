@@ -254,14 +254,14 @@ export default function ActionPanel({
               )}
             <div className="flex w-full justify-start gap-2">
               <button
-                className="cursor-pointer text-medium inline-block max-h-fit max-w-fit items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
+                className="text-medium inline-block max-h-fit max-w-fit cursor-pointer items-center justify-center rounded-lg bg-gray-100 px-3 py-1"
                 onClick={onClose}
               >
                 Cancel
               </button>
 
               <button
-                className={`cursor-pointer text-medium inline-block max-h-fit max-w-fit rounded-lg px-3 py-1 font-semibold ${mode === "add" ? "bg-[#C9FFAE]" : "bg-[#E5E7EB]"} items-center justify-center`}
+                className={`text-medium inline-block max-h-fit max-w-fit cursor-pointer rounded-lg px-3 py-1 font-semibold ${mode === "add" ? "bg-[#C9FFAE]" : "bg-[#E5E7EB]"} items-center justify-center`}
                 onClick={async () => {
                   if (mode === "add") {
                     const { error } = await supabase

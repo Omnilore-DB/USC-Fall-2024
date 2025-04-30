@@ -49,6 +49,7 @@ export default function Table() {
       state: "CA",
       zip_code: "",
       public: true,
+      accepts_terms_and_conditions: false,
       sku: "",
       amount: "",
       fee: "0",
@@ -333,6 +334,66 @@ export default function Table() {
                     )}
                   </Field>
                   <Field
+                    name="amount"
+                    validators={{
+                      onChange: z
+                        .string()
+                        .regex(/^\d+(\.\d{1,2})?$/, "Invalid amount"),
+                    }}
+                  >
+                    {(field) => (
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Amount<span className="text-red-600">*</span>
+                        </label>
+                        <input
+                          value={field.state.value}
+                          type="number"
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          onBlur={field.handleBlur}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                        />
+                        {field.state.meta.errors ? (
+                          <p className="text-sm text-red-600">
+                            {field.state.meta.errors
+                              .map((e) => e?.message)
+                              .join(", ")}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                  </Field>
+                  <div />
+                  {/* <Field
+                    name="fee"
+                    validators={{
+                      onChange: z
+                        .string()
+                        .regex(/^\d+(\.\d{1,2})?$/, "Invalid fee"),
+                    }}
+                  >
+                    {(field) => (
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Fee<span className="text-red-600">*</span>
+                        </label>
+                        <input
+                          value={field.state.value}
+                          type="number"
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                        />
+                        {field.state.meta.errors ? (
+                          <p className="text-sm text-red-600">
+                            {field.state.meta.errors
+                              .map((e) => e?.message)
+                              .join(", ")}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                  </Field> */}
+                  <Field
                     name="email"
                     validators={{
                       onChangeListenTo: ["phone"],
@@ -442,204 +503,133 @@ export default function Table() {
                   </Field>
                   <Subscribe selector={(state) => [state.values.sku]}>
                     {([sku]) => {
-                      const sku_type = products.find(
-                        (p) => p.sku === sku,
-                      )?.type;
-                      return sku_type === "MEMBERSHIP" ? (
-                        <>
-                          <Field
-                            name="street_address"
-                            validators={{
-                              onChange: z
-                                .string()
-                                .min(1, "Street address cannot be empty"),
-                            }}
-                          >
-                            {(field) => (
-                              <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                  Street Address
-                                </label>
-                                <input
-                                  value={field.state.value ?? ""}
-                                  onChange={(e) =>
-                                    field.handleChange(e.target.value)
-                                  }
-                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
-                                />
-                                {field.state.meta.errors ? (
-                                  <p className="text-sm text-red-600">
-                                    {field.state.meta.errors
-                                      .map((e) => e?.message)
-                                      .join(", ")}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          </Field>
-                          <Field
-                            name="city"
-                            validators={{
-                              onChange: z
-                                .string()
-                                .min(1, "City cannot be empty"),
-                            }}
-                          >
-                            {(field) => (
-                              <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                  City
-                                </label>
-                                <input
-                                  value={field.state.value ?? ""}
-                                  onChange={(e) =>
-                                    field.handleChange(e.target.value)
-                                  }
-                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
-                                />
-                                {field.state.meta.errors ? (
-                                  <p className="text-sm text-red-600">
-                                    {field.state.meta.errors
-                                      .map((e) => e?.message)
-                                      .join(", ")}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          </Field>
-                          <Field
-                            name="state"
-                            validators={{
-                              onChange: states.schema,
-                            }}
-                          >
-                            {(field) => (
-                              <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                  State
-                                </label>
-                                <select
-                                  value={field.state.value ?? ""}
-                                  onChange={(e) =>
-                                    field.handleChange(e.target.value)
-                                  }
-                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
-                                >
-                                  {states.schema.options.map((option) => (
-                                    <option key={option} value={option}>
-                                      {option}
-                                    </option>
-                                  ))}
-                                </select>
-                                {field.state.meta.errors ? (
-                                  <p className="text-sm text-red-600">
-                                    {field.state.meta.errors
-                                      .map((e) => e?.message)
-                                      .join(", ")}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          </Field>
-                          <Field
-                            name="zip_code"
-                            validators={{
-                              onChange: zip_code.schema,
-                            }}
-                          >
-                            {(field) => (
-                              <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                  Zip Code
-                                </label>
-                                <input
-                                  value={field.state.value ?? ""}
-                                  onChange={(e) =>
-                                    field.handleChange(e.target.value)
-                                  }
-                                  onBlur={field.handleBlur}
-                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
-                                />
-                                {field.state.meta.errors ? (
-                                  <p className="text-sm text-red-600">
-                                    {field.state.meta.errors
-                                      .map((e) => e?.message)
-                                      .join(", ")}
-                                  </p>
-                                ) : null}
-                              </div>
-                            )}
-                          </Field>
-                        </>
-                      ) : null;
-                    }}
-                  </Subscribe>
-                  <Field
-                    name="amount"
-                    validators={{
-                      onChange: z
-                        .string()
-                        .regex(/^\d+(\.\d{1,2})?$/, "Invalid amount"),
-                    }}
-                  >
-                    {(field) => (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Amount<span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          value={field.state.value}
-                          type="number"
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
-                        />
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors
-                              .map((e) => e?.message)
-                              .join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  </Field>
-                  <Field
-                    name="fee"
-                    validators={{
-                      onChange: z
-                        .string()
-                        .regex(/^\d+(\.\d{1,2})?$/, "Invalid fee"),
-                    }}
-                  >
-                    {(field) => (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Fee<span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          value={field.state.value}
-                          type="number"
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
-                        />
-                        {field.state.meta.errors ? (
-                          <p className="text-sm text-red-600">
-                            {field.state.meta.errors
-                              .map((e) => e?.message)
-                              .join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                  </Field>
-
-                  <Subscribe selector={(state) => [state.values.sku]}>
-                    {([sku]) => {
                       return (
                         products.find((p) => p.sku === sku)?.type ===
                           "MEMBERSHIP" && (
                           <>
+                            <Field
+                              name="street_address"
+                              validators={{
+                                onChange: z
+                                  .string()
+                                  .min(1, "Street address cannot be empty"),
+                              }}
+                            >
+                              {(field) => (
+                                <div className="space-y-2">
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    Street Address
+                                  </label>
+                                  <input
+                                    value={field.state.value ?? ""}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                                  />
+                                  {field.state.meta.errors ? (
+                                    <p className="text-sm text-red-600">
+                                      {field.state.meta.errors
+                                        .map((e) => e?.message)
+                                        .join(", ")}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              )}
+                            </Field>
+                            <Field
+                              name="city"
+                              validators={{
+                                onChange: z
+                                  .string()
+                                  .min(1, "City cannot be empty"),
+                              }}
+                            >
+                              {(field) => (
+                                <div className="space-y-2">
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    City
+                                  </label>
+                                  <input
+                                    value={field.state.value ?? ""}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                                  />
+                                  {field.state.meta.errors ? (
+                                    <p className="text-sm text-red-600">
+                                      {field.state.meta.errors
+                                        .map((e) => e?.message)
+                                        .join(", ")}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              )}
+                            </Field>
+                            <Field
+                              name="state"
+                              validators={{
+                                onChange: states.schema,
+                              }}
+                            >
+                              {(field) => (
+                                <div className="space-y-2">
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    State
+                                  </label>
+                                  <select
+                                    value={field.state.value ?? ""}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                                  >
+                                    {states.schema.options.map((option) => (
+                                      <option key={option} value={option}>
+                                        {option}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {field.state.meta.errors ? (
+                                    <p className="text-sm text-red-600">
+                                      {field.state.meta.errors
+                                        .map((e) => e?.message)
+                                        .join(", ")}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              )}
+                            </Field>
+                            <Field
+                              name="zip_code"
+                              validators={{
+                                onChange: zip_code.schema,
+                              }}
+                            >
+                              {(field) => (
+                                <div className="space-y-2">
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    Zip Code
+                                  </label>
+                                  <input
+                                    value={field.state.value ?? ""}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    onBlur={field.handleBlur}
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                                  />
+                                  {field.state.meta.errors ? (
+                                    <p className="text-sm text-red-600">
+                                      {field.state.meta.errors
+                                        .map((e) => e?.message)
+                                        .join(", ")}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              )}
+                            </Field>
                             <Field
                               name="emergency_contact"
                               validators={{
@@ -769,11 +759,29 @@ export default function Table() {
                                 </div>
                               )}
                             </Field>
+                            <Field name="accepts_terms_and_conditions">
+                              {(field) => (
+                                <div className="space-y-2">
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    Accepts Terms & Conditions
+                                  </label>
+                                  <input
+                                    type="checkbox"
+                                    checked={field.state.value ?? true}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.checked)
+                                    }
+                                    className="rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                                  />
+                                </div>
+                              )}
+                            </Field>
                           </>
                         )
                       );
                     }}
                   </Subscribe>
+
                   <div className="col-span-2 flex justify-end">
                     <Subscribe
                       selector={(state) => [
@@ -783,7 +791,7 @@ export default function Table() {
                       children={([canSubmit, isSubmitting]) => (
                         <button
                           type="submit"
-                          className={`cursor-pointer text-sm inline-block max-h-fit max-w-fit rounded-lg px-3 py-1 font-semibold bg-[#E5E7EB] items-center justify-center`}
+                          className={`inline-block max-h-fit max-w-fit cursor-pointer items-center justify-center rounded-lg bg-[#E5E7EB] px-3 py-1 text-sm font-semibold`}
                           disabled={!canSubmit}
                         >
                           {isSubmitting ? "Adding..." : "Add Mail-In Order"}

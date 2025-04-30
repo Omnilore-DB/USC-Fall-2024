@@ -69,6 +69,7 @@ export type MailInOrderData = {
   state: string | null;
   zip_code: string | null;
   public: boolean;
+  accepts_terms_and_conditions: boolean;
 
   sku: string;
   amount: string;

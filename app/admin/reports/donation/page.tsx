@@ -233,7 +233,7 @@ export default function DonationReports() {
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="cursor-pointer h-10 w-full rounded-lg border-gray-200 bg-white p-2"
+                            className="h-10 w-full cursor-pointer rounded-lg border-gray-200 bg-white p-2"
                           />
                         </div>
                         <div className="flex w-1/3 flex-col">
@@ -244,7 +244,7 @@ export default function DonationReports() {
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="cursor-pointer h-10 w-full rounded-lg border-gray-200 bg-white p-2"
+                            className="h-10 w-full cursor-pointer rounded-lg border-gray-200 bg-white p-2"
                           />
                         </div>
                       </>
@@ -263,7 +263,7 @@ export default function DonationReports() {
                     )}
                     <div className="flex w-1/3 items-end">
                       <button
-                        className="cursor-pointer h-10 w-full rounded-lg bg-gray-200 font-semibold"
+                        className="h-10 w-full cursor-pointer rounded-lg bg-gray-200 font-semibold"
                         onClick={() => setCustomRange((prev) => !prev)}
                       >
                         {customRange ? "Calendar Year" : "Custom Range"}
@@ -274,14 +274,14 @@ export default function DonationReports() {
                     <div className="flex w-1/2 items-end">
                       <button
                         onClick={fetchDonationTransactions}
-                        className="cursor-pointer h-10 w-full rounded-lg bg-blue-500 font-semibold text-white"
+                        className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
                       >
                         Generate Report
                       </button>
                     </div>
                     <div className="flex w-1/2 items-end">
                       <button
-                        className="cursor-pointer h-10 w-full rounded-lg bg-green-500 font-semibold text-white"
+                        className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
                         onClick={exportToCSV}
                       >
                         Export as CSV
