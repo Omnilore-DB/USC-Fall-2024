@@ -291,7 +291,7 @@ export default function DonationReports() {
                 </div>
 
                 <div className="w-full grow overflow-y-auto">
-                  <table className="w-full border-collapse rounded-lg rounded-xl bg-white text-left shadow-sm">
+                  <table className="w-full border-collapse rounded-xl bg-white text-left shadow-sm">
                     <thead>
                       <tr>
                         <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
