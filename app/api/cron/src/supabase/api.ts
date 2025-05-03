@@ -200,6 +200,8 @@ export const update = {
       )
         continue;
 
+      if (t.fulfillment_status === "CANCELED") continue;
+
       for (const [line_item, data] of t.parsed_form_data.entries()) {
         const { data: mem, error } = convert.member(data);
 
@@ -250,6 +252,11 @@ export const update = {
               mem.emergency_contact_phone ?? matches[0].emergency_contact_phone,
             phone: matches[0].phone ?? mem.phone,
             email: matches[0].email ?? mem.email,
+            member_status:
+              sku_map.get(data.sku)?.type === "MEMBERSHIP" &&
+              sku_map.get(data.sku)?.status
+                ? sku_map.get(data.sku)?.status
+                : matches[0].member_status,
           });
         } else {
           const new_mem = {
@@ -258,6 +265,11 @@ export const update = {
               sku_map.get(data.sku)?.type === "MEMBERSHIP"
                 ? ("MEMBER" as const)
                 : ("NONMEMBER" as const),
+            member_status:
+              sku_map.get(data.sku)?.type === "MEMBERSHIP" &&
+              sku_map.get(data.sku)?.status
+                ? sku_map.get(data.sku)?.status
+                : matches[0].member_status,
           };
 
           const created_mem = await insert.member(new_mem);

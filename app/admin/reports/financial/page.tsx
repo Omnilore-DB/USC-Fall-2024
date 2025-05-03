@@ -29,7 +29,6 @@ const TreasurerReqs = () => {
   const [donors, setDonors] = useState<any[]>([]);
 
   const [customRange, setCustomRange] = useState(false);
-  const [availableYears] = useState(["2022", "2023", "2024", "2025"]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -46,8 +45,25 @@ const TreasurerReqs = () => {
     Record<string, SupabasePayout>
   >({});
   const [fetchPayoutsErr, setFetchPayoutsErr] = useState<string | null>(null);
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
 
-  // const [roles, setRoles] = useState<string[] | null>(null);
+  useEffect(() => {
+    const setup = async () => {
+      const userRoles = await getRoles();
+      if (!userRoles) {
+        console.error("Failed to fetch roles");
+        return;
+      }
+      setRoles(userRoles);
+      const currentYear = new Date().getFullYear();
+      const years = [];
+      for (let y = 2023; y <= currentYear; y++) {
+        years.push(y.toString());
+      }
+      setAvailableYears(years);
+    };
+    setup();
+  }, []);
 
   const categories = ["MEMBERSHIP", "FORUM", "DONATION"];
 

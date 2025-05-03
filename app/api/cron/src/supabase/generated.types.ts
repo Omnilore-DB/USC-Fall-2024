@@ -375,6 +375,21 @@ export type Database = {
         };
         Relationships: [];
       };
+      dynamic_links: {
+        Row: {
+          link: string;
+          name: string;
+        };
+        Insert: {
+          link: string;
+          name: string;
+        };
+        Update: {
+          link?: string;
+          name?: string;
+        };
+        Relationships: [];
+      };
       "Enrollment-24a (legacy)": {
         Row: {
           CreatedAt: string | null;
@@ -1525,18 +1540,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      permissions: {
-        Row: {
-          permission: string;
-        };
-        Insert: {
-          permission: string;
-        };
-        Update: {
-          permission?: string;
-        };
-        Relationships: [];
-      };
       permissions_by_role: {
         Row: {
           can_create: boolean | null;
@@ -1658,74 +1661,6 @@ export type Database = {
           year?: string | null;
         };
         Relationships: [];
-      };
-      prospects: {
-        Row: {
-          date: string | null;
-          id: number;
-          notes: string | null;
-          prospect_name: string;
-          prospect_phone: string | null;
-          referred_by_member_id: number | null;
-          referred_by_phone: string | null;
-        };
-        Insert: {
-          date?: string | null;
-          id?: number;
-          notes?: string | null;
-          prospect_name: string;
-          prospect_phone?: string | null;
-          referred_by_member_id?: number | null;
-          referred_by_phone?: string | null;
-        };
-        Update: {
-          date?: string | null;
-          id?: number;
-          notes?: string | null;
-          prospect_name?: string;
-          prospect_phone?: string | null;
-          referred_by_member_id?: number | null;
-          referred_by_phone?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "prospects_referred_by_member_id_fkey";
-            columns: ["referred_by_member_id"];
-            isOneToOne: false;
-            referencedRelation: "members";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      role_permissions: {
-        Row: {
-          permission: string;
-          role: string;
-        };
-        Insert: {
-          permission: string;
-          role: string;
-        };
-        Update: {
-          permission?: string;
-          role?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "role_permissions_permission_fkey";
-            columns: ["permission"];
-            isOneToOne: false;
-            referencedRelation: "permissions";
-            referencedColumns: ["permission"];
-          },
-          {
-            foreignKeyName: "role_permissions_role_fkey";
-            columns: ["role"];
-            isOneToOne: false;
-            referencedRelation: "roles";
-            referencedColumns: ["role"];
-          },
-        ];
       };
       roles: {
         Row: {
@@ -1946,6 +1881,24 @@ export type Database = {
             referencedColumns: ["role"];
           },
         ];
+      };
+      users: {
+        Row: {
+          created_at: string | null;
+          email: string;
+          id: number;
+        };
+        Insert: {
+          created_at?: string | null;
+          email: string;
+          id?: number;
+        };
+        Update: {
+          created_at?: string | null;
+          email?: string;
+          id?: number;
+        };
+        Relationships: [];
       };
       "users (legacy)": {
         Row: {

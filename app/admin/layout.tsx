@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import Logo from "@/components/assets/logo.png";
 import { LogOut, MailIcon } from "lucide-react";
-import { signOut } from "@/app/supabase";
+import { getDocumentationLink, signOut } from "@/app/supabase";
 import { getRoles } from "@/app/supabase";
 
 export default function AdminLayout({
@@ -132,14 +132,20 @@ export default function AdminLayout({
           {/* Logout button positioned at bottom */}
           <div className="flex flex-col items-start justify-center border-t border-gray-100 pt-2">
             <button
-              onClick={async () => {}}
+              onClick={async () => {
+                const link = await getDocumentationLink();
+                window.open(link, "_blank");
+              }}
               className="group flex w-full cursor-pointer items-center gap-2 p-2 text-[#85849E]"
             >
               <HelpIcon className="group-hover:bg-blue-500" />
               <span className="text-left group-hover:text-blue-500">Help</span>
             </button>
             <button
-              onClick={async () => {}}
+              onClick={async () => {
+                await signOut();
+                router.push("/login");
+              }}
               className="group flex w-full cursor-pointer items-center gap-2 p-2 text-[#85849E]"
             >
               <LogOut className="group-hover:stroke-red-500" size={20} />

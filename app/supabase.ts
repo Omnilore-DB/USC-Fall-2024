@@ -184,3 +184,17 @@ export const getRowById = async (table: TableName, id: number) => {
     return null;
   }
 };
+
+export async function getDocumentationLink() {
+  const { data, error } = await supabase
+    .from("dynamic_links")
+    .select()
+    .eq("name", "documentation");
+
+  if (error) {
+    console.error("Failed to fetch link:", error.message);
+    return "";
+  }
+
+  return data[0].link;
+}
