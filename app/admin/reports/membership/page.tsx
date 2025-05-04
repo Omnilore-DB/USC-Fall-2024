@@ -7,7 +7,6 @@ import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
 export default function MembershipReports() {
   const [members, setMembers] = useState<any[]>([]);
-  const [roles, setRoles] = useState<string[]>([]);
   const [customRange, setCustomRange] = useState(false);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -202,12 +201,6 @@ export default function MembershipReports() {
 
   useEffect(() => {
     const setup = async () => {
-      const userRoles = await getRoles();
-      if (!userRoles) {
-        console.error("Failed to fetch roles");
-        return;
-      }
-      setRoles(userRoles);
       const { data, error } = await supabase
         .from("products")
         .select("year")
@@ -230,156 +223,152 @@ export default function MembershipReports() {
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
       <div className="flex w-full grow flex-col items-center justify-center overflow-y-auto">
-        {roles === null ? (
-          <div>Don't have the necessary permission</div>
-        ) : (
-          <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
-            <div className="flex h-full w-full flex-col items-center">
-              <div className="flex h-full w-full flex-col gap-3">
-                <div className="flex w-full flex-row items-end justify-between">
-                  <div className="flex w-3/5 flex-row justify-between gap-2">
-                    {customRange ? (
-                      <>
-                        <div className="flex w-1/3 flex-col">
+        <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
+          <div className="flex h-full w-full flex-col items-center">
+            <div className="flex h-full w-full flex-col gap-3">
+              <div className="flex w-full flex-row items-end justify-between">
+                <div className="flex w-3/5 flex-row justify-between gap-2">
+                  {customRange ? (
+                    <>
+                      <div className="flex w-1/3 flex-col">
+                        <label className="text-sm font-semibold">
+                          Start Date
+                        </label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="h-10 w-full cursor-pointer rounded-lg border-gray-200 bg-white p-2"
+                        />
+                      </div>
+                      <div className="flex w-1/3 flex-col">
+                        <label className="text-sm font-semibold">
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="h-10 w-full cursor-pointer rounded-lg border-gray-200 bg-white p-2"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex w-2/3 flex-col">
+                        <div className="flex w-full flex-col">
                           <label className="text-sm font-semibold">
-                            Start Date
+                            Academic Year
                           </label>
-                          <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="h-10 w-full cursor-pointer rounded-lg border-gray-200 bg-white p-2"
+                          <MultiSelectDropdown
+                            options={availableYears.map((year) =>
+                              formatAcademicYear(year),
+                            )}
+                            selectedOptions={selectedYears.map((y) =>
+                              formatAcademicYear(y),
+                            )}
+                            setSelectedOptions={(formattedSelected) => {
+                              const rawSelected = availableYears.filter((y) =>
+                                formattedSelected.includes(
+                                  formatAcademicYear(y),
+                                ),
+                              );
+                              setSelectedYears(rawSelected);
+                            }}
+                            placeholder="Select Academic Year(s)"
                           />
                         </div>
-                        <div className="flex w-1/3 flex-col">
-                          <label className="text-sm font-semibold">
-                            End Date
-                          </label>
-                          <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="h-10 w-full cursor-pointer rounded-lg border-gray-200 bg-white p-2"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex w-2/3 flex-col">
-                          <div className="flex w-full flex-col">
-                            <label className="text-sm font-semibold">
-                              Academic Year
-                            </label>
-                            <MultiSelectDropdown
-                              options={availableYears.map((year) =>
-                                formatAcademicYear(year),
-                              )}
-                              selectedOptions={selectedYears.map((y) =>
-                                formatAcademicYear(y),
-                              )}
-                              setSelectedOptions={(formattedSelected) => {
-                                const rawSelected = availableYears.filter((y) =>
-                                  formattedSelected.includes(
-                                    formatAcademicYear(y),
-                                  ),
-                                );
-                                setSelectedYears(rawSelected);
-                              }}
-                              placeholder="Select Academic Year(s)"
-                            />
-                          </div>
-                        </div>
-                      </>
-                    )}
-                    <div className="flex w-1/3 items-end">
-                      <button
-                        className="h-10 w-full cursor-pointer rounded-lg bg-gray-200 font-semibold"
-                        onClick={() => setCustomRange((prev) => !prev)}
-                      >
-                        {customRange ? "Academic Year" : "Custom Range"}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex w-1/4 flex-row justify-between gap-2">
-                    <div className="flex w-1/2 items-end">
-                      <button
-                        onClick={fetchMembershipMembers}
-                        className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
-                      >
-                        Generate Report
-                      </button>
-                    </div>
-                    <div className="flex w-1/2 items-end">
-                      <button
-                        className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
-                        onClick={exportToCSV}
-                      >
-                        Export as CSV
-                      </button>
-                    </div>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex w-1/3 items-end">
+                    <button
+                      className="h-10 w-full cursor-pointer rounded-lg bg-gray-200 font-semibold"
+                      onClick={() => setCustomRange((prev) => !prev)}
+                    >
+                      {customRange ? "Academic Year" : "Custom Range"}
+                    </button>
                   </div>
                 </div>
-                <div className="w-full grow overflow-y-auto rounded-xl">
-                  <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
-                    <thead>
+                <div className="flex w-1/4 flex-row justify-between gap-2">
+                  <div className="flex w-1/2 items-end">
+                    <button
+                      onClick={fetchMembershipMembers}
+                      className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
+                    >
+                      Generate Report
+                    </button>
+                  </div>
+                  <div className="flex w-1/2 items-end">
+                    <button
+                      className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
+                      onClick={exportToCSV}
+                    >
+                      Export as CSV
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="w-full grow overflow-y-auto rounded-xl">
+                <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
+                  <thead>
+                    <tr>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Name
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Address
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Phone
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Email
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Emergency Contact
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Emergency Phone
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Status
+                      </th>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Expiration
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {members.length === 0 ? (
                       <tr>
-                        <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
-                          Name
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Address
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Phone
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Email
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Emergency Contact
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Emergency Phone
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Status
-                        </th>
-                        <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
-                          Expiration
-                        </th>
+                        <td
+                          colSpan={8}
+                          className="p-3 text-center text-gray-500"
+                        >
+                          No members found
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {members.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={8}
-                            className="p-3 text-center text-gray-500"
-                          >
-                            No members found
-                          </td>
+                    ) : (
+                      members.map((m, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="p-3">{m.name}</td>
+                          <td className="p-3">{m.address}</td>
+                          <td className="p-3">{m.phone}</td>
+                          <td className="p-3">{m.email}</td>
+                          <td className="p-3">{m.emergency_contact}</td>
+                          <td className="p-3">{m.emergency_contact_phone}</td>
+                          <td className="p-3">{m.member_status}</td>
+                          <td className="p-3">{m.expiration_date}</td>
                         </tr>
-                      ) : (
-                        members.map((m, i) => (
-                          <tr key={i} className="border-t">
-                            <td className="p-3">{m.name}</td>
-                            <td className="p-3">{m.address}</td>
-                            <td className="p-3">{m.phone}</td>
-                            <td className="p-3">{m.email}</td>
-                            <td className="p-3">{m.emergency_contact}</td>
-                            <td className="p-3">{m.emergency_contact_phone}</td>
-                            <td className="p-3">{m.member_status}</td>
-                            <td className="p-3">{m.expiration_date}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

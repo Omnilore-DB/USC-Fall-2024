@@ -6,7 +6,6 @@ import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
 export default function ForumReports() {
-  const [roles, setRoles] = useState<string[]>([]);
   const [customRange, setCustomRange] = useState(false);
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [availableTrimesters] = useState([
@@ -32,13 +31,6 @@ export default function ForumReports() {
 
   useEffect(() => {
     const setup = async () => {
-      const userRoles = await getRoles();
-      if (!userRoles) {
-        console.error("Failed to fetch roles");
-        return;
-      }
-      setRoles(userRoles);
-      // fetch years
       const { data, error } = await supabase
         .from("products")
         .select("year")
@@ -280,155 +272,151 @@ export default function ForumReports() {
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
       <div className="flex w-full grow flex-col items-center justify-center overflow-y-auto">
-        {roles === null ? (
-          <div>Don't have the necessary permission</div>
-        ) : (
-          <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
-            <div className="flex h-full w-full flex-col items-center">
-              <div className="flex h-full w-full flex-col gap-3">
-                <div className="flex w-full flex-row items-end justify-between">
-                  <div className="flex w-3/5 flex-row justify-between gap-2">
-                    {customRange ? (
-                      <>
-                        <div className="flex w-1/3 flex-col">
-                          <label className="text-sm font-semibold">
-                            Start Date
-                          </label>
-                          <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
-                          />
-                        </div>
-                        <div className="flex w-1/3 flex-col">
-                          <label className="text-sm font-semibold">
-                            End Date
-                          </label>
-                          <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex w-1/3 flex-col">
-                          <label className="text-sm font-semibold">
-                            Calendar Year(s)
-                          </label>
-                          <MultiSelectDropdown
-                            options={availableYears}
-                            selectedOptions={selectedYears}
-                            setSelectedOptions={setSelectedYears}
-                            placeholder="Select Calendar Year(s)"
-                          />
-                        </div>
-                        <div className="flex w-1/3 flex-col">
-                          <label className="text-sm font-semibold">
-                            Trimester(s)
-                          </label>
-                          <MultiSelectDropdown
-                            options={availableTrimesters}
-                            selectedOptions={selectedTrimesters}
-                            setSelectedOptions={setSelectedTrimesters}
-                            placeholder="Select Trimester(s)"
-                          />
-                        </div>
-                      </>
-                    )}
-                    <div className="flex w-1/3 items-end">
-                      <button
-                        className="h-10 w-full cursor-pointer rounded-lg bg-gray-200 font-semibold"
-                        onClick={() => {
-                          setCustomRange((prev) => !prev);
-                          setForumMembers([]);
-                        }}
-                      >
-                        {customRange ? "Calendar Year" : "Custom Range"}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex w-1/4 flex-row justify-between gap-2">
-                    <div className="flex w-1/2 items-end">
-                      <button
-                        onClick={fetchForumReport}
-                        className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
-                      >
-                        Generate Report
-                      </button>
-                    </div>
-                    <div className="flex w-1/2 items-end">
-                      <button
-                        className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
-                        onClick={exportToCSV}
-                      >
-                        Export as CSV
-                      </button>
-                    </div>
+        <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
+          <div className="flex h-full w-full flex-col items-center">
+            <div className="flex h-full w-full flex-col gap-3">
+              <div className="flex w-full flex-row items-end justify-between">
+                <div className="flex w-3/5 flex-row justify-between gap-2">
+                  {customRange ? (
+                    <>
+                      <div className="flex w-1/3 flex-col">
+                        <label className="text-sm font-semibold">
+                          Start Date
+                        </label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
+                        />
+                      </div>
+                      <div className="flex w-1/3 flex-col">
+                        <label className="text-sm font-semibold">
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="h-10 w-full rounded-lg border-gray-200 bg-white p-2"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex w-1/3 flex-col">
+                        <label className="text-sm font-semibold">
+                          Calendar Year(s)
+                        </label>
+                        <MultiSelectDropdown
+                          options={availableYears}
+                          selectedOptions={selectedYears}
+                          setSelectedOptions={setSelectedYears}
+                          placeholder="Select Calendar Year(s)"
+                        />
+                      </div>
+                      <div className="flex w-1/3 flex-col">
+                        <label className="text-sm font-semibold">
+                          Trimester(s)
+                        </label>
+                        <MultiSelectDropdown
+                          options={availableTrimesters}
+                          selectedOptions={selectedTrimesters}
+                          setSelectedOptions={setSelectedTrimesters}
+                          placeholder="Select Trimester(s)"
+                        />
+                      </div>
+                    </>
+                  )}
+                  <div className="flex w-1/3 items-end">
+                    <button
+                      className="h-10 w-full cursor-pointer rounded-lg bg-gray-200 font-semibold"
+                      onClick={() => {
+                        setCustomRange((prev) => !prev);
+                        setForumMembers([]);
+                      }}
+                    >
+                      {customRange ? "Calendar Year" : "Custom Range"}
+                    </button>
                   </div>
                 </div>
-                <div className="w-full grow overflow-y-auto rounded-xl">
-                  <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
-                    <thead>
+                <div className="flex w-1/4 flex-row justify-between gap-2">
+                  <div className="flex w-1/2 items-end">
+                    <button
+                      onClick={fetchForumReport}
+                      className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
+                    >
+                      Generate Report
+                    </button>
+                  </div>
+                  <div className="flex w-1/2 items-end">
+                    <button
+                      className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
+                      onClick={exportToCSV}
+                    >
+                      Export as CSV
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="w-full grow overflow-y-auto rounded-xl">
+                <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
+                  <thead>
+                    <tr>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Name
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Email
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Phone
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Date
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Amount
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Type
+                      </th>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Descriptor
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {forumMembers.length === 0 ? (
                       <tr>
-                        <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
-                          Name
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Email
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Phone
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Date
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Amount
-                        </th>
-                        <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                          Type
-                        </th>
-                        <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
-                          Descriptor
-                        </th>
+                        <td
+                          colSpan={4}
+                          className="p-3 text-center text-gray-500"
+                        >
+                          No forum participants found
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {forumMembers.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={4}
-                            className="p-3 text-center text-gray-500"
-                          >
-                            No forum participants found
+                    ) : (
+                      forumMembers.map((m, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="p-3">{m.name}</td>
+                          <td className="p-3">{m.email}</td>
+                          <td className="p-3">{m.phone}</td>
+                          <td className="p-3">
+                            {new Date(m.date).toLocaleDateString()}
                           </td>
+                          <td className="p-3">${m.amount.toFixed(2)}</td>
+                          <td className="p-3">{m.type}</td>
+                          <td className="p-3">{m.descriptor}</td>
                         </tr>
-                      ) : (
-                        forumMembers.map((m, i) => (
-                          <tr key={i} className="border-t">
-                            <td className="p-3">{m.name}</td>
-                            <td className="p-3">{m.email}</td>
-                            <td className="p-3">{m.phone}</td>
-                            <td className="p-3">
-                              {new Date(m.date).toLocaleDateString()}
-                            </td>
-                            <td className="p-3">${m.amount.toFixed(2)}</td>
-                            <td className="p-3">{m.type}</td>
-                            <td className="p-3">{m.descriptor}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

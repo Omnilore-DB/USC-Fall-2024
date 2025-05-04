@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
 const TreasurerReqs = () => {
-  const [roles, setRoles] = useState<string[]>([]);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [showReport, setShowReport] = useState(false);
@@ -48,21 +47,12 @@ const TreasurerReqs = () => {
   const [availableYears, setAvailableYears] = useState<string[]>([]);
 
   useEffect(() => {
-    const setup = async () => {
-      const userRoles = await getRoles();
-      if (!userRoles) {
-        console.error("Failed to fetch roles");
-        return;
-      }
-      setRoles(userRoles);
-      const currentYear = new Date().getFullYear();
-      const years = [];
-      for (let y = 2023; y <= currentYear; y++) {
-        years.push(y.toString());
-      }
-      setAvailableYears(years);
-    };
-    setup();
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let y = 2023; y <= currentYear; y++) {
+      years.push(y.toString());
+    }
+    setAvailableYears(years);
   }, []);
 
   const categories = ["MEMBERSHIP", "FORUM", "DONATION"];

@@ -28,6 +28,10 @@ export default function AdminLayout({
           console.error("Failed to fetch roles");
           return;
         }
+        if (userRoles.includes("member") || userRoles.length === 0) {
+          router.push("/members");
+          return;
+        }
         setRoles(userRoles);
       } catch (error) {
         console.error("Error fetching roles:", error);
