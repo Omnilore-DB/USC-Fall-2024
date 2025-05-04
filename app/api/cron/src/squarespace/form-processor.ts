@@ -98,7 +98,8 @@ export function parse_form_data(data: [string, string][]): ProcessedFormData {
 
     if (
       label ===
-      "I recognize that Omnilore is a member-driven, peer teaching/learning organization. As a member, I agree to assume my share of responsibility necessary for the success of its program, including but not limited to: (1) preparing and providing an approximately 30 minute presentation and (2) preparing discussion questions and leading a discussion as agreed by S/DG members during Pre-meeting planning in each Study/Discussion Group (S/DG) in which I enroll."
+        "I recognize that Omnilore is a member-driven, peer teaching/learning organization. As a member, I agree to assume my share of responsibility necessary for the success of its program, including but not limited to: (1) preparing and providing an approximately 30 minute presentation and (2) preparing discussion questions and leading a discussion as agreed by S/DG members during Pre-meeting planning in each Study/Discussion Group (S/DG) in which I enroll." ||
+      label === "Terms and Conditions"
     ) {
       continue;
     }
