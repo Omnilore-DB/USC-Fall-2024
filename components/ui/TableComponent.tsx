@@ -300,27 +300,20 @@ const TableComponent = ({
                               <div
                                 className={`${typeof item[columnName] === "object" ? "max-h-20" : ""}`}
                               >
-                                {columnName === "issues" &&
-                                Array.isArray(item[columnName]) &&
-                                item[columnName].length > 0
-                                  ? item[columnName]
-                                      .map((issue) => issue.message)
-                                      .join(", ")
-                                  : typeof item[columnName] === "object" &&
-                                      item[columnName] !== null
-                                    ? JSON.stringify(
-                                        item[columnName],
-                                        undefined,
-                                        1,
-                                      )
-                                    : typeof item[columnName] === "boolean"
-                                      ? item[columnName].toString()
-                                      : columnName
-                                            .toLowerCase()
-                                            .includes("phone") &&
-                                          item[columnName]
-                                        ? formatPhoneNumber(item[columnName])
-                                        : item[columnName]}
+                                {typeof item[columnName] === "object" &&
+                                item[columnName] !== null
+                                  ? JSON.stringify(
+                                      item[columnName],
+                                      undefined,
+                                      1,
+                                    )
+                                  : typeof item[columnName] === "boolean"
+                                    ? item[columnName].toString()
+                                    : columnName
+                                          .toLowerCase()
+                                          .includes("phone") && item[columnName]
+                                      ? formatPhoneNumber(item[columnName])
+                                      : item[columnName]}
                               </div>
                             </td>
                           ),
