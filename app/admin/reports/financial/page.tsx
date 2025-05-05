@@ -322,16 +322,16 @@ const TreasurerReqs = () => {
     const grossResults: Record<string, number> = {};
     const feeResults: Record<string, number> = {};
 
-    const fetchDonors = async () => {
+    const fetchDonors = async (start_date: string, end_date: string) => {
       // Only fetch donors if we have valid dates
-      if (!fromDate || !toDate) {
+      if (!start_date || !end_date) {
         console.log("Skipping donor fetch due to missing dates");
         return;
       }
 
       const { data, error } = await supabase.rpc("get_donation_history", {
-        start_date: fromDate,
-        end_date: toDate,
+        start_date,
+        end_date,
       });
 
       if (error) {
@@ -460,7 +460,7 @@ const TreasurerReqs = () => {
     setStripeNet(stripe_net);
     setStripePayout(stripe_payout);
 
-    await fetchDonors();
+    await fetchDonors(fromDateValue, toDateValue);
   };
 
   const getTotalLabel = () => {

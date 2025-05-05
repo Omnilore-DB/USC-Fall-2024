@@ -23,6 +23,8 @@ const memberSchema = {
   phone: { type: "basic", name: "text", nullable: true },
   email: { type: "basic", name: "text", nullable: true },
   photo_link: { type: "basic", name: "text", nullable: true },
+  public: { type: "basic", name: "boolean", nullable: true },
+  type: { type: "basic", name: "text", nullable: true }
 };
 
 export default function Search() {
@@ -40,15 +42,18 @@ export default function Search() {
 
   const filteredEntries = useMemo(() => {
     const keywords = query.toLowerCase().split(" ").filter(Boolean);
-    return entries.filter((item) =>
-      keywords.every((kw) =>
-        Object.values(item).some(
-          (value) =>
-            value !== null && value.toString().toLowerCase().includes(kw),
+    return entries
+      .filter(item => item.public !== false && item.type !== "NONMEMBER")
+      .filter(item =>
+        keywords.every(kw =>
+          Object.values(item).some(
+            value =>
+              value !== null && value.toString().toLowerCase().includes(kw),
+          ),
         ),
-      ),
-    );
+      );
   }, [query, entries]);
+  
 
   useEffect(() => {
     const setup = async () => {
