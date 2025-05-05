@@ -223,6 +223,53 @@ const TreasurerReqs = () => {
     URL.revokeObjectURL(url);
   };
 
+  const fetchDonors = async (start: string, end: string) => {
+    if (!start || !end) {
+      console.log("Skipping donor fetch due to missing dates");
+      return;
+    }
+  
+    const { data, error } = await supabase.rpc("get_donation_history", {
+      start_date: start,
+      end_date: end,
+    });
+  
+  
+  if (error) {
+    console.error("Error fetching donors:", error.message);
+  } else {
+    console.log("Donors fetched:", data);
+
+    const grouped = data.reduce((acc, item) => {
+      const key = item.member_id;
+      if (!acc[key]) {
+        acc[key] = {
+          member_id: item.member_id,
+          first_name: item.first_name,
+          last_name: item.last_name,
+          street_address: item.street_address,
+          city: item.city,
+          state: item.state,
+          zip_code: item.zip_code,
+          donations: [],
+          total_donation_amount: 0,
+        };
+      }
+
+      acc[key].donations.push({
+        date: item.donation_date,
+        amount: item.donation_amount,
+      });
+
+      acc[key].total_donation_amount += item.donation_amount;
+
+      return acc;
+    }, {} as any);
+
+    setDonors(Object.values(grouped));
+  }
+};
+
   const fetchPayouts = async (fromDate: string, toDate: string) => {
     const { data, error } = await supabase
       .from("payouts")
@@ -300,7 +347,6 @@ const TreasurerReqs = () => {
       return;
     }
 
-    setShowReport(true);
 
     const range: { year: number; month: number }[] = [];
     const loop = new Date(fromDateValue);
@@ -313,6 +359,8 @@ const TreasurerReqs = () => {
       loop.setUTCMonth(loop.getUTCMonth() + 1);
     }
     setMonthsInRange(range);
+    await fetchDonors(fromDateValue, toDateValue);
+    //setShowReport(true);
 
     fetchPayouts(
       Temporal.PlainYearMonth.from(range[0]).toString(),
@@ -322,52 +370,6 @@ const TreasurerReqs = () => {
     const grossResults: Record<string, number> = {};
     const feeResults: Record<string, number> = {};
 
-    const fetchDonors = async (start_date: string, end_date: string) => {
-      // Only fetch donors if we have valid dates
-      if (!start_date || !end_date) {
-        console.log("Skipping donor fetch due to missing dates");
-        return;
-      }
-
-      const { data, error } = await supabase.rpc("get_donation_history", {
-        start_date,
-        end_date,
-      });
-
-      if (error) {
-        console.error("Error fetching donors:", error.message);
-      } else {
-        console.log("Donors fetched:", data);
-
-        const grouped = data.reduce((acc, item) => {
-          const key = item.member_id;
-          if (!acc[key]) {
-            acc[key] = {
-              member_id: item.member_id,
-              first_name: item.first_name,
-              last_name: item.last_name,
-              street_address: item.street_address,
-              city: item.city,
-              state: item.state,
-              zip_code: item.zip_code,
-              donations: [],
-              total_donation_amount: 0,
-            };
-          }
-
-          acc[key].donations.push({
-            date: item.donation_date,
-            amount: item.donation_amount,
-          });
-
-          acc[key].total_donation_amount += item.donation_amount;
-
-          return acc;
-        }, {} as any);
-
-        setDonors(Object.values(grouped));
-      }
-    };
 
     const grossFeePromises: Promise<void>[] = [];
 
@@ -459,8 +461,6 @@ const TreasurerReqs = () => {
     setStripeFee(stripe_fee);
     setStripeNet(stripe_net);
     setStripePayout(stripe_payout);
-
-    await fetchDonors(fromDateValue, toDateValue);
   };
 
   const getTotalLabel = () => {
@@ -496,20 +496,43 @@ const TreasurerReqs = () => {
 
     setFromDate(start);
     setToDate(end);
-    setTriggerPresetReport(true); // This will cause useEffect to fire after state updates
+    setTriggerPresetReport(true); 
   };
 
+  //donationRows
   React.useEffect(() => {
     if (triggerPresetReport && fromDate && toDate) {
       handleGenerateReport();
-      setTriggerPresetReport(false); // reset the flag
+      setTriggerPresetReport(false); 
     }
   }, [triggerPresetReport, fromDate, toDate]);
-  // Generate Squarespace rows
-  const squarespaceRows = categories.map((cat) => {
-    const row: string[] = [cat];
-    let ytdGross = 0;
-    let ytdFee = 0;
+  const donationRows = React.useMemo(() => {
+    return donors.flatMap((donor) => {
+      const fullName = `${donor.first_name} ${donor.last_name}`;
+      const address = [donor.street_address, donor.city, donor.state, donor.zip_code]
+        .filter(Boolean)
+        .join(", ");
+      return donor.donations.map((donation: { date: string; amount: number }) => [
+        fullName,
+        new Date(donation.date).toLocaleDateString(),
+        donation.amount.toFixed(2),
+        address,
+      ]);
+    });
+  }, [donors]);
+  
+  React.useEffect(() => {
+    if (donors.length > 0 && monthsInRange.length > 0) {
+      setShowReport(true);
+    }
+  }, [donors, monthsInRange]);
+  
+
+// Generate Squarespace rows
+const squarespaceRows = categories.map((cat) => {
+  const row: string[] = [cat];
+  let ytdGross = 0;
+  let ytdFee = 0;
 
     monthsInRange.forEach(({ year, month }) => {
       const key = `${cat}-${year}-${month}`;
@@ -574,24 +597,19 @@ const TreasurerReqs = () => {
     ],
   ];
 
-  // Donation rows
-  const donationRows = donors.flatMap((donor) => {
-    const fullName = `${donor.first_name} ${donor.last_name}`;
-    const address = [
-      donor.street_address,
-      donor.city,
-      donor.state,
-      donor.zip_code,
-    ]
-      .filter(Boolean)
-      .join(", ");
-    return donor.donations.map((donation: any) => [
-      fullName,
-      new Date(donation.date).toLocaleDateString(),
-      donation.amount.toFixed(2),
-      address,
-    ]);
-  });
+// // Donation rows
+// const donationRows = donors.flatMap((donor) => {
+//   const fullName = `${donor.first_name} ${donor.last_name}`;
+//   const address = [donor.street_address, donor.city, donor.state, donor.zip_code]
+//     .filter(Boolean)
+//     .join(", ");
+//     return donor.donations.map((donation: { date: string; amount: number }) => [
+//       fullName,
+//     new Date(donation.date).toLocaleDateString(),
+//     donation.amount.toFixed(2),
+//     address,
+//   ]);
+// });
 
   return (
     <div className="custom-scrollbar flex h-full w-full flex-col bg-gray-100">
@@ -1296,6 +1314,6 @@ const TreasurerReqs = () => {
       </div>
     </div>
   );
-};
+}
 
 export default TreasurerReqs;
