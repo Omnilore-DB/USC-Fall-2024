@@ -229,6 +229,8 @@ export const update = {
 
         const existing_mt = await get.member_transactions(t.id, line_item);
 
+        const product = sku_map.get(data.sku);
+
         if (matches.length > 0) {
           if (existing_mt.length === 0) {
             await upsert.member_transaction({
@@ -242,10 +244,7 @@ export const update = {
 
           await update.member(matches[0].id, {
             ...matches[0],
-            type:
-              sku_map.get(data.sku)?.type === "MEMBERSHIP"
-                ? "MEMBER"
-                : matches[0].type,
+            type: product?.type === "MEMBERSHIP" ? "MEMBER" : matches[0].type,
             emergency_contact:
               mem.emergency_contact ?? matches[0].emergency_contact,
             emergency_contact_phone:
@@ -253,23 +252,34 @@ export const update = {
             phone: matches[0].phone ?? mem.phone,
             email: matches[0].email ?? mem.email,
             member_status:
-              sku_map.get(data.sku)?.type === "MEMBERSHIP" &&
-              sku_map.get(data.sku)?.status
-                ? sku_map.get(data.sku)?.status
+              product?.type === "MEMBERSHIP" && product?.status
+                ? product?.status
                 : matches[0].member_status,
+            public:
+              product?.type === "MEMBERSHIP"
+                ? (mem.public ?? matches[0].public)
+                : matches[0].public,
+            expiration_date:
+              product?.type === "MEMBERSHIP" && product?.year
+                ? `08/31/20${product.year.replace(/\D/, "").slice(2)}`
+                : matches[0].expiration_date,
           });
         } else {
           const new_mem = {
             ...mem,
             type:
-              sku_map.get(data.sku)?.type === "MEMBERSHIP"
+              product?.type === "MEMBERSHIP"
                 ? ("MEMBER" as const)
                 : ("NONMEMBER" as const),
             member_status:
-              sku_map.get(data.sku)?.type === "MEMBERSHIP" &&
-              sku_map.get(data.sku)?.status
-                ? sku_map.get(data.sku)?.status
-                : matches[0].member_status,
+              product?.type === "MEMBERSHIP" && product?.status
+                ? product?.status
+                : undefined,
+            public: product?.type === "MEMBERSHIP" ? mem.public : undefined,
+            expiration_date:
+              product?.type === "MEMBERSHIP" && product?.year
+                ? `08/31/20${product.year.replace(/\D/, "").slice(2)}`
+                : undefined,
           };
 
           const created_mem = await insert.member(new_mem);
