@@ -1,4 +1,4 @@
-This is the repository developed by the Spring 2025 Team and is currently in production on AWS
+This is the repository developed by the USC Spring 2025 Team and is currently in production on AWS
 _________________________________________________________________________________________________________
 
 <!-- already have the elastic IP configured on the EC2 instance with the OS at least Amazon Linux 2023 -->
