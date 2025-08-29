@@ -57,7 +57,8 @@ const api = {
 
       // api only has data for last 3 years. check paypal docs for this
       let start_date = Temporal.Now.zonedDateTimeISO("UTC").add({
-        years: -3,
+        years: -2,
+        days: -364,
       });
 
       while (
@@ -76,6 +77,8 @@ const api = {
         );
 
         const data = (await res.json()) as PaypalTransactionSearchResponse;
+
+        console.log(JSON.stringify(data, null, 2));
 
         paypal_payouts.push(
           ...data.transaction_details
