@@ -1,3 +1,6 @@
+This is the repository developed by the Spring 2025 Team and is currently in production on AWS
+
+
 <!-- already have the elastic IP configured on the EC2 instance with the OS at least Amazon Linux 2023 -->
 <!-- for security and keys I selected the preexisting options that are already on our AWS accounts -->
 <!-- security group = launch-wizard-1, key name = Cron Job Public/Private Key Pair (RSA) -->
