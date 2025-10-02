@@ -42,6 +42,7 @@ export default function ActionPanel({
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [userFormData, setUserFormData] = useState<Record<string, any>>({});
   const [products, setProducts] = useState<SupabaseProduct[]>([]);
+  const [instanceId, setInstanceId] = useState<number>(0);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -67,21 +68,19 @@ export default function ActionPanel({
         scrollContainerRef.current.scrollTop = 0;
       }
 
-      // Set form data only when opening the panel
+      // Reset form state fresh each open
       if (mode === "edit" && selectedRow) {
-        console.log("EDIT MODE");
         setFormData(selectedRow);
-        setUserFormData(selectedRow);
-        console.log("form data ", formData);
+        setUserFormData({});
       } else {
-        console.log("ADD MODE");
         setFormData({});
         setUserFormData({});
-        console.log("form data ", formData);
       }
+
+      // Bump instance so field components remount and clear internal state
+      setInstanceId((x) => x + 1);
     } else {
-      // Clear form data when panel is closing
-      console.log("Panel closed, clearing form data");
+      // Clear form data when panel is closing so next open is clean
       setFormData({});
       setUserFormData({});
       document.body.style.overflow = "auto";
@@ -122,9 +121,8 @@ export default function ActionPanel({
       )}
 
       <div
-        className={`fixed right-0 bottom-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-250`}
+        className={`fixed right-0 bottom-0 z-50 h-[90%] w-1/3 transform rounded-tl-xl border bg-white shadow-lg ${isOpen ? "translate-x-0" : "translate-x-full"
+          } transition-transform duration-250`}
       >
         <div className="flex h-full flex-col">
           <div className="flex flex-col border-b p-4">
@@ -145,7 +143,12 @@ export default function ActionPanel({
 
               <button
                 className="inline-block max-w-fit text-xl text-[#616161]"
-                onClick={onClose}
+                onClick={() => {
+                  // ensure state is cleared when closing via X
+                  setFormData({});
+                  setUserFormData({});
+                  onClose();
+                }}
               >
                 ✖
               </button>
@@ -180,7 +183,7 @@ export default function ActionPanel({
                   if (name === "photo_path" || name === "photo_link") {
                     return (
                       <div
-                        key={`${name}-${type}-${selectedRow?.[name]}`}
+                        key={`${instanceId}-${name}-${type}-${selectedRow?.[name]}`}
                         className="flex flex-col gap-3"
                       >
                         <label className="font-medium capitalize">
@@ -235,7 +238,7 @@ export default function ActionPanel({
                   // Regular fields
                   return (
                     <InputField
-                      key={`${name}-${type}-${selectedRow?.[name]}`}
+                      key={`${instanceId}-${name}-${type}-${selectedRow?.[name]}`}
                       fieldName={name}
                       fieldType={type}
                       required={!nullable}
