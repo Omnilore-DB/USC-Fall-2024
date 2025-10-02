@@ -12,22 +12,154 @@ export default function MembershipReports() {
   const [endDate, setEndDate] = useState<string>("");
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [showTransactions, setShowTransactions] = useState(false);
+  const [memberTransactions, setMemberTransactions] = useState<any[]>([]);
+
+  const fetchMemberTransactions = async (memberId: number) => {
+    try {
+      // First get the member_to_transactions records
+      const { data: memberTransactions, error: mttError } = await supabase
+        .from("members_to_transactions")
+        .select(`
+          transaction_id,
+          amount,
+          sku
+        `)
+        .eq("member_id", memberId);
+
+      if (mttError) {
+        console.error("Failed to fetch member transactions", mttError);
+        return [];
+      }
+
+      if (!memberTransactions || memberTransactions.length === 0) {
+        return [];
+      }
+
+      // Get the transaction IDs
+      const transactionIds = memberTransactions.map(mt => mt.transaction_id);
+
+      // Fetch the actual transactions
+      const { data: transactions, error: txError } = await supabase
+        .from("transactions")
+        .select(`
+          id,
+          date,
+          payment_platform,
+          fulfillment_status,
+          refunded_amount,
+          amount,
+          created_at
+        `)
+        .in("id", transactionIds)
+        .order("date", { ascending: false });
+
+      if (txError) {
+        console.error("Failed to fetch transactions", txError);
+        return [];
+      }
+
+      // Fetch product information for the SKUs
+      const skus = [...new Set(memberTransactions.map(mt => mt.sku))];
+      const { data: products, error: productError } = await supabase
+        .from("products")
+        .select("sku, descriptor, type")
+        .in("sku", skus);
+
+      if (productError) {
+        console.error("Failed to fetch products", productError);
+      }
+
+      const productMap = products ? Object.fromEntries(
+        products.map(p => [p.sku, p])
+      ) : {};
+
+      // Combine the data - SIMPLIFIED STATUS LOGIC (no Date operations)
+      const processedTransactions = memberTransactions.map(mt => {
+        const transaction = transactions.find(t => t.id === mt.transaction_id);
+        const product = productMap[mt.sku];
+        
+        if (!transaction) return null;
+
+        // SIMPLIFIED STATUS LOGIC - No time-dependent operations
+        let display_status = "Completed";
+
+        // Handle refunds first
+        if (transaction.refunded_amount > 0) {
+          if (transaction.refunded_amount === transaction.amount) {
+            display_status = "Fully Refunded";
+          } else {
+            display_status = "Partially Refunded";
+          }
+        } 
+        // Use the ACTUAL fulfillment_status from the database
+        else if (transaction.fulfillment_status === "CANCELED") {
+          display_status = "Canceled";
+        }
+        else if (transaction.fulfillment_status === "PENDING") {
+          display_status = "Pending";
+        }
+        else if (transaction.fulfillment_status === "FULFILLED") {
+          display_status = "Completed";
+        }
+        // For any unknown status, show the raw status
+        else {
+          display_status = transaction.fulfillment_status || "Unknown";
+        }
+        
+        return {
+          transaction_id: mt.transaction_id,
+          amount: mt.amount,
+          sku: mt.sku,
+          date: transaction.date,
+          payment_platform: transaction.payment_platform,
+          fulfillment_status: transaction.fulfillment_status,
+          refunded_amount: transaction.refunded_amount,
+          total_amount: transaction.amount,
+          created_at: transaction.created_at,
+          product_descriptor: product?.descriptor || "Unknown",
+          product_type: product?.type || "Unknown",
+          display_status: display_status
+        };
+      }).filter(Boolean);
+
+      return processedTransactions;
+    } catch (error) {
+      console.error("Error fetching transactions", error);
+      return [];
+    }
+  };
+
+  // View transactions for a member
+  const handleViewTransactions = async (member: any) => {
+    setSelectedMember(member);
+    const transactions = await fetchMemberTransactions(member.id);
+    setMemberTransactions(transactions);
+    setShowTransactions(true);
+  };
 
   const exportToCSV = () => {
     if (members.length === 0) {
       alert("No data to export");
       return;
     }
+    
+    // Enhanced headers with new fields
     const headers = [
       "Name",
-      "Address",
+      "Address", 
       "Phone",
       "Email",
       "Emergency Contact",
       "Emergency Phone",
       "Status",
       "Expiration",
+      "Gender",
+      "Member Type",
+      "Delivery Method"
     ];
+    
     const rows = members.map((m) => [
       m.name ?? "",
       m.address ?? "",
@@ -37,7 +169,11 @@ export default function MembershipReports() {
       m.emergency_contact_phone ?? "",
       m.member_status ?? "",
       m.expiration_date ?? "",
+      m.gender ?? "",
+      m.type ?? "",
+      m.delivery_method ?? "Email" // Default to Email
     ]);
+    
     const csvContent = [
       headers.join(","),
       ...rows.map((r) =>
@@ -98,6 +234,7 @@ export default function MembershipReports() {
       console.error("Failed to fetch membership SKUs", productError);
       return;
     }
+    
     const skuStatusMap = Object.fromEntries(
       products.map((p) => [p.sku, p.status ?? ""]),
     );
@@ -154,11 +291,14 @@ export default function MembershipReports() {
       return;
     }
 
+    // Enhanced member query with additional fields
     const { data: membersData, error: membersError } = await supabase
       .from("members")
-      .select(
-        "id, first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date",
-      )
+      .select(`
+        id, first_name, last_name, street_address, city, state, zip_code, 
+        phone, email, emergency_contact, emergency_contact_phone, 
+        member_status, expiration_date, gender, type
+      `)
       .in("id", filteredMemberIds.map(Number));
 
     if (membersError) {
@@ -175,6 +315,7 @@ export default function MembershipReports() {
           [m?.state, m?.zip_code].filter(Boolean).join(" "),
         ].filter(Boolean);
         return {
+          id: m?.id,
           first_name: m?.first_name ?? "",
           last_name: m?.last_name ?? "",
           name: `${m?.first_name} ${m?.last_name}`,
@@ -187,14 +328,16 @@ export default function MembershipReports() {
           ),
           member_status: skuStatusMap[row.sku] ?? "",
           expiration_date: m?.expiration_date,
+          gender: m?.gender ?? "",
+          type: m?.type ?? "",
+          delivery_method: "Email" // Default value - you may want to get this from another source
         };
       })
       .sort((a, b) => {
         const lastNameCompare = a.last_name.localeCompare(b.last_name);
         if (lastNameCompare !== 0) return lastNameCompare;
         return a.first_name.localeCompare(b.first_name);
-      })
-      .map(({ first_name, last_name, ...rest }) => rest);
+      });
 
     setMembers(formatted);
   };
@@ -222,6 +365,70 @@ export default function MembershipReports() {
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
+      {/* Transactions Modal */}
+      {showTransactions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg p-6 w-3/4 max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">
+                Transactions for {selectedMember?.name}
+              </h2>
+              <button
+                onClick={() => setShowTransactions(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {memberTransactions.length === 0 ? (
+                <p className="text-gray-500">No transactions found.</p>
+              ) : (
+                memberTransactions.map((transaction, index) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <strong>Date:</strong> {transaction.date}
+                      </div>
+                      <div>
+                        <strong>Type:</strong> {transaction.product_type}
+                      </div>
+                      <div>
+                        <strong>Amount:</strong> ${transaction.amount}
+                      </div>
+                      <div>
+                        <strong>Purpose:</strong> {transaction.product_descriptor}
+                      </div>
+                      <div>
+                        <strong>Platform:</strong> {transaction.payment_platform}
+                      </div>
+                      <div>
+                        <strong>Status:</strong> {transaction.display_status}
+                      </div>
+                      {transaction.refunded_amount > 0 && (
+                        <div className="col-span-2">
+                          <strong>Refunded:</strong> ${transaction.refunded_amount}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowTransactions(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex w-full grow flex-col items-center justify-center overflow-y-auto">
         <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
           <div className="flex h-full w-full flex-col items-center">
@@ -309,6 +516,8 @@ export default function MembershipReports() {
                   </div>
                 </div>
               </div>
+              
+              {/* Enhanced Table with Additional Columns and View Transactions Button */}
               <div className="w-full grow overflow-y-auto rounded-xl">
                 <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
                   <thead>
@@ -334,8 +543,20 @@ export default function MembershipReports() {
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Status
                       </th>
-                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Expiration
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Gender
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Member Type
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Delivery Method
+                      </th>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -343,7 +564,7 @@ export default function MembershipReports() {
                     {members.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={8}
+                          colSpan={12}
                           className="p-3 text-center text-gray-500"
                         >
                           No members found
@@ -360,6 +581,17 @@ export default function MembershipReports() {
                           <td className="p-3">{m.emergency_contact_phone}</td>
                           <td className="p-3">{m.member_status}</td>
                           <td className="p-3">{m.expiration_date}</td>
+                          <td className="p-3">{m.gender}</td>
+                          <td className="p-3">{m.type}</td>
+                          <td className="p-3">{m.delivery_method}</td>
+                          <td className="p-3">
+                            <button
+                              onClick={() => handleViewTransactions(m)}
+                              className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                            >
+                              View Transactions
+                            </button>
+                          </td>
                         </tr>
                       ))
                     )}
