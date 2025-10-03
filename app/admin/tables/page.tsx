@@ -12,6 +12,7 @@ import DeletePanel from "@/components/ui/DeletePanel";
 import { MoonLoader } from "react-spinners";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { ClientOnly } from "@/components/is-client";
+import { supabase } from "@/app/supabase";
 
 export default function () {
   return (
@@ -50,6 +51,10 @@ function Table() {
   const [isEntryPanelOpen, setIsEntryPanelOpen] = useState(false);
   const [isDeletePanelOpen, setIsDeletePanelOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Transaction modal state
+  const [showTransactions, setShowTransactions] = useState(false);
+  const [memberTransactions, setMemberTransactions] = useState<any[]>([]);
 
   const filteredEntries = useMemo(() => {
     const keywords = query.toLowerCase().split(" ").filter(Boolean);
@@ -128,6 +133,124 @@ function Table() {
     });
   }, [filteredEntries, selectedSort, selectedSortWay]);
 
+  // Fetch member transactions
+  const fetchMemberTransactions = async (memberId: number) => {
+    try {
+      const { data: memberTransactions, error: mttError } = await supabase
+        .from("members_to_transactions")
+        .select(`
+          transaction_id,
+          amount,
+          sku
+        `)
+        .eq("member_id", memberId);
+
+      if (mttError) {
+        console.error("Failed to fetch member transactions", mttError);
+        return [];
+      }
+
+      if (!memberTransactions || memberTransactions.length === 0) {
+        return [];
+      }
+
+      const transactionIds = memberTransactions.map(mt => mt.transaction_id);
+
+      const { data: transactions, error: txError } = await supabase
+        .from("transactions")
+        .select(`
+          id,
+          date,
+          payment_platform,
+          fulfillment_status,
+          refunded_amount,
+          amount,
+          created_at
+        `)
+        .in("id", transactionIds)
+        .order("date", { ascending: false });
+
+      if (txError) {
+        console.error("Failed to fetch transactions", txError);
+        return [];
+      }
+
+      const skus = [...new Set(memberTransactions.map(mt => mt.sku))];
+      const { data: products, error: productError } = await supabase
+        .from("products")
+        .select("sku, descriptor, type")
+        .in("sku", skus);
+
+      if (productError) {
+        console.error("Failed to fetch products", productError);
+      }
+
+      const productMap = products ? Object.fromEntries(
+        products.map(p => [p.sku, p])
+      ) : {};
+
+      const processedTransactions = memberTransactions.map(mt => {
+        const transaction = transactions.find(t => t.id === mt.transaction_id);
+        const product = productMap[mt.sku];
+        
+        if (!transaction) return null;
+
+        let display_status = "Completed";
+
+        if (transaction.refunded_amount > 0) {
+          if (transaction.refunded_amount === transaction.amount) {
+            display_status = "Fully Refunded";
+          } else {
+            display_status = "Partially Refunded";
+          }
+        } 
+        else if (transaction.fulfillment_status === "CANCELED") {
+          display_status = "Canceled";
+        }
+        else if (transaction.fulfillment_status === "PENDING") {
+          display_status = "Pending";
+        }
+        else if (transaction.fulfillment_status === "FULFILLED") {
+          display_status = "Completed";
+        }
+        else {
+          display_status = transaction.fulfillment_status || "Unknown";
+        }
+        
+        return {
+          transaction_id: mt.transaction_id,
+          amount: mt.amount,
+          sku: mt.sku,
+          date: transaction.date,
+          payment_platform: transaction.payment_platform,
+          fulfillment_status: transaction.fulfillment_status,
+          refunded_amount: transaction.refunded_amount,
+          total_amount: transaction.amount,
+          created_at: transaction.created_at,
+          product_descriptor: product?.descriptor || "Unknown",
+          product_type: product?.type || "Unknown",
+          display_status: display_status
+        };
+      }).filter(Boolean);
+
+      return processedTransactions;
+    } catch (error) {
+      console.error("Error fetching transactions", error);
+      return [];
+    }
+  };
+
+  const handleViewTransactions = async () => {
+    if (!selectedRow || selectedTable !== "members") {
+      alert("Please select a member from the members table");
+      return;
+    }
+    
+    const transactions = await fetchMemberTransactions(selectedRow.id);
+    setMemberTransactions(transactions);
+    setShowTransactions(true);
+  };
+
   useEffect(() => {
     const setup = async () => {
       try {
@@ -157,7 +280,6 @@ function Table() {
         setPermissions(allPermissions);
         setTables(tablesArray);
 
-        // Set the first table and trigger data fetching
         if (tablesArray.length > 0 && !tablesArray.includes(selectedTable)) {
           setSelectedTable(tablesArray[0] as TableName);
         }
@@ -254,6 +376,70 @@ function Table() {
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
+      {/* Transactions Modal */}
+      {showTransactions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg p-6 w-3/4 max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">
+                Transactions for {selectedRow?.first_name} {selectedRow?.last_name}
+              </h2>
+              <button
+                onClick={() => setShowTransactions(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {memberTransactions.length === 0 ? (
+                <p className="text-gray-500">No transactions found.</p>
+              ) : (
+                memberTransactions.map((transaction, index) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <strong>Date:</strong> {transaction.date}
+                      </div>
+                      <div>
+                        <strong>Type:</strong> {transaction.product_type}
+                      </div>
+                      <div>
+                        <strong>Amount:</strong> ${transaction.amount}
+                      </div>
+                      <div>
+                        <strong>Purpose:</strong> {transaction.product_descriptor}
+                      </div>
+                      <div>
+                        <strong>Platform:</strong> {transaction.payment_platform}
+                      </div>
+                      <div>
+                        <strong>Status:</strong> {transaction.display_status}
+                      </div>
+                      {transaction.refunded_amount > 0 && (
+                        <div className="col-span-2">
+                          <strong>Refunded:</strong> ${transaction.refunded_amount}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowTransactions(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex w-full grow flex-col items-center justify-center overflow-y-auto">
         {roles === null ? (
           <div>Don't have the necessary permission</div>
@@ -316,6 +502,15 @@ function Table() {
                         actionType="delete"
                         onClick={() => openDeletePanel()}
                       />
+                    )}
+                    {/* View Transactions button - only show for members table */}
+                    {selectedTable === "members" && (
+                      <button
+                        onClick={handleViewTransactions}
+                        className="flex cursor-pointer items-center gap-1 rounded-3xl px-4 text-sm font-medium transition-colors bg-blue-100 hover:bg-blue-200"
+                      >
+                        <span className="font-semibold">view transactions</span>
+                      </button>
                     )}
                   </div>
                 </div>

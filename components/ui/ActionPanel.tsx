@@ -232,6 +232,58 @@ export default function ActionPanel({
                     );
                   }
 
+                  // Gender dropdown field
+                  if (name === "gender") {
+                    return (
+                      <div key={name} className="flex flex-col gap-3">
+                        <label className="font-medium capitalize">
+                          {name.replace(/_/g, " ")}
+                        </label>
+                        <select
+                          value={formData[name] || ""}
+                          onChange={(e) => setUserFormData({
+                            ...userFormData,
+                            [name]: e.target.value || null
+                          })}
+                          className="w-full rounded-lg border border-gray-200 p-2"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="M">Male</option>
+                          <option value="F">Female</option>
+                          <option value="Other">Other</option>
+                          <option value="Prefer not to say">Prefer not to say</option>
+                        </select>
+                      </div>
+                    );
+                  }
+
+                  // Member status dropdown field - UPDATED: Changed "Suspended" to "Expired"
+                  if (name === "member_status") {
+                    return (
+                      <div key={name} className="flex flex-col gap-3">
+                        <label className="font-medium capitalize">
+                          {name.replace(/_/g, " ")}
+                        </label>
+                        <select
+                          value={formData[name] || ""}
+                          onChange={(e) => setUserFormData({
+                            ...userFormData,
+                            [name]: e.target.value || null
+                          })}
+                          className="w-full rounded-lg border border-gray-200 p-2"
+                        >
+                          <option value="">Select Status</option>
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                          <option value="Leave of Absence">Leave of Absence</option>
+                          <option value="Deceased">Deceased</option>
+                          <option value="Expired">Expired</option>
+                        </select>
+                      </div>
+                    );
+                  }
+
+
                   // Regular fields
                   return (
                     <InputField

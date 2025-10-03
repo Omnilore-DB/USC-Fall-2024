@@ -1,7 +1,7 @@
 "use client";
 
 import { supabase } from "@/app/supabase";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
@@ -12,23 +12,59 @@ export default function MembershipReports() {
   const [endDate, setEndDate] = useState<string>("");
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  
+  // Column filters state - only for specific columns
+  const [filters, setFilters] = useState<Record<string, string>>({
+    member_status: "",
+    expiration_date: "",
+    gender: "",
+    type: "",
+    delivery_method: ""
+  });
+
+  // Get unique values for dropdown filters
+  const uniqueValues = useMemo(() => {
+    return {
+      member_status: [...new Set(members.map(m => m.member_status).filter(Boolean))].sort(),
+      gender: [...new Set(members.map(m => m.gender).filter(Boolean))].sort(),
+      type: [...new Set(members.map(m => m.type).filter(Boolean))].sort(),
+      delivery_method: [...new Set(members.map(m => m.delivery_method).filter(Boolean))].sort(),
+    };
+  }, [members]);
+
+  // Apply filters to members
+  const filteredMembers = useMemo(() => {
+    return members.filter(member => {
+      return Object.entries(filters).every(([key, filterValue]) => {
+        if (!filterValue) return true;
+        const memberValue = String(member[key] || "");
+        return memberValue === filterValue;
+      });
+    });
+  }, [members, filters]);
 
   const exportToCSV = () => {
-    if (members.length === 0) {
+    // Export filtered members instead of all members
+    if (filteredMembers.length === 0) {
       alert("No data to export");
       return;
     }
+    
     const headers = [
       "Name",
-      "Address",
+      "Address", 
       "Phone",
       "Email",
       "Emergency Contact",
       "Emergency Phone",
       "Status",
       "Expiration",
+      "Gender",
+      "Member Type",
+      "Delivery Method"
     ];
-    const rows = members.map((m) => [
+    
+    const rows = filteredMembers.map((m) => [
       m.name ?? "",
       m.address ?? "",
       m.phone ?? "",
@@ -37,7 +73,11 @@ export default function MembershipReports() {
       m.emergency_contact_phone ?? "",
       m.member_status ?? "",
       m.expiration_date ?? "",
+      m.gender ?? "",
+      m.type ?? "",
+      m.delivery_method ?? "Email"
     ]);
+    
     const csvContent = [
       headers.join(","),
       ...rows.map((r) =>
@@ -98,6 +138,7 @@ export default function MembershipReports() {
       console.error("Failed to fetch membership SKUs", productError);
       return;
     }
+    
     const skuStatusMap = Object.fromEntries(
       products.map((p) => [p.sku, p.status ?? ""]),
     );
@@ -156,9 +197,11 @@ export default function MembershipReports() {
 
     const { data: membersData, error: membersError } = await supabase
       .from("members")
-      .select(
-        "id, first_name, last_name, street_address, city, state, zip_code, phone, email, emergency_contact, emergency_contact_phone, member_status, expiration_date",
-      )
+      .select(`
+        id, first_name, last_name, street_address, city, state, zip_code, 
+        phone, email, emergency_contact, emergency_contact_phone, 
+        member_status, expiration_date, gender, type
+      `)
       .in("id", filteredMemberIds.map(Number));
 
     if (membersError) {
@@ -175,6 +218,7 @@ export default function MembershipReports() {
           [m?.state, m?.zip_code].filter(Boolean).join(" "),
         ].filter(Boolean);
         return {
+          id: m?.id,
           first_name: m?.first_name ?? "",
           last_name: m?.last_name ?? "",
           name: `${m?.first_name} ${m?.last_name}`,
@@ -187,14 +231,16 @@ export default function MembershipReports() {
           ),
           member_status: skuStatusMap[row.sku] ?? "",
           expiration_date: m?.expiration_date,
+          gender: m?.gender ?? "",
+          type: m?.type ?? "",
+          delivery_method: "Email"
         };
       })
       .sort((a, b) => {
         const lastNameCompare = a.last_name.localeCompare(b.last_name);
         if (lastNameCompare !== 0) return lastNameCompare;
         return a.first_name.localeCompare(b.first_name);
-      })
-      .map(({ first_name, last_name, ...rest }) => rest);
+      });
 
     setMembers(formatted);
   };
@@ -309,6 +355,8 @@ export default function MembershipReports() {
                   </div>
                 </div>
               </div>
+              
+              {/* Table with dropdown filters */}
               <div className="w-full grow overflow-y-auto rounded-xl">
                 <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
                   <thead>
@@ -334,23 +382,95 @@ export default function MembershipReports() {
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Status
                       </th>
-                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Expiration
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Gender
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Member Type
+                      </th>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Delivery Method
+                      </th>
+                    </tr>
+                    {/* Filter Row - only for specific columns */}
+                    <tr>
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
+                      {/* Status Filter */}
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2">
+                        <select
+                          value={filters.member_status}
+                          onChange={(e) => setFilters({...filters, member_status: e.target.value})}
+                          className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                        >
+                          <option value="">All</option>
+                          {uniqueValues.member_status.map(val => (
+                            <option key={val} value={val}>{val}</option>
+                          ))}
+                        </select>
+                      </th>
+                      {/* Expiration Filter */}
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
+                      {/* Gender Filter */}
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2">
+                        <select
+                          value={filters.gender}
+                          onChange={(e) => setFilters({...filters, gender: e.target.value})}
+                          className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                        >
+                          <option value="">All</option>
+                          {uniqueValues.gender.map(val => (
+                            <option key={val} value={val}>{val}</option>
+                          ))}
+                        </select>
+                      </th>
+                      {/* Member Type Filter */}
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2">
+                        <select
+                          value={filters.type}
+                          onChange={(e) => setFilters({...filters, type: e.target.value})}
+                          className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                        >
+                          <option value="">All</option>
+                          {uniqueValues.type.map(val => (
+                            <option key={val} value={val}>{val}</option>
+                          ))}
+                        </select>
+                      </th>
+                      {/* Delivery Method Filter */}
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2">
+                        <select
+                          value={filters.delivery_method}
+                          onChange={(e) => setFilters({...filters, delivery_method: e.target.value})}
+                          className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                        >
+                          <option value="">All</option>
+                          {uniqueValues.delivery_method.map(val => (
+                            <option key={val} value={val}>{val}</option>
+                          ))}
+                        </select>
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {members.length === 0 ? (
+                    {filteredMembers.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={8}
+                          colSpan={11}
                           className="p-3 text-center text-gray-500"
                         >
                           No members found
                         </td>
                       </tr>
                     ) : (
-                      members.map((m, i) => (
+                      filteredMembers.map((m, i) => (
                         <tr key={i} className="border-t">
                           <td className="p-3">{m.name}</td>
                           <td className="p-3">{m.address}</td>
@@ -360,6 +480,9 @@ export default function MembershipReports() {
                           <td className="p-3">{m.emergency_contact_phone}</td>
                           <td className="p-3">{m.member_status}</td>
                           <td className="p-3">{m.expiration_date}</td>
+                          <td className="p-3">{m.gender}</td>
+                          <td className="p-3">{m.type}</td>
+                          <td className="p-3">{m.delivery_method}</td>
                         </tr>
                       ))
                     )}
