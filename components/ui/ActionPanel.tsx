@@ -257,7 +257,7 @@ export default function ActionPanel({
                     );
                   }
 
-                  // Member status dropdown field  
+                  // Member status dropdown field - UPDATED: Changed "Suspended" to "Expired"
                   if (name === "member_status") {
                     return (
                       <div key={name} className="flex flex-col gap-3">
@@ -277,7 +277,7 @@ export default function ActionPanel({
                           <option value="Inactive">Inactive</option>
                           <option value="Leave of Absence">Leave of Absence</option>
                           <option value="Deceased">Deceased</option>
-                          <option value="Suspended">Suspended</option>
+                          <option value="Expired">Expired</option>
                         </select>
                       </div>
                     );
