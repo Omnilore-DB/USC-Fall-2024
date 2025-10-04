@@ -595,7 +595,7 @@ export default function ForumReports() {
                       </tr>
                     ) : (
                       sortedForumMembers.map((m, i) => (
-                        <tr key={i} className="border-t">
+                        <tr key={i} className={`border-t ${i % 2 === 1 ? "bg-orange-50" : ""}`}>
                           <td className="p-3">{m.name}</td>
                           <td className="p-3">{m.email}</td>
                           <td className="p-3">{m.phone}</td>

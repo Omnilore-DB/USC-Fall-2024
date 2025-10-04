@@ -503,7 +503,7 @@ export default function DonationReports() {
                       </tr>
                     ) : (
                       sortedDonations.map((t, i) => (
-                        <tr key={i} className="border-t">
+                        <tr key={i} className={`border-t ${i % 2 === 1 ? "bg-orange-50" : ""}`}>
                           <td className="p-3">{t.name}</td>
                           <td className="p-3">{t.transaction_email}</td>
                           <td className="p-3">{t.address}</td>

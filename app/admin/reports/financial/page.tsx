@@ -1098,10 +1098,10 @@ const squarespaceRows = categories.map((cat) => {
                         </thead>
 
                         <tbody>
-                          {categories.map((cat) => (
+                          {categories.map((cat, catIndex) => (
                             <React.Fragment key={cat}>
                               {/* Main data row */}
-                              <tr>
+                              <tr className={catIndex % 2 === 1 ? "bg-orange-50" : ""}>
                                 <td className="sticky left-0 z-20 border bg-gray-100 p-2 text-left font-semibold">
                                   {cat.charAt(0).toUpperCase() +
                                     cat.slice(1).toLowerCase()}
@@ -1119,13 +1119,13 @@ const squarespaceRows = categories.map((cat) => {
                                     <React.Fragment
                                       key={`${cat}-${year}-${month}`}
                                     >
-                                      <td className="border p-2">
+                                      <td className="border border-l-2 border-l-gray-400 p-2">
                                         {format(gross)}
                                       </td>
                                       <td className="border p-2">
                                         {format(fee)}
                                       </td>
-                                      <td className="border p-2">
+                                      <td className="border border-r-2 border-r-gray-400 p-2">
                                         {format(net)}
                                       </td>
                                     </React.Fragment>
@@ -1169,13 +1169,13 @@ const squarespaceRows = categories.map((cat) => {
 
                               return (
                                 <React.Fragment key={`total-${year}-${month}`}>
-                                  <td className="border bg-gray-50 p-2">
+                                  <td className="border border-l-2 border-l-gray-400 bg-gray-50 p-2">
                                     {format(totalGross)}
                                   </td>
                                   <td className="border bg-gray-50 p-2">
                                     {format(totalFee)}
                                   </td>
-                                  <td className="border bg-gray-50 p-2">
+                                  <td className="border border-r-2 border-r-gray-400 bg-gray-50 p-2">
                                     {format(totalNet)}
                                   </td>
                                 </React.Fragment>
@@ -1256,7 +1256,7 @@ const squarespaceRows = categories.map((cat) => {
                               const key = `${year}-${month}`;
                               return (
                                 <React.Fragment key={`gross-${year}-${month}`}>
-                                  <td className="border p-2 text-center">
+                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center">
                                     {format(paypalGross[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
@@ -1268,7 +1268,7 @@ const squarespaceRows = categories.map((cat) => {
                           </tr>
 
                           {/* Row: Fee */}
-                          <tr>
+                          <tr className="bg-orange-50">
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2 font-semibold">
                               Fee
                             </td>
@@ -1276,7 +1276,7 @@ const squarespaceRows = categories.map((cat) => {
                               const key = `${year}-${month}`;
                               return (
                                 <React.Fragment key={`fee-${year}-${month}`}>
-                                  <td className="border p-2 text-center">
+                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center">
                                     {format(paypalFee[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
@@ -1297,7 +1297,7 @@ const squarespaceRows = categories.map((cat) => {
                               return (
                                 <td
                                   key={`net-${year}-${month}`}
-                                  className="border p-2 text-center"
+                                  className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center"
                                 >
                                   {format((paypalPayout[key] ?? 0) / 100)}
                                 </td>
@@ -1323,7 +1323,7 @@ const squarespaceRows = categories.map((cat) => {
                                 <React.Fragment
                                   key={`paypal-confirm-${year}-${month}`}
                                 >
-                                  <td className="border bg-white p-2 text-center">
+                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 bg-white p-2 text-center">
                                     <div className="flex flex-col items-center">
                                       <input
                                         type="checkbox"
@@ -1432,7 +1432,7 @@ const squarespaceRows = categories.map((cat) => {
                                 <React.Fragment
                                   key={`stripe-gross-${year}-${month}`}
                                 >
-                                  <td className="border p-2 text-center">
+                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center">
                                     {format(stripeGross[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
@@ -1444,7 +1444,7 @@ const squarespaceRows = categories.map((cat) => {
                           </tr>
 
                           {/* Row: Fee */}
-                          <tr>
+                          <tr className="bg-orange-50">
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2 font-semibold">
                               Fee
                             </td>
@@ -1454,7 +1454,7 @@ const squarespaceRows = categories.map((cat) => {
                                 <React.Fragment
                                   key={`stripe-fee-${year}-${month}`}
                                 >
-                                  <td className="border p-2 text-center">
+                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center">
                                     {format(stripeFee[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
@@ -1476,7 +1476,7 @@ const squarespaceRows = categories.map((cat) => {
                                 <React.Fragment
                                   key={`stripe-net-${year}-${month}`}
                                 >
-                                  <td className="border p-2 text-center">
+                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center">
                                     {format((stripePayout[key] ?? 0) / 100)}
                                   </td>
                                 </React.Fragment>
@@ -1501,7 +1501,7 @@ const squarespaceRows = categories.map((cat) => {
                                 <React.Fragment
                                   key={`stripe-confirm-${year}-${month}`}
                                 >
-                                  <td className="border bg-white p-2 text-center">
+                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 bg-white p-2 text-center">
                                     <div className="flex flex-col items-center">
                                       <input
                                         type="checkbox"
