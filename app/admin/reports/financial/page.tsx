@@ -1101,12 +1101,12 @@ const squarespaceRows = categories.map((cat) => {
                           {categories.map((cat, catIndex) => (
                             <React.Fragment key={cat}>
                               {/* Main data row */}
-                              <tr className={catIndex % 2 === 1 ? "bg-orange-50" : ""}>
+                              <tr>
                                 <td className="sticky left-0 z-20 border bg-gray-100 p-2 text-left font-semibold">
                                   {cat.charAt(0).toUpperCase() +
                                     cat.slice(1).toLowerCase()}
                                 </td>
-                                {monthsInRange.map(({ year, month }) => {
+                                {monthsInRange.map(({ year, month }, monthIndex) => {
                                   // Convert category to uppercase for data lookup to match existing data keys
                                   const upperCat = cat.toUpperCase();
                                   const key = `${upperCat}-${year}-${month}`;
@@ -1115,17 +1115,28 @@ const squarespaceRows = categories.map((cat) => {
                                   const fee = feeData[key] ?? 0;
                                   const net = gross - fee;
 
+                                  const isAlternateMonth = monthIndex % 2 === 1;
+                                  const isAlternateRow = catIndex % 2 === 1;
+
+                                  // Determine background color based on row and column
+                                  let bgColor = "";
+                                  if (isAlternateRow) {
+                                    bgColor = isAlternateMonth ? "bg-orange-100" : "bg-gray-100";
+                                  } else {
+                                    bgColor = isAlternateMonth ? "bg-orange-50" : "";
+                                  }
+
                                   return (
                                     <React.Fragment
                                       key={`${cat}-${year}-${month}`}
                                     >
-                                      <td className="border border-l-2 border-l-gray-400 p-2">
+                                      <td className={`border border-l-2 border-l-gray-400 p-2 ${bgColor}`}>
                                         {format(gross)}
                                       </td>
-                                      <td className="border p-2">
+                                      <td className={`border p-2 ${bgColor}`}>
                                         {format(fee)}
                                       </td>
-                                      <td className="border border-r-2 border-r-gray-400 p-2">
+                                      <td className={`border border-r-2 border-r-gray-400 p-2 ${bgColor}`}>
                                         {format(net)}
                                       </td>
                                     </React.Fragment>
@@ -1148,11 +1159,11 @@ const squarespaceRows = categories.map((cat) => {
                           ))}
 
                           {/* Total Row */}
-                          <tr className="bg-gray-50 font-semibold">
+                          <tr className="font-semibold">
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2 text-left font-semibold">
                               Total
                             </td>
-                            {monthsInRange.map(({ year, month }) => {
+                            {monthsInRange.map(({ year, month }, monthIndex) => {
                               // Calculate totals for each month across all categories
                               let totalGross = 0;
                               let totalFee = 0;
@@ -1167,15 +1178,17 @@ const squarespaceRows = categories.map((cat) => {
 
                               totalNet = totalGross - totalFee;
 
+                              const isAlternateMonth = monthIndex % 2 === 1;
+
                               return (
                                 <React.Fragment key={`total-${year}-${month}`}>
-                                  <td className="border border-l-2 border-l-gray-400 bg-gray-50 p-2">
+                                  <td className={`border border-l-2 border-l-gray-400 p-2 ${isAlternateMonth ? "bg-orange-100" : "bg-gray-100"}`}>
                                     {format(totalGross)}
                                   </td>
-                                  <td className="border bg-gray-50 p-2">
+                                  <td className={`border p-2 ${isAlternateMonth ? "bg-orange-100" : "bg-gray-100"}`}>
                                     {format(totalFee)}
                                   </td>
-                                  <td className="border border-r-2 border-r-gray-400 bg-gray-50 p-2">
+                                  <td className={`border border-r-2 border-r-gray-400 p-2 ${isAlternateMonth ? "bg-orange-100" : "bg-gray-100"}`}>
                                     {format(totalNet)}
                                   </td>
                                 </React.Fragment>
@@ -1252,11 +1265,13 @@ const squarespaceRows = categories.map((cat) => {
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2 font-semibold">
                               Gross
                             </td>
-                            {monthsInRange.map(({ year, month }) => {
+                            {monthsInRange.map(({ year, month }, monthIndex) => {
                               const key = `${year}-${month}`;
+                              const isAlternateMonth = monthIndex % 2 === 1;
+                              const bgColor = isAlternateMonth ? "bg-orange-50" : "";
                               return (
                                 <React.Fragment key={`gross-${year}-${month}`}>
-                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center">
+                                  <td className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}>
                                     {format(paypalGross[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
@@ -1268,15 +1283,17 @@ const squarespaceRows = categories.map((cat) => {
                           </tr>
 
                           {/* Row: Fee */}
-                          <tr className="bg-orange-50">
+                          <tr>
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2 font-semibold">
                               Fee
                             </td>
-                            {monthsInRange.map(({ year, month }) => {
+                            {monthsInRange.map(({ year, month }, monthIndex) => {
                               const key = `${year}-${month}`;
+                              const isAlternateMonth = monthIndex % 2 === 1;
+                              const bgColor = isAlternateMonth ? "bg-orange-100" : "bg-gray-100";
                               return (
                                 <React.Fragment key={`fee-${year}-${month}`}>
-                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center">
+                                  <td className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}>
                                     {format(paypalFee[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
@@ -1288,16 +1305,18 @@ const squarespaceRows = categories.map((cat) => {
                           </tr>
 
                           {/* Row: Payout */}
-                          <tr className="bg-white font-semibold">
+                          <tr className="font-semibold">
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2">
                               Payout
                             </td>
-                            {monthsInRange.map(({ year, month }) => {
+                            {monthsInRange.map(({ year, month }, monthIndex) => {
                               const key = `${year}-${month}`;
+                              const isAlternateMonth = monthIndex % 2 === 1;
+                              const bgColor = isAlternateMonth ? "bg-orange-50" : "";
                               return (
                                 <td
                                   key={`net-${year}-${month}`}
-                                  className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center"
+                                  className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}
                                 >
                                   {format((paypalPayout[key] ?? 0) / 100)}
                                 </td>
@@ -1310,20 +1329,22 @@ const squarespaceRows = categories.map((cat) => {
                           </tr>
 
                           {/* Row: Bank Confirmation */}
-                          <tr className="bg-gray-100 font-semibold">
+                          <tr className="font-semibold">
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2 font-semibold">
                               Bank Confirmation
                             </td>
-                            {monthsInRange.map(({ year, month }) => {
+                            {monthsInRange.map(({ year, month }, monthIndex) => {
                               const temporalKey = Temporal.PlainYearMonth.from({
                                 year,
                                 month,
                               }).toString();
+                              const isAlternateMonth = monthIndex % 2 === 1;
+                              const bgColor = isAlternateMonth ? "bg-orange-100" : "bg-gray-100";
                               return (
                                 <React.Fragment
                                   key={`paypal-confirm-${year}-${month}`}
                                 >
-                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 bg-white p-2 text-center">
+                                  <td className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}>
                                     <div className="flex flex-col items-center">
                                       <input
                                         type="checkbox"
@@ -1426,13 +1447,15 @@ const squarespaceRows = categories.map((cat) => {
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2 font-semibold">
                               Gross
                             </td>
-                            {monthsInRange.map(({ year, month }) => {
+                            {monthsInRange.map(({ year, month }, monthIndex) => {
                               const key = `${year}-${month}`;
+                              const isAlternateMonth = monthIndex % 2 === 1;
+                              const bgColor = isAlternateMonth ? "bg-orange-50" : "";
                               return (
                                 <React.Fragment
                                   key={`stripe-gross-${year}-${month}`}
                                 >
-                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center">
+                                  <td className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}>
                                     {format(stripeGross[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
@@ -1444,17 +1467,19 @@ const squarespaceRows = categories.map((cat) => {
                           </tr>
 
                           {/* Row: Fee */}
-                          <tr className="bg-orange-50">
+                          <tr>
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2 font-semibold">
                               Fee
                             </td>
-                            {monthsInRange.map(({ year, month }) => {
+                            {monthsInRange.map(({ year, month }, monthIndex) => {
                               const key = `${year}-${month}`;
+                              const isAlternateMonth = monthIndex % 2 === 1;
+                              const bgColor = isAlternateMonth ? "bg-orange-100" : "bg-gray-100";
                               return (
                                 <React.Fragment
                                   key={`stripe-fee-${year}-${month}`}
                                 >
-                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center">
+                                  <td className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}>
                                     {format(stripeFee[key] ?? 0)}
                                   </td>
                                 </React.Fragment>
@@ -1466,17 +1491,19 @@ const squarespaceRows = categories.map((cat) => {
                           </tr>
 
                           {/* Row: Payout */}
-                          <tr className="bg-white font-semibold">
+                          <tr className="font-semibold">
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2">
                               Payout
                             </td>
-                            {monthsInRange.map(({ year, month }) => {
+                            {monthsInRange.map(({ year, month }, monthIndex) => {
                               const key = `${year}-${month}`;
+                              const isAlternateMonth = monthIndex % 2 === 1;
+                              const bgColor = isAlternateMonth ? "bg-orange-50" : "";
                               return (
                                 <React.Fragment
                                   key={`stripe-net-${year}-${month}`}
                                 >
-                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center">
+                                  <td className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}>
                                     {format((stripePayout[key] ?? 0) / 100)}
                                   </td>
                                 </React.Fragment>
@@ -1488,20 +1515,22 @@ const squarespaceRows = categories.map((cat) => {
                           </tr>
 
                           {/* Row: Bank Confirmation */}
-                          <tr className="bg-gray-100 font-semibold">
+                          <tr className="font-semibold">
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2">
                               Bank Confirmation
                             </td>
-                            {monthsInRange.map(({ year, month }) => {
+                            {monthsInRange.map(({ year, month }, monthIndex) => {
                               const temporalKey = Temporal.PlainYearMonth.from({
                                 year,
                                 month,
                               }).toString();
+                              const isAlternateMonth = monthIndex % 2 === 1;
+                              const bgColor = isAlternateMonth ? "bg-orange-100" : "bg-gray-100";
                               return (
                                 <React.Fragment
                                   key={`stripe-confirm-${year}-${month}`}
                                 >
-                                  <td className="border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 bg-white p-2 text-center">
+                                  <td className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}>
                                     <div className="flex flex-col items-center">
                                       <input
                                         type="checkbox"
