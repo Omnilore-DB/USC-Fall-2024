@@ -1,9 +1,10 @@
 "use client";
 
 import { supabase } from "@/app/supabase";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
+import SelectDropdown from "@/components/ui/SelectDropdown";
 
 export default function ForumReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -26,8 +27,38 @@ export default function ForumReports() {
       date: string;
       amount: number;
       descriptor: string;
+      first_name?: string;
+      last_name?: string;
     }[]
   >([]);
+
+  // Sorting state with localStorage persistence
+  const [selectedSort, setSelectedSort] = useState<string>("default");
+  const [selectedSortWay, setSelectedSortWay] = useState<"asc" | "desc">("asc");
+  const sortOptions = ["default", "first_name", "last_name", "amount"];
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedSort = localStorage.getItem("forum_report_sort");
+      const savedSortWay = localStorage.getItem("forum_report_sort_way");
+      if (savedSort) setSelectedSort(savedSort);
+      if (savedSortWay) setSelectedSortWay(savedSortWay as "asc" | "desc");
+    }
+  }, []);
+
+  // Save to localStorage when changed
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("forum_report_sort", selectedSort);
+    }
+  }, [selectedSort]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("forum_report_sort_way", selectedSortWay);
+    }
+  }, [selectedSortWay]);
 
   useEffect(() => {
     const setup = async () => {
@@ -189,6 +220,8 @@ export default function ForumReports() {
 
         return {
           name: `${member?.first_name ?? ""} ${member?.last_name ?? ""}`,
+          first_name: member?.first_name ?? "",
+          last_name: member?.last_name ?? "",
           email: member?.email ?? "",
           phone: formatPhoneNumber(member?.phone ?? ""),
           type: member?.type ?? "",
@@ -196,8 +229,7 @@ export default function ForumReports() {
           amount: tx?.amount ?? 0,
           descriptor: skuDescriptorMap[entry.sku] ?? "",
         };
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      });
 
     setForumMembers(formatted);
   };
@@ -269,13 +301,67 @@ export default function ForumReports() {
     URL.revokeObjectURL(url);
   };
 
+  // Apply sorting to forum members
+  const sortedForumMembers = useMemo(() => {
+    if (selectedSort === "default") return forumMembers;
+
+    return forumMembers.toSorted((a, b) => {
+      // Handle first_name sorting (include last_name as secondary)
+      if (selectedSort === "first_name") {
+        const aName = `${a.first_name || ""} ${a.last_name || ""}`;
+        const bName = `${b.first_name || ""} ${b.last_name || ""}`;
+        return selectedSortWay === "asc"
+          ? aName.localeCompare(bName)
+          : bName.localeCompare(aName);
+      }
+
+      // Handle last_name sorting (include first_name as secondary)
+      if (selectedSort === "last_name") {
+        const aName = `${a.last_name || ""} ${a.first_name || ""}`;
+        const bName = `${b.last_name || ""} ${b.first_name || ""}`;
+        return selectedSortWay === "asc"
+          ? aName.localeCompare(bName)
+          : bName.localeCompare(aName);
+      }
+
+      // Handle amount (numeric) sorting
+      if (selectedSort === "amount") {
+        return selectedSortWay === "asc"
+          ? a.amount - b.amount
+          : b.amount - a.amount;
+      }
+
+      return 0;
+    });
+  }, [forumMembers, selectedSort, selectedSortWay]);
+
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
       <div className="flex w-full grow flex-col items-center justify-center overflow-y-auto">
         <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
           <div className="flex h-full w-full flex-col items-center">
             <div className="flex h-full w-full flex-col gap-3">
-              <div className="flex w-full flex-row items-end justify-between">
+              <div className="flex w-full flex-row items-end justify-between gap-2">
+                {/* Sorting Controls */}
+                <div className="flex w-1/5 flex-row gap-2">
+                  <div className="flex w-1/2 flex-col">
+                    <label className="text-sm font-semibold">Sort By</label>
+                    <SelectDropdown
+                      options={sortOptions}
+                      selectedOption={selectedSort}
+                      setSelectedOption={(sort) => setSelectedSort(sort)}
+                    />
+                  </div>
+                  <div className="flex w-1/2 flex-col">
+                    <label className="text-sm font-semibold">Order</label>
+                    <SelectDropdown
+                      options={["asc", "desc"]}
+                      selectedOption={selectedSortWay}
+                      setSelectedOption={(way) => setSelectedSortWay(way as "asc" | "desc")}
+                    />
+                  </div>
+                </div>
+
                 <div className="flex w-3/5 flex-row justify-between gap-2">
                   {customRange ? (
                     <>
@@ -387,17 +473,17 @@ export default function ForumReports() {
                     </tr>
                   </thead>
                   <tbody>
-                    {forumMembers.length === 0 ? (
+                    {sortedForumMembers.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={4}
+                          colSpan={7}
                           className="p-3 text-center text-gray-500"
                         >
                           No forum participants found
                         </td>
                       </tr>
                     ) : (
-                      forumMembers.map((m, i) => (
+                      sortedForumMembers.map((m, i) => (
                         <tr key={i} className="border-t">
                           <td className="p-3">{m.name}</td>
                           <td className="p-3">{m.email}</td>

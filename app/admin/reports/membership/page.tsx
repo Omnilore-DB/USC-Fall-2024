@@ -4,6 +4,7 @@ import { supabase } from "@/app/supabase";
 import { useState, useEffect, useMemo } from "react";
 import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
+import SelectDropdown from "@/components/ui/SelectDropdown";
 
 export default function MembershipReports() {
   const [members, setMembers] = useState<any[]>([]);
@@ -12,7 +13,35 @@ export default function MembershipReports() {
   const [endDate, setEndDate] = useState<string>("");
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
-  
+
+  // Sorting state with localStorage persistence
+  const [selectedSort, setSelectedSort] = useState<string>("default");
+  const [selectedSortWay, setSelectedSortWay] = useState<"asc" | "desc">("asc");
+  const sortOptions = ["default", "first_name", "last_name", "expiration_date", "member_status"];
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedSort = localStorage.getItem("membership_report_sort");
+      const savedSortWay = localStorage.getItem("membership_report_sort_way");
+      if (savedSort) setSelectedSort(savedSort);
+      if (savedSortWay) setSelectedSortWay(savedSortWay as "asc" | "desc");
+    }
+  }, []);
+
+  // Save to localStorage when changed
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("membership_report_sort", selectedSort);
+    }
+  }, [selectedSort]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("membership_report_sort_way", selectedSortWay);
+    }
+  }, [selectedSortWay]);
+
   // Column filters state - only for specific columns
   const [filters, setFilters] = useState<Record<string, string>>({
     member_status: "",
@@ -43,16 +72,64 @@ export default function MembershipReports() {
     });
   }, [members, filters]);
 
+  // Apply sorting to filtered members
+  const sortedMembers = useMemo(() => {
+    if (selectedSort === "default") return filteredMembers;
+
+    return filteredMembers.toSorted((a, b) => {
+      // Handle first_name sorting (include last_name as secondary)
+      if (selectedSort === "first_name") {
+        const aName = `${a.first_name || ""} ${a.last_name || ""}`;
+        const bName = `${b.first_name || ""} ${b.last_name || ""}`;
+        return selectedSortWay === "asc"
+          ? aName.localeCompare(bName)
+          : bName.localeCompare(aName);
+      }
+
+      // Handle last_name sorting (include first_name as secondary)
+      if (selectedSort === "last_name") {
+        const aName = `${a.last_name || ""} ${a.first_name || ""}`;
+        const bName = `${b.last_name || ""} ${b.first_name || ""}`;
+        return selectedSortWay === "asc"
+          ? aName.localeCompare(bName)
+          : bName.localeCompare(aName);
+      }
+
+      // Handle expiration_date sorting
+      if (selectedSort === "expiration_date") {
+        const dateA = a.expiration_date ? new Date(a.expiration_date) : new Date(0);
+        const dateB = b.expiration_date ? new Date(b.expiration_date) : new Date(0);
+        return selectedSortWay === "asc"
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime();
+      }
+
+      // Handle member_status (string) sorting
+      if (selectedSort === "member_status") {
+        const aStatus = a.member_status || "";
+        const bStatus = b.member_status || "";
+        return selectedSortWay === "asc"
+          ? aStatus.localeCompare(bStatus)
+          : bStatus.localeCompare(aStatus);
+      }
+
+      // Default string comparison
+      return selectedSortWay === "asc"
+        ? (a[selectedSort] || "").toString().localeCompare((b[selectedSort] || "").toString())
+        : (b[selectedSort] || "").toString().localeCompare((a[selectedSort] || "").toString());
+    });
+  }, [filteredMembers, selectedSort, selectedSortWay]);
+
   const exportToCSV = () => {
     // Export filtered members instead of all members
     if (filteredMembers.length === 0) {
       alert("No data to export");
       return;
     }
-    
+
     const headers = [
       "Name",
-      "Address", 
+      "Address",
       "Phone",
       "Email",
       "Emergency Contact",
@@ -63,7 +140,7 @@ export default function MembershipReports() {
       "Member Type",
       "Delivery Method"
     ];
-    
+
     const rows = filteredMembers.map((m) => [
       m.name ?? "",
       m.address ?? "",
@@ -77,7 +154,7 @@ export default function MembershipReports() {
       m.type ?? "",
       m.delivery_method ?? "Email"
     ]);
-    
+
     const csvContent = [
       headers.join(","),
       ...rows.map((r) =>
@@ -138,7 +215,7 @@ export default function MembershipReports() {
       console.error("Failed to fetch membership SKUs", productError);
       return;
     }
-    
+
     const skuStatusMap = Object.fromEntries(
       products.map((p) => [p.sku, p.status ?? ""]),
     );
@@ -272,8 +349,28 @@ export default function MembershipReports() {
         <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
           <div className="flex h-full w-full flex-col items-center">
             <div className="flex h-full w-full flex-col gap-3">
-              <div className="flex w-full flex-row items-end justify-between">
-                <div className="flex w-3/5 flex-row justify-between gap-2">
+              <div className="flex w-full flex-row items-end justify-between gap-2">
+                {/* Sorting Controls */}
+                <div className="flex w-1/4 flex-row gap-2">
+                  <div className="flex w-1/2 flex-col">
+                    <label className="text-sm font-semibold">Sort By</label>
+                    <SelectDropdown
+                      options={sortOptions}
+                      selectedOption={selectedSort}
+                      setSelectedOption={(sort) => setSelectedSort(sort)}
+                    />
+                  </div>
+                  <div className="flex w-1/2 flex-col">
+                    <label className="text-sm font-semibold">Order</label>
+                    <SelectDropdown
+                      options={["asc", "desc"]}
+                      selectedOption={selectedSortWay}
+                      setSelectedOption={(way) => setSelectedSortWay(way as "asc" | "desc")}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex w-1/2 flex-row justify-between gap-2">
                   {customRange ? (
                     <>
                       <div className="flex w-1/3 flex-col">
@@ -355,7 +452,7 @@ export default function MembershipReports() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Table with dropdown filters */}
               <div className="w-full grow overflow-y-auto rounded-xl">
                 <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
@@ -407,7 +504,7 @@ export default function MembershipReports() {
                       <th className="sticky top-[52px] z-10 bg-gray-50 p-2">
                         <select
                           value={filters.member_status}
-                          onChange={(e) => setFilters({...filters, member_status: e.target.value})}
+                          onChange={(e) => setFilters({ ...filters, member_status: e.target.value })}
                           className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                         >
                           <option value="">All</option>
@@ -422,7 +519,7 @@ export default function MembershipReports() {
                       <th className="sticky top-[52px] z-10 bg-gray-50 p-2">
                         <select
                           value={filters.gender}
-                          onChange={(e) => setFilters({...filters, gender: e.target.value})}
+                          onChange={(e) => setFilters({ ...filters, gender: e.target.value })}
                           className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                         >
                           <option value="">All</option>
@@ -435,7 +532,7 @@ export default function MembershipReports() {
                       <th className="sticky top-[52px] z-10 bg-gray-50 p-2">
                         <select
                           value={filters.type}
-                          onChange={(e) => setFilters({...filters, type: e.target.value})}
+                          onChange={(e) => setFilters({ ...filters, type: e.target.value })}
                           className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                         >
                           <option value="">All</option>
@@ -448,7 +545,7 @@ export default function MembershipReports() {
                       <th className="sticky top-[52px] z-10 bg-gray-50 p-2">
                         <select
                           value={filters.delivery_method}
-                          onChange={(e) => setFilters({...filters, delivery_method: e.target.value})}
+                          onChange={(e) => setFilters({ ...filters, delivery_method: e.target.value })}
                           className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                         >
                           <option value="">All</option>
@@ -460,7 +557,7 @@ export default function MembershipReports() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredMembers.length === 0 ? (
+                    {sortedMembers.length === 0 ? (
                       <tr>
                         <td
                           colSpan={11}
@@ -470,7 +567,7 @@ export default function MembershipReports() {
                         </td>
                       </tr>
                     ) : (
-                      filteredMembers.map((m, i) => (
+                      sortedMembers.map((m, i) => (
                         <tr key={i} className="border-t">
                           <td className="p-3">{m.name}</td>
                           <td className="p-3">{m.address}</td>
