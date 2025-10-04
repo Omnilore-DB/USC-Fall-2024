@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import SelectDropdown from "@/components/ui/SelectDropdown";
+import * as XLSX from "xlsx";
 
 export default function DonationReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -99,6 +100,44 @@ export default function DonationReports() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const exportToXLSX = () => {
+    if (donationTransactions.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const headers = ["Name", "Email", "Address", "Date", "Amount", "Type"];
+    const rows = donationTransactions.map((t) => [
+      t.name ?? "",
+      t.transaction_email ?? "",
+      t.address ?? "",
+      new Date(t.date).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+      t.amount.toFixed(2),
+      t.type ?? "",
+    ]);
+
+    const worksheetData = [headers, ...rows];
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Donation Report");
+
+    const yearsString =
+      selectedYears.length > 0 ? selectedYears.join("_") : "all";
+    let filename = "";
+
+    if (customRange && startDate && endDate) {
+      filename = `donation_report_${startDate}_to_${endDate}.xlsx`;
+    } else {
+      filename = `donation_report_${yearsString}.xlsx`;
+    }
+
+    XLSX.writeFile(workbook, filename);
   };
 
   const fetchDonationTransactions = async () => {
@@ -352,21 +391,29 @@ export default function DonationReports() {
                     </button>
                   </div>
                 </div>
-                <div className="flex w-1/4 flex-row justify-between gap-2">
-                  <div className="flex w-1/2 items-end">
+                <div className="flex w-1/3 flex-row justify-between gap-2">
+                  <div className="flex w-1/3 items-end">
                     <button
                       onClick={fetchDonationTransactions}
-                      className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-blue-500 text-sm font-semibold text-white"
                     >
                       Generate Report
                     </button>
                   </div>
-                  <div className="flex w-1/2 items-end">
+                  <div className="flex w-1/3 items-end">
                     <button
-                      className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-red-500 text-sm font-semibold text-white"
                       onClick={exportToCSV}
                     >
-                      Export as CSV
+                      Export to CSV
+                    </button>
+                  </div>
+                  <div className="flex w-1/3 items-end">
+                    <button
+                      className="h-8 w-full cursor-pointer rounded-lg bg-green-600 text-sm font-semibold text-white"
+                      onClick={exportToXLSX}
+                    >
+                      Export to XLSX
                     </button>
                   </div>
                 </div>

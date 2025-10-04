@@ -153,10 +153,138 @@ const TreasurerReqs = () => {
       allData.push([]);
     });
 
+    // Create CSV content
+    const csvContent = allData.map(row =>
+      row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")
+    ).join("\r\n");
+
+    let filename = "";
+    if (customRange && startDate && endDate) {
+      filename = `financial_report_${startDate}_to_${endDate}.csv`;
+    } else {
+      const yearsString =
+        selectedYears.length > 0 ? selectedYears.join("_") : "all";
+      filename = `financial_report_${yearsString}.csv`;
+    }
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportFullReportToXLSX = () => {
+    const reportSections = [
+      {
+        title: "Squarespace",
+        headers: [
+          "Category",
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+          "YTD",
+        ],
+        rows: squarespaceRows,
+      },
+      {
+        title: "PayPal",
+        headers: [
+          "Category",
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+          "YTD",
+        ],
+        rows: paypalRows,
+      },
+      {
+        title: "Stripe",
+        headers: [
+          "Category",
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+          "YTD",
+        ],
+        rows: stripeRows,
+      },
+      {
+        title: "Donation",
+        headers: [
+          "Category",
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+          "YTD",
+        ],
+        rows: donationRows,
+      },
+    ];
+
+    let allData: any[][] = [];
+
+    reportSections.forEach(({ title, headers, rows }) => {
+      allData.push([title]);
+      allData.push(headers);
+      allData.push(...rows);
+      allData.push([]);
+    });
+
     const worksheet = XLSX.utils.aoa_to_sheet(allData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "FinancialReport");
-    XLSX.writeFile(workbook, "FinancialReport.csv");
+
+    let filename = "";
+    if (customRange && startDate && endDate) {
+      filename = `financial_report_${startDate}_to_${endDate}.xlsx`;
+    } else {
+      const yearsString =
+        selectedYears.length > 0 ? selectedYears.join("_") : "all";
+      filename = `financial_report_${yearsString}.xlsx`;
+    }
+
+    XLSX.writeFile(workbook, filename);
   };
 
   // CSV export function
@@ -668,22 +796,29 @@ const squarespaceRows = categories.map((cat) => {
                     </button>
                   </div>
                 </div>
-                <div className="flex w-1/4 flex-row justify-between gap-2">
-                  <div className="flex w-1/2 items-end">
+                <div className="flex w-1/3 flex-row justify-between gap-2">
+                  <div className="flex w-1/3 items-end">
                     <button
                       onClick={handleGenerateReport}
-                      className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-blue-500 text-sm font-semibold text-white"
                     >
                       Generate Report
                     </button>
                   </div>
-
-                  <div className="flex w-1/2 items-end">
+                  <div className="flex w-1/3 items-end">
                     <button
+                      className="h-8 w-full cursor-pointer rounded-lg bg-red-500 text-sm font-semibold text-white"
                       onClick={exportFullReportToCSV}
-                      className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
                     >
-                      Export as CSV
+                      Export to CSV
+                    </button>
+                  </div>
+                  <div className="flex w-1/3 items-end">
+                    <button
+                      className="h-8 w-full cursor-pointer rounded-lg bg-green-600 text-sm font-semibold text-white"
+                      onClick={exportFullReportToXLSX}
+                    >
+                      Export to XLSX
                     </button>
                   </div>
                 </div>

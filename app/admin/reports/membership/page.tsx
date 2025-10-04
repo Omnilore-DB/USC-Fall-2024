@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import SelectDropdown from "@/components/ui/SelectDropdown";
+import * as XLSX from "xlsx";
 
 export default function MembershipReports() {
   const [members, setMembers] = useState<any[]>([]);
@@ -182,6 +183,60 @@ export default function MembershipReports() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const exportToXLSX = () => {
+    // Export filtered members instead of all members
+    if (filteredMembers.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const headers = [
+      "Name",
+      "Address",
+      "Phone",
+      "Email",
+      "Emergency Contact",
+      "Emergency Phone",
+      "Status",
+      "Expiration",
+      "Gender",
+      "Member Type",
+      "Delivery Method"
+    ];
+
+    const rows = filteredMembers.map((m) => [
+      m.name ?? "",
+      m.address ?? "",
+      m.phone ?? "",
+      m.email ?? "",
+      m.emergency_contact ?? "",
+      m.emergency_contact_phone ?? "",
+      m.member_status ?? "",
+      m.expiration_date ?? "",
+      m.gender ?? "",
+      m.type ?? "",
+      m.delivery_method ?? "Email"
+    ]);
+
+    const worksheetData = [headers, ...rows];
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Membership Report");
+
+    let filename = "";
+    if (customRange && startDate && endDate) {
+      filename = `membership_report_${startDate}_to_${endDate}.xlsx`;
+    } else {
+      const yearsString =
+        selectedYears.length > 0
+          ? selectedYears.map(formatAcademicYear).join("_")
+          : "all";
+      filename = `membership_report_${yearsString}.xlsx`;
+    }
+
+    XLSX.writeFile(workbook, filename);
   };
 
   const formatAcademicYear = (shortYear: string): string => {
@@ -433,21 +488,29 @@ export default function MembershipReports() {
                     </button>
                   </div>
                 </div>
-                <div className="flex w-1/4 flex-row justify-between gap-2">
-                  <div className="flex w-1/2 items-end">
+                <div className="flex w-1/3 flex-row justify-between gap-2">
+                  <div className="flex w-1/3 items-end">
                     <button
                       onClick={fetchMembershipMembers}
-                      className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-blue-500 text-sm font-semibold text-white"
                     >
                       Generate Report
                     </button>
                   </div>
-                  <div className="flex w-1/2 items-end">
+                  <div className="flex w-1/3 items-end">
                     <button
-                      className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-red-500 text-sm font-semibold text-white"
                       onClick={exportToCSV}
                     >
-                      Export as CSV
+                      Export to CSV
+                    </button>
+                  </div>
+                  <div className="flex w-1/3 items-end">
+                    <button
+                      className="h-8 w-full cursor-pointer rounded-lg bg-green-600 text-sm font-semibold text-white"
+                      onClick={exportToXLSX}
+                    >
+                      Export to XLSX
                     </button>
                   </div>
                 </div>
