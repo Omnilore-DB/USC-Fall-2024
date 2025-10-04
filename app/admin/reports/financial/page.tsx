@@ -7,6 +7,8 @@ import { Temporal } from "temporal-polyfill";
 import { updatePayout } from "./actions";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 const TreasurerReqs = () => {
   const [fromDate, setFromDate] = useState("");
@@ -178,7 +180,99 @@ const TreasurerReqs = () => {
     URL.revokeObjectURL(url);
   };
 
-  const exportFullReportToXLSX = () => {
+  const exportFullReportToXLSX = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Financial Report");
+
+    const buildFullYearRows = (dataBuilder: (month: number) => any) => {
+      const fullYearData: any[] = [];
+      for (let month = 1; month <= 12; month++) {
+        const monthInRange = monthsInRange.find(m => m.month === month);
+        if (monthInRange) {
+          fullYearData.push(dataBuilder(month));
+        } else {
+          fullYearData.push("");
+        }
+      }
+      return fullYearData;
+    };
+
+    const squarespaceRowsFull = categories.map((cat) => {
+      const row: any[] = [cat];
+      let ytdGross = 0;
+      let ytdFee = 0;
+
+      for (let month = 1; month <= 12; month++) {
+        const monthInRange = monthsInRange.find(m => m.month === month);
+        if (monthInRange) {
+          const key = `${cat}-${monthInRange.year}-${month}`;
+          const gross = grossData[key] ?? 0;
+          const fee = feeData[key] ?? 0;
+          ytdGross += gross;
+          ytdFee += fee;
+          row.push((gross - fee).toFixed(2));
+        } else {
+          row.push("");
+        }
+      }
+      row.push((ytdGross - ytdFee).toFixed(2));
+      return row;
+    });
+
+    const paypalRowsFull = [
+      [
+        "Gross",
+        ...buildFullYearRows((month) => {
+          const monthData = monthsInRange.find(m => m.month === month);
+          return monthData ? (paypalGross[`${monthData.year}-${month}`] ?? 0).toFixed(2) : "";
+        }),
+        getRangeTotal(paypalGross).toFixed(2),
+      ],
+      [
+        "Fee",
+        ...buildFullYearRows((month) => {
+          const monthData = monthsInRange.find(m => m.month === month);
+          return monthData ? (paypalFee[`${monthData.year}-${month}`] ?? 0).toFixed(2) : "";
+        }),
+        getRangeTotal(paypalFee).toFixed(2),
+      ],
+      [
+        "Payout",
+        ...buildFullYearRows((month) => {
+          const monthData = monthsInRange.find(m => m.month === month);
+          return monthData ? ((paypalPayout[`${monthData.year}-${month}`] ?? 0) / 100).toFixed(2) : "";
+        }),
+        (getRangeTotal(paypalPayout) / 100).toFixed(2),
+      ],
+    ];
+
+    const stripeRowsFull = [
+      [
+        "Gross",
+        ...buildFullYearRows((month) => {
+          const monthData = monthsInRange.find(m => m.month === month);
+          return monthData ? (stripeGross[`${monthData.year}-${month}`] ?? 0).toFixed(2) : "";
+        }),
+        getRangeTotal(stripeGross).toFixed(2),
+      ],
+      [
+        "Fee",
+        ...buildFullYearRows((month) => {
+          const monthData = monthsInRange.find(m => m.month === month);
+          return monthData ? (stripeFee[`${monthData.year}-${month}`] ?? 0).toFixed(2) : "";
+        }),
+        getRangeTotal(stripeFee).toFixed(2),
+      ],
+      [
+        "Payout",
+        ...buildFullYearRows((month) => {
+          const monthData = monthsInRange.find(m => m.month === month);
+          return monthData ? ((stripePayout[`${monthData.year}-${month}`] ?? 0) / 100).toFixed(2) : "";
+        }),
+        (getRangeTotal(stripePayout) / 100).toFixed(2),
+      ],
+    ];
+
     const reportSections = [
       {
         title: "Squarespace",
@@ -198,7 +292,7 @@ const TreasurerReqs = () => {
           "Dec",
           "YTD",
         ],
-        rows: squarespaceRows,
+        rows: squarespaceRowsFull,
       },
       {
         title: "PayPal",
@@ -218,7 +312,7 @@ const TreasurerReqs = () => {
           "Dec",
           "YTD",
         ],
-        rows: paypalRows,
+        rows: paypalRowsFull,
       },
       {
         title: "Stripe",
@@ -238,42 +332,161 @@ const TreasurerReqs = () => {
           "Dec",
           "YTD",
         ],
-        rows: stripeRows,
+        rows: stripeRowsFull,
       },
       {
         title: "Donation",
-        headers: [
-          "Category",
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-          "YTD",
-        ],
+        headers: ["Name", "Date", "Amount", "Address"],
         rows: donationRows,
       },
     ];
 
-    let allData: any[][] = [];
+    worksheet.columns = [
+      { width: 20 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 12 },
+      { width: 40 },
+    ];
 
-    reportSections.forEach(({ title, headers, rows }) => {
-      allData.push([title]);
-      allData.push(headers);
-      allData.push(...rows);
-      allData.push([]);
+    let currentRow = 1;
+
+    reportSections.forEach((section) => {
+      const titleRow = worksheet.getRow(currentRow);
+      titleRow.getCell(1).value = section.title;
+      titleRow.getCell(1).font = { bold: true, size: 14 };
+      titleRow.getCell(1).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE7E6E6" },
+      };
+      titleRow.getCell(1).border = {
+        top: { style: "medium" },
+        bottom: { style: "medium" },
+        left: { style: "medium" },
+        right: { style: "medium" },
+      };
+      currentRow++;
+
+      const headerRow = worksheet.getRow(currentRow);
+      section.headers.forEach((header, idx) => {
+        const cell = headerRow.getCell(idx + 1);
+        cell.value = header;
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF4472C4" },
+        };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+
+      if (section.title === "Donation") {
+        worksheet.mergeCells(currentRow, 4, currentRow, 8);
+        const addressCell = headerRow.getCell(4);
+        addressCell.value = "Address";
+        addressCell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        addressCell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF4472C4" },
+        };
+        addressCell.alignment = { horizontal: "center", vertical: "middle" };
+        addressCell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+      }
+
+      currentRow++;
+
+      section.rows.forEach((rowData, rowIdx) => {
+        const dataRow = worksheet.getRow(currentRow);
+        rowData.forEach((cellValue: any, colIdx: number) => {
+          const cell = dataRow.getCell(colIdx + 1);
+          const num = parseFloat(cellValue);
+          cell.value = !isNaN(num) && cellValue !== "" && typeof cellValue === "string" && cellValue.match(/^\d+\.?\d*$/) ? num : cellValue;
+
+          if (colIdx > 0 && typeof cell.value === "number") {
+            cell.numFmt = "$#,##0.00";
+            cell.alignment = { horizontal: "right", vertical: "middle" };
+          } else {
+            cell.alignment = { horizontal: "left", vertical: "middle" };
+          }
+
+          cell.border = {
+            top: { style: "thin", color: { argb: "FFD3D3D3" } },
+            bottom: { style: "thin", color: { argb: "FFD3D3D3" } },
+            left: { style: "thin", color: { argb: "FFD3D3D3" } },
+            right: { style: "thin", color: { argb: "FFD3D3D3" } },
+          };
+
+          if (section.title !== "Donation" && colIdx > 0) {
+            if (colIdx === 13) {
+              cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FFFCD5B4" },
+              };
+            }
+            else if (colIdx % 2 === 1) {
+              cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FFFDE9D9" },
+              };
+            }
+          }
+
+          if (section.title === "Donation" && rowIdx % 2 === 0) {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFF2F2F2" },
+            };
+          }
+        });
+
+        if (section.title === "Donation") {
+          worksheet.mergeCells(currentRow, 4, currentRow, 8);
+
+          if (rowIdx % 2 === 0) {
+            for (let extraCol = 5; extraCol <= 8; extraCol++) {
+              const extraCell = dataRow.getCell(extraCol);
+              extraCell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FFF2F2F2" },
+              };
+            }
+          }
+        }
+
+        currentRow++;
+      });
+
+      currentRow++;
     });
 
-    const worksheet = XLSX.utils.aoa_to_sheet(allData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "FinancialReport");
+    worksheet.views = [{ state: "frozen", ySplit: 1 }];
 
     let filename = "";
     if (customRange && startDate && endDate) {
@@ -284,7 +497,11 @@ const TreasurerReqs = () => {
       filename = `financial_report_${yearsString}.xlsx`;
     }
 
-    XLSX.writeFile(workbook, filename);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, filename);
   };
 
   // CSV export function

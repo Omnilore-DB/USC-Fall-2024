@@ -6,6 +6,8 @@ import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import SelectDropdown from "@/components/ui/SelectDropdown";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 export default function ForumReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -302,35 +304,74 @@ export default function ForumReports() {
     URL.revokeObjectURL(url);
   };
 
-  const exportToXLSX = () => {
+  const exportToXLSX = async () => {
     if (forumMembers.length === 0) {
       alert("No data to export");
       return;
     }
 
-    const headers = [
-      "Name",
-      "Email",
-      "Phone",
-      "Date",
-      "Amount",
-      "Type",
-      "Descriptor",
-    ];
-    const rows = forumMembers.map((m) => [
-      m.name ?? "",
-      m.email ?? "",
-      m.phone ?? "",
-      new Date(m.date).toLocaleDateString(),
-      m.amount.toFixed(2),
-      m.type ?? "",
-      m.descriptor ?? "",
-    ]);
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Forum Report");
 
-    const worksheetData = [headers, ...rows];
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Forum Report");
+    worksheet.columns = [
+      { header: "Name", key: "name", width: 25 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Phone", key: "phone", width: 18 },
+      { header: "Date", key: "date", width: 12 },
+      { header: "Amount", key: "amount", width: 12 },
+      { header: "Type", key: "type", width: 15 },
+      { header: "Descriptor", key: "descriptor", width: 35 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF4472C4" },
+    };
+    worksheet.getRow(1).alignment = { horizontal: "center", vertical: "middle" };
+    worksheet.getRow(1).border = {
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" },
+    };
+
+    forumMembers.forEach((m, idx) => {
+      const row = worksheet.addRow({
+        name: m.name ?? "",
+        email: m.email ?? "",
+        phone: m.phone ?? "",
+        date: new Date(m.date),
+        amount: m.amount,
+        type: m.type ?? "",
+        descriptor: m.descriptor ?? "",
+      });
+
+      row.getCell(4).numFmt = "mmm dd, yyyy";
+      row.getCell(5).numFmt = "$#,##0.00";
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFD3D3D3" } },
+          bottom: { style: "thin", color: { argb: "FFD3D3D3" } },
+          left: { style: "thin", color: { argb: "FFD3D3D3" } },
+          right: { style: "thin", color: { argb: "FFD3D3D3" } },
+        };
+      });
+
+      if (idx % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFF2F2F2" },
+          };
+        });
+      }
+    });
+
+    worksheet.views = [{ state: "frozen", ySplit: 1 }];
 
     const trimesterMap: Record<string, string> = {
       "Trimester 1": "t1",
@@ -356,7 +397,11 @@ export default function ForumReports() {
         : `forum_report_${yearsString}.xlsx`;
     }
 
-    XLSX.writeFile(workbook, filename);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, filename);
   };
 
   // Apply sorting to forum members

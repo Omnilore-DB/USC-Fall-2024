@@ -2,10 +2,10 @@
 
 import { supabase } from "@/app/supabase";
 import { useState, useEffect, useMemo } from "react";
-import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import SelectDropdown from "@/components/ui/SelectDropdown";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 export default function MembershipReports() {
   const [members, setMembers] = useState<any[]>([]);
@@ -185,45 +185,83 @@ export default function MembershipReports() {
     URL.revokeObjectURL(url);
   };
 
-  const exportToXLSX = () => {
-    // Export filtered members instead of all members
+  const exportToXLSX = async () => {
     if (filteredMembers.length === 0) {
       alert("No data to export");
       return;
     }
 
-    const headers = [
-      "Name",
-      "Address",
-      "Phone",
-      "Email",
-      "Emergency Contact",
-      "Emergency Phone",
-      "Status",
-      "Expiration",
-      "Gender",
-      "Member Type",
-      "Delivery Method"
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Membership Report");
+
+    worksheet.columns = [
+      { header: "Name", key: "name", width: 25 },
+      { header: "Address", key: "address", width: 40 },
+      { header: "Phone", key: "phone", width: 18 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Emergency Contact", key: "emergency_contact", width: 25 },
+      { header: "Emergency Phone", key: "emergency_phone", width: 18 },
+      { header: "Status", key: "status", width: 15 },
+      { header: "Expiration", key: "expiration", width: 12 },
+      { header: "Gender", key: "gender", width: 10 },
+      { header: "Member Type", key: "type", width: 15 },
+      { header: "Delivery Method", key: "delivery_method", width: 15 },
     ];
 
-    const rows = filteredMembers.map((m) => [
-      m.name ?? "",
-      m.address ?? "",
-      m.phone ?? "",
-      m.email ?? "",
-      m.emergency_contact ?? "",
-      m.emergency_contact_phone ?? "",
-      m.member_status ?? "",
-      m.expiration_date ?? "",
-      m.gender ?? "",
-      m.type ?? "",
-      m.delivery_method ?? "Email"
-    ]);
+    worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF4472C4" },
+    };
+    worksheet.getRow(1).alignment = { horizontal: "center", vertical: "middle" };
+    worksheet.getRow(1).border = {
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" },
+    };
 
-    const worksheetData = [headers, ...rows];
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Membership Report");
+    filteredMembers.forEach((m, idx) => {
+      const row = worksheet.addRow({
+        name: m.name ?? "",
+        address: m.address ?? "",
+        phone: m.phone ?? "",
+        email: m.email ?? "",
+        emergency_contact: m.emergency_contact ?? "",
+        emergency_phone: m.emergency_contact_phone ?? "",
+        status: m.member_status ?? "",
+        expiration: m.expiration_date ? new Date(m.expiration_date) : "",
+        gender: m.gender ?? "",
+        type: m.type ?? "",
+        delivery_method: m.delivery_method ?? "Email",
+      });
+
+      if (m.expiration_date) {
+        row.getCell(8).numFmt = "yyyy-mm-dd";
+      }
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFD3D3D3" } },
+          bottom: { style: "thin", color: { argb: "FFD3D3D3" } },
+          left: { style: "thin", color: { argb: "FFD3D3D3" } },
+          right: { style: "thin", color: { argb: "FFD3D3D3" } },
+        };
+      });
+
+      if (idx % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFF2F2F2" },
+          };
+        });
+      }
+    });
+
+    worksheet.views = [{ state: "frozen", ySplit: 1 }];
 
     let filename = "";
     if (customRange && startDate && endDate) {
@@ -236,7 +274,11 @@ export default function MembershipReports() {
       filename = `membership_report_${yearsString}.xlsx`;
     }
 
-    XLSX.writeFile(workbook, filename);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, filename);
   };
 
   const formatAcademicYear = (shortYear: string): string => {

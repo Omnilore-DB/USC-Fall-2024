@@ -6,6 +6,8 @@ import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import SelectDropdown from "@/components/ui/SelectDropdown";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 export default function DonationReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -102,30 +104,72 @@ export default function DonationReports() {
     URL.revokeObjectURL(url);
   };
 
-  const exportToXLSX = () => {
+  const exportToXLSX = async () => {
     if (donationTransactions.length === 0) {
       alert("No data to export");
       return;
     }
 
-    const headers = ["Name", "Email", "Address", "Date", "Amount", "Type"];
-    const rows = donationTransactions.map((t) => [
-      t.name ?? "",
-      t.transaction_email ?? "",
-      t.address ?? "",
-      new Date(t.date).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }),
-      t.amount.toFixed(2),
-      t.type ?? "",
-    ]);
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Donation Report");
 
-    const worksheetData = [headers, ...rows];
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Donation Report");
+    worksheet.columns = [
+      { header: "Name", key: "name", width: 25 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Address", key: "address", width: 40 },
+      { header: "Date", key: "date", width: 12 },
+      { header: "Amount", key: "amount", width: 12 },
+      { header: "Type", key: "type", width: 15 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF4472C4" },
+    };
+    worksheet.getRow(1).alignment = { horizontal: "center", vertical: "middle" };
+    worksheet.getRow(1).border = {
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" },
+    };
+
+    donationTransactions.forEach((t, idx) => {
+      const row = worksheet.addRow({
+        name: t.name ?? "",
+        email: t.transaction_email ?? "",
+        address: t.address ?? "",
+        date: new Date(t.date),
+        amount: t.amount,
+        type: t.type ?? "",
+      });
+
+      row.getCell(4).numFmt = "mmm dd, yyyy";
+      row.getCell(5).numFmt = "$#,##0.00";
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFD3D3D3" } },
+          bottom: { style: "thin", color: { argb: "FFD3D3D3" } },
+          left: { style: "thin", color: { argb: "FFD3D3D3" } },
+          right: { style: "thin", color: { argb: "FFD3D3D3" } },
+        };
+      });
+
+      if (idx % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFF2F2F2" },
+          };
+        });
+      }
+    });
+
+    worksheet.views = [{ state: "frozen", ySplit: 1 }];
 
     const yearsString =
       selectedYears.length > 0 ? selectedYears.join("_") : "all";
@@ -137,7 +181,11 @@ export default function DonationReports() {
       filename = `donation_report_${yearsString}.xlsx`;
     }
 
-    XLSX.writeFile(workbook, filename);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, filename);
   };
 
   const fetchDonationTransactions = async () => {
