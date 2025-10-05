@@ -95,7 +95,7 @@ export default function AdminLayout({
               <ReportsButton />
               {(showSubMenu || activeReportTab !== "") && (
                 <div className="flex flex-col gap-1 pl-6">
-                  {["Membership", "Forum", "Donation", "Financial"].map(
+                  {["Membership", "Forum", "Donation", "Financial", "Transactions"].map(
                     (tab) => (
                       <button
                         key={tab}
