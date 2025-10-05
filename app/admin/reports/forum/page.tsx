@@ -5,6 +5,9 @@ import { useState, useEffect, useMemo } from "react";
 import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import SelectDropdown from "@/components/ui/SelectDropdown";
+import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 export default function ForumReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -301,6 +304,106 @@ export default function ForumReports() {
     URL.revokeObjectURL(url);
   };
 
+  const exportToXLSX = async () => {
+    if (forumMembers.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Forum Report");
+
+    worksheet.columns = [
+      { header: "Name", key: "name", width: 25 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Phone", key: "phone", width: 18 },
+      { header: "Date", key: "date", width: 12 },
+      { header: "Amount", key: "amount", width: 12 },
+      { header: "Type", key: "type", width: 15 },
+      { header: "Descriptor", key: "descriptor", width: 35 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF4472C4" },
+    };
+    worksheet.getRow(1).alignment = { horizontal: "center", vertical: "middle" };
+    worksheet.getRow(1).border = {
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" },
+    };
+
+    forumMembers.forEach((m, idx) => {
+      const row = worksheet.addRow({
+        name: m.name ?? "",
+        email: m.email ?? "",
+        phone: m.phone ?? "",
+        date: new Date(m.date),
+        amount: m.amount,
+        type: m.type ?? "",
+        descriptor: m.descriptor ?? "",
+      });
+
+      row.getCell(4).numFmt = "mmm dd, yyyy";
+      row.getCell(5).numFmt = "$#,##0.00";
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFD3D3D3" } },
+          bottom: { style: "thin", color: { argb: "FFD3D3D3" } },
+          left: { style: "thin", color: { argb: "FFD3D3D3" } },
+          right: { style: "thin", color: { argb: "FFD3D3D3" } },
+        };
+      });
+
+      if (idx % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFF2F2F2" },
+          };
+        });
+      }
+    });
+
+    worksheet.views = [{ state: "frozen", ySplit: 1 }];
+
+    const trimesterMap: Record<string, string> = {
+      "Trimester 1": "t1",
+      "Trimester 2": "t2",
+      "Trimester 3": "t3",
+    };
+
+    const yearsString =
+      selectedYears.length > 0 ? selectedYears.join("_") : "all";
+
+    let filename = "";
+    if (customRange && startDate && endDate) {
+      filename = `forum_report_${startDate}_to_${endDate}.xlsx`;
+    } else {
+      let trimestersString = "";
+      if (selectedTrimesters.length > 0 && selectedTrimesters.length < 3) {
+        trimestersString = selectedTrimesters
+          .map((t) => trimesterMap[t] || t)
+          .join("_");
+      }
+      filename = trimestersString
+        ? `forum_report_${yearsString}_${trimestersString}.xlsx`
+        : `forum_report_${yearsString}.xlsx`;
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, filename);
+  };
+
   // Apply sorting to forum members
   const sortedForumMembers = useMemo(() => {
     if (selectedSort === "default") return forumMembers;
@@ -426,21 +529,29 @@ export default function ForumReports() {
                     </button>
                   </div>
                 </div>
-                <div className="flex w-1/4 flex-row justify-between gap-2">
-                  <div className="flex w-1/2 items-end">
+                <div className="flex w-1/3 flex-row justify-between gap-2">
+                  <div className="flex w-1/3 items-end">
                     <button
                       onClick={fetchForumReport}
-                      className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-blue-500 text-sm font-semibold text-white"
                     >
                       Generate Report
                     </button>
                   </div>
-                  <div className="flex w-1/2 items-end">
+                  <div className="flex w-1/3 items-end">
                     <button
-                      className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-red-500 text-sm font-semibold text-white"
                       onClick={exportToCSV}
                     >
-                      Export as CSV
+                      Export to CSV
+                    </button>
+                  </div>
+                  <div className="flex w-1/3 items-end">
+                    <button
+                      className="h-8 w-full cursor-pointer rounded-lg bg-green-600 text-sm font-semibold text-white"
+                      onClick={exportToXLSX}
+                    >
+                      Export to XLSX
                     </button>
                   </div>
                 </div>
@@ -484,7 +595,7 @@ export default function ForumReports() {
                       </tr>
                     ) : (
                       sortedForumMembers.map((m, i) => (
-                        <tr key={i} className="border-t">
+                        <tr key={i} className={`border-t ${i % 2 === 1 ? "bg-orange-50" : ""}`}>
                           <td className="p-3">{m.name}</td>
                           <td className="p-3">{m.email}</td>
                           <td className="p-3">{m.phone}</td>

@@ -5,6 +5,9 @@ import { useState, useEffect, useMemo } from "react";
 import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import SelectDropdown from "@/components/ui/SelectDropdown";
+import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 export default function DonationReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -99,6 +102,90 @@ export default function DonationReports() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const exportToXLSX = async () => {
+    if (donationTransactions.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Donation Report");
+
+    worksheet.columns = [
+      { header: "Name", key: "name", width: 25 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Address", key: "address", width: 40 },
+      { header: "Date", key: "date", width: 12 },
+      { header: "Amount", key: "amount", width: 12 },
+      { header: "Type", key: "type", width: 15 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF4472C4" },
+    };
+    worksheet.getRow(1).alignment = { horizontal: "center", vertical: "middle" };
+    worksheet.getRow(1).border = {
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" },
+    };
+
+    donationTransactions.forEach((t, idx) => {
+      const row = worksheet.addRow({
+        name: t.name ?? "",
+        email: t.transaction_email ?? "",
+        address: t.address ?? "",
+        date: new Date(t.date),
+        amount: t.amount,
+        type: t.type ?? "",
+      });
+
+      row.getCell(4).numFmt = "mmm dd, yyyy";
+      row.getCell(5).numFmt = "$#,##0.00";
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFD3D3D3" } },
+          bottom: { style: "thin", color: { argb: "FFD3D3D3" } },
+          left: { style: "thin", color: { argb: "FFD3D3D3" } },
+          right: { style: "thin", color: { argb: "FFD3D3D3" } },
+        };
+      });
+
+      if (idx % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFF2F2F2" },
+          };
+        });
+      }
+    });
+
+    worksheet.views = [{ state: "frozen", ySplit: 1 }];
+
+    const yearsString =
+      selectedYears.length > 0 ? selectedYears.join("_") : "all";
+    let filename = "";
+
+    if (customRange && startDate && endDate) {
+      filename = `donation_report_${startDate}_to_${endDate}.xlsx`;
+    } else {
+      filename = `donation_report_${yearsString}.xlsx`;
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, filename);
   };
 
   const fetchDonationTransactions = async () => {
@@ -352,21 +439,29 @@ export default function DonationReports() {
                     </button>
                   </div>
                 </div>
-                <div className="flex w-1/4 flex-row justify-between gap-2">
-                  <div className="flex w-1/2 items-end">
+                <div className="flex w-1/3 flex-row justify-between gap-2">
+                  <div className="flex w-1/3 items-end">
                     <button
                       onClick={fetchDonationTransactions}
-                      className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-blue-500 text-sm font-semibold text-white"
                     >
                       Generate Report
                     </button>
                   </div>
-                  <div className="flex w-1/2 items-end">
+                  <div className="flex w-1/3 items-end">
                     <button
-                      className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-red-500 text-sm font-semibold text-white"
                       onClick={exportToCSV}
                     >
-                      Export as CSV
+                      Export to CSV
+                    </button>
+                  </div>
+                  <div className="flex w-1/3 items-end">
+                    <button
+                      className="h-8 w-full cursor-pointer rounded-lg bg-green-600 text-sm font-semibold text-white"
+                      onClick={exportToXLSX}
+                    >
+                      Export to XLSX
                     </button>
                   </div>
                 </div>
@@ -408,7 +503,7 @@ export default function DonationReports() {
                       </tr>
                     ) : (
                       sortedDonations.map((t, i) => (
-                        <tr key={i} className="border-t">
+                        <tr key={i} className={`border-t ${i % 2 === 1 ? "bg-orange-50" : ""}`}>
                           <td className="p-3">{t.name}</td>
                           <td className="p-3">{t.transaction_email}</td>
                           <td className="p-3">{t.address}</td>

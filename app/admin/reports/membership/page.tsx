@@ -2,9 +2,10 @@
 
 import { supabase } from "@/app/supabase";
 import { useState, useEffect, useMemo } from "react";
-import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import SelectDropdown from "@/components/ui/SelectDropdown";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 export default function MembershipReports() {
   const [members, setMembers] = useState<any[]>([]);
@@ -182,6 +183,102 @@ export default function MembershipReports() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const exportToXLSX = async () => {
+    if (filteredMembers.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Membership Report");
+
+    worksheet.columns = [
+      { header: "Name", key: "name", width: 25 },
+      { header: "Address", key: "address", width: 40 },
+      { header: "Phone", key: "phone", width: 18 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Emergency Contact", key: "emergency_contact", width: 25 },
+      { header: "Emergency Phone", key: "emergency_phone", width: 18 },
+      { header: "Status", key: "status", width: 15 },
+      { header: "Expiration", key: "expiration", width: 12 },
+      { header: "Gender", key: "gender", width: 10 },
+      { header: "Member Type", key: "type", width: 15 },
+      { header: "Delivery Method", key: "delivery_method", width: 15 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF4472C4" },
+    };
+    worksheet.getRow(1).alignment = { horizontal: "center", vertical: "middle" };
+    worksheet.getRow(1).border = {
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" },
+    };
+
+    filteredMembers.forEach((m, idx) => {
+      const row = worksheet.addRow({
+        name: m.name ?? "",
+        address: m.address ?? "",
+        phone: m.phone ?? "",
+        email: m.email ?? "",
+        emergency_contact: m.emergency_contact ?? "",
+        emergency_phone: m.emergency_contact_phone ?? "",
+        status: m.member_status ?? "",
+        expiration: m.expiration_date ? new Date(m.expiration_date) : "",
+        gender: m.gender ?? "",
+        type: m.type ?? "",
+        delivery_method: m.delivery_method ?? "Email",
+      });
+
+      if (m.expiration_date) {
+        row.getCell(8).numFmt = "yyyy-mm-dd";
+      }
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFD3D3D3" } },
+          bottom: { style: "thin", color: { argb: "FFD3D3D3" } },
+          left: { style: "thin", color: { argb: "FFD3D3D3" } },
+          right: { style: "thin", color: { argb: "FFD3D3D3" } },
+        };
+      });
+
+      if (idx % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFF2F2F2" },
+          };
+        });
+      }
+    });
+
+    worksheet.views = [{ state: "frozen", ySplit: 1 }];
+
+    let filename = "";
+    if (customRange && startDate && endDate) {
+      filename = `membership_report_${startDate}_to_${endDate}.xlsx`;
+    } else {
+      const yearsString =
+        selectedYears.length > 0
+          ? selectedYears.map(formatAcademicYear).join("_")
+          : "all";
+      filename = `membership_report_${yearsString}.xlsx`;
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, filename);
   };
 
   const formatAcademicYear = (shortYear: string): string => {
@@ -433,21 +530,29 @@ export default function MembershipReports() {
                     </button>
                   </div>
                 </div>
-                <div className="flex w-1/4 flex-row justify-between gap-2">
-                  <div className="flex w-1/2 items-end">
+                <div className="flex w-1/3 flex-row justify-between gap-2">
+                  <div className="flex w-1/3 items-end">
                     <button
                       onClick={fetchMembershipMembers}
-                      className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-blue-500 text-sm font-semibold text-white"
                     >
                       Generate Report
                     </button>
                   </div>
-                  <div className="flex w-1/2 items-end">
+                  <div className="flex w-1/3 items-end">
                     <button
-                      className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
+                      className="h-8 w-full cursor-pointer rounded-lg bg-red-500 text-sm font-semibold text-white"
                       onClick={exportToCSV}
                     >
-                      Export as CSV
+                      Export to CSV
+                    </button>
+                  </div>
+                  <div className="flex w-1/3 items-end">
+                    <button
+                      className="h-8 w-full cursor-pointer rounded-lg bg-green-600 text-sm font-semibold text-white"
+                      onClick={exportToXLSX}
+                    >
+                      Export to XLSX
                     </button>
                   </div>
                 </div>
@@ -568,7 +673,7 @@ export default function MembershipReports() {
                       </tr>
                     ) : (
                       sortedMembers.map((m, i) => (
-                        <tr key={i} className="border-t">
+                        <tr key={i} className={`border-t ${i % 2 === 1 ? "bg-orange-50" : ""}`}>
                           <td className="p-3">{m.name}</td>
                           <td className="p-3">{m.address}</td>
                           <td className="p-3">{m.phone}</td>
