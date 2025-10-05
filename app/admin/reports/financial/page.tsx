@@ -29,6 +29,16 @@ const TreasurerReqs = () => {
 
   const [donors, setDonors] = useState<any[]>([]);
 
+  const [categorySummary, setCategorySummary] = useState<{
+    membership: { total: number; count: number };
+    forum: { total: number; count: number };
+    donation: { total: number; count: number };
+  }>({
+    membership: { total: 0, count: 0 },
+    forum: { total: 0, count: 0 },
+    donation: { total: 0, count: 0 },
+  });
+
   const [customRange, setCustomRange] = useState(false);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>("");
@@ -747,6 +757,41 @@ const TreasurerReqs = () => {
     setGrossData(grossResults);
     setFeeData(feeResults);
 
+    const summary = {
+      membership: { total: 0, count: 0 },
+      forum: { total: 0, count: 0 },
+      donation: { total: 0, count: 0 },
+    };
+
+    for (const category of categories) {
+      let categoryTotal = 0;
+      for (const { year, month } of range) {
+        const upperCaseCategory = category.toUpperCase();
+        const key = `${upperCaseCategory}-${year}-${month}`;
+        const gross = grossResults[key] ?? 0;
+        const fee = feeResults[key] ?? 0;
+        categoryTotal += gross - fee;
+      }
+
+      const categoryKey = category.toLowerCase() as 'membership' | 'forum' | 'donation';
+      summary[categoryKey].total = categoryTotal;
+
+      const { data: countData, error: countError } = await supabase.rpc(
+        "get_transaction_count_by_type",
+        {
+          p_type: category,
+          p_start_date: fromDateValue,
+          p_end_date: toDateValue,
+        }
+      );
+
+      if (!countError && countData !== null) {
+        summary[categoryKey].count = countData;
+      }
+    }
+
+    setCategorySummary(summary);
+
     const paypal_gross: Record<string, number> = {};
     const paypal_fee: Record<string, number> = {};
     const paypal_net: Record<string, number> = {};
@@ -1044,11 +1089,60 @@ const squarespaceRows = categories.map((cat) => {
               {/* <div className="relative custom-scrollbar bg-white p-4 rounded-lg overflow-auto"> */}
               {showReport && (
                 <div className="custom-scrollbar h-full w-full rounded-lg bg-white p-4 px-6">
+                  <div className="mb-4 grid grid-cols-4 gap-3">
+                    <div className="rounded-lg border border-slate-300 bg-slate-100 p-3">
+                      <h3 className="mb-1 text-xs font-semibold text-black">
+                        Total
+                      </h3>
+                      <p className="text-lg font-bold text-black">
+                        {format(
+                          categorySummary.membership.total +
+                          categorySummary.forum.total +
+                          categorySummary.donation.total
+                        )}
+                      </p>
+                      <p className="text-xs text-black">
+                        {categorySummary.membership.count +
+                          categorySummary.forum.count +
+                          categorySummary.donation.count}{" "}
+                        transactions
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-blue-300 bg-blue-100 p-3">
+                      <h3 className="mb-1 text-xs font-semibold text-black">
+                        Membership
+                      </h3>
+                      <p className="text-lg font-bold text-black">
+                        {format(categorySummary.membership.total)}
+                      </p>
+                      <p className="text-xs text-black">
+                        {categorySummary.membership.count} transactions
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-emerald-300 bg-emerald-100 p-3">
+                      <h3 className="mb-1 text-xs font-semibold text-black">
+                        Forum
+                      </h3>
+                      <p className="text-lg font-bold text-black">
+                        {format(categorySummary.forum.total)}
+                      </p>
+                      <p className="text-xs text-black">
+                        {categorySummary.forum.count} transactions
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-purple-300 bg-purple-100 p-3">
+                      <h3 className="mb-1 text-xs font-semibold text-black">
+                        Donation
+                      </h3>
+                      <p className="text-lg font-bold text-black">
+                        {format(categorySummary.donation.total)}
+                      </p>
+                      <p className="text-xs text-black">
+                        {categorySummary.donation.count} transactions
+                      </p>
+                    </div>
+                  </div>
                   <div className="custom-scrollbar relative w-full grow overflow-auto rounded-lg bg-white">
-                    <p className="mb-4">
-                      {/* Showing report from <strong>{fromDate}</strong> to{" "}
-                      <strong>{toDate}</strong> */}
-                    </p>
                     <div className="sticky left-0 z-10 pb-2">
                       <h2 className="mb-2 text-base font-semibold">
                         Squarespace
@@ -1100,14 +1194,12 @@ const squarespaceRows = categories.map((cat) => {
                         <tbody>
                           {categories.map((cat, catIndex) => (
                             <React.Fragment key={cat}>
-                              {/* Main data row */}
                               <tr>
                                 <td className="sticky left-0 z-20 border bg-gray-100 p-2 text-left font-semibold">
                                   {cat.charAt(0).toUpperCase() +
                                     cat.slice(1).toLowerCase()}
                                 </td>
                                 {monthsInRange.map(({ year, month }, monthIndex) => {
-                                  // Convert category to uppercase for data lookup to match existing data keys
                                   const upperCat = cat.toUpperCase();
                                   const key = `${upperCat}-${year}-${month}`;
 
@@ -1118,7 +1210,6 @@ const squarespaceRows = categories.map((cat) => {
                                   const isAlternateMonth = monthIndex % 2 === 1;
                                   const isAlternateRow = catIndex % 2 === 1;
 
-                                  // Determine background color based on row and column
                                   let bgColor = "";
                                   if (isAlternateRow) {
                                     bgColor = isAlternateMonth ? "bg-orange-100" : "bg-gray-100";
@@ -1158,13 +1249,11 @@ const squarespaceRows = categories.map((cat) => {
                             </React.Fragment>
                           ))}
 
-                          {/* Total Row */}
                           <tr className="font-semibold">
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2 text-left font-semibold">
                               Total
                             </td>
                             {monthsInRange.map(({ year, month }, monthIndex) => {
-                              // Calculate totals for each month across all categories
                               let totalGross = 0;
                               let totalFee = 0;
                               let totalNet = 0;
@@ -1216,7 +1305,6 @@ const squarespaceRows = categories.map((cat) => {
                       </table>
                     </div>
 
-                    {/* Paypal Section */}
                     <div className="sticky left-0 z-10 bg-white pb-2">
                       <h2 className="mt-8 mb-2 text-base font-semibold">
                         PayPal
@@ -1398,7 +1486,6 @@ const squarespaceRows = categories.map((cat) => {
                       </table>
                     </div>
 
-                    {/* Stripe Section */}
                     <div className="sticky left-0 z-10 bg-white pb-2">
                       <h2 className="mt-8 mb-2 text-base font-semibold">
                         Stripe
@@ -1514,7 +1601,6 @@ const squarespaceRows = categories.map((cat) => {
                             </td>
                           </tr>
 
-                          {/* Row: Bank Confirmation */}
                           <tr className="font-semibold">
                             <td className="sticky left-0 z-20 border bg-gray-100 p-2">
                               Bank Confirmation
@@ -1578,7 +1664,6 @@ const squarespaceRows = categories.map((cat) => {
                                 </React.Fragment>
                               );
                             })}
-                            {/* YTD Total */}
                             <td className="sticky right-0 border bg-gray-100 p-2 font-bold"></td>
                           </tr>
                         </tbody>
@@ -1587,7 +1672,6 @@ const squarespaceRows = categories.map((cat) => {
                   </div>
                 </div>
               )}
-              {/* </div> */}
             </div>
           </div>
         </div>
