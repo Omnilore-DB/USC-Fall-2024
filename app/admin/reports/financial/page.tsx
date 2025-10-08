@@ -776,17 +776,16 @@ const TreasurerReqs = () => {
       const categoryKey = category.toLowerCase() as 'membership' | 'forum' | 'donation';
       summary[categoryKey].total = categoryTotal;
 
-      const { data: countData, error: countError } = await supabase.rpc(
-        "get_transaction_count_by_type",
-        {
-          p_type: category,
-          p_start_date: fromDateValue,
-          p_end_date: toDateValue,
-        }
-      );
+      const { data: countData, error: countError } = await supabase
+        .from('transactions')
+        .select('id, members_to_transactions!inner(sku, products!inner(type))', { count: 'exact', head: false })
+        .gte('date', fromDateValue)
+        .lte('date', toDateValue)
+        .eq('members_to_transactions.products.type', category.toUpperCase() as 'MEMBERSHIP' | 'FORUM' | 'DONATION');
 
-      if (!countError && countData !== null) {
-        summary[categoryKey].count = countData;
+      if (!countError && countData) {
+        const uniqueTransactionIds = new Set(countData.map(t => t.id));
+        summary[categoryKey].count = uniqueTransactionIds.size;
       }
     }
 
