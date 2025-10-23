@@ -583,47 +583,47 @@ const TreasurerReqs = () => {
       console.log("Skipping donor fetch due to missing dates");
       return;
     }
-  
+
     const { data, error } = await supabase.rpc("get_donation_history", {
       start_date: start,
       end_date: end,
     });
-  
-  
-  if (error) {
-    console.error("Error fetching donors:", error.message);
-  } else {
-    console.log("Donors fetched:", data);
 
-    const grouped = data.reduce((acc, item) => {
-      const key = item.member_id;
-      if (!acc[key]) {
-        acc[key] = {
-          member_id: item.member_id,
-          first_name: item.first_name,
-          last_name: item.last_name,
-          street_address: item.street_address,
-          city: item.city,
-          state: item.state,
-          zip_code: item.zip_code,
-          donations: [],
-          total_donation_amount: 0,
-        };
-      }
 
-      acc[key].donations.push({
-        date: item.donation_date,
-        amount: item.donation_amount,
-      });
+    if (error) {
+      console.error("Error fetching donors:", error.message);
+    } else {
+      console.log("Donors fetched:", data);
 
-      acc[key].total_donation_amount += item.donation_amount;
+      const grouped = data.reduce((acc, item) => {
+        const key = item.member_id;
+        if (!acc[key]) {
+          acc[key] = {
+            member_id: item.member_id,
+            first_name: item.first_name,
+            last_name: item.last_name,
+            street_address: item.street_address,
+            city: item.city,
+            state: item.state,
+            zip_code: item.zip_code,
+            donations: [],
+            total_donation_amount: 0,
+          };
+        }
 
-      return acc;
-    }, {} as any);
+        acc[key].donations.push({
+          date: item.donation_date,
+          amount: item.donation_amount,
+        });
 
-    setDonors(Object.values(grouped));
-  }
-};
+        acc[key].total_donation_amount += item.donation_amount;
+
+        return acc;
+      }, {} as any);
+
+      setDonors(Object.values(grouped));
+    }
+  };
 
   const fetchPayouts = async (fromDate: string, toDate: string) => {
     const { data, error } = await supabase
@@ -885,14 +885,14 @@ const TreasurerReqs = () => {
 
     setFromDate(start);
     setToDate(end);
-    setTriggerPresetReport(true); 
+    setTriggerPresetReport(true);
   };
 
   //donationRows
   React.useEffect(() => {
     if (triggerPresetReport && fromDate && toDate) {
       handleGenerateReport();
-      setTriggerPresetReport(false); 
+      setTriggerPresetReport(false);
     }
   }, [triggerPresetReport, fromDate, toDate]);
   const donationRows = React.useMemo(() => {
@@ -909,19 +909,19 @@ const TreasurerReqs = () => {
       ]);
     });
   }, [donors]);
-  
+
   React.useEffect(() => {
-    if (donors.length > 0 && monthsInRange.length > 0) {
+    if (monthsInRange.length > 0) {
       setShowReport(true);
     }
-  }, [donors, monthsInRange]);
-  
+  }, [monthsInRange]);
 
-// Generate Squarespace rows
-const squarespaceRows = categories.map((cat) => {
-  const row: string[] = [cat];
-  let ytdGross = 0;
-  let ytdFee = 0;
+
+  // Generate Squarespace rows
+  const squarespaceRows = categories.map((cat) => {
+    const row: string[] = [cat];
+    let ytdGross = 0;
+    let ytdFee = 0;
 
     monthsInRange.forEach(({ year, month }) => {
       const key = `${cat}-${year}-${month}`;
@@ -986,19 +986,19 @@ const squarespaceRows = categories.map((cat) => {
     ],
   ];
 
-// // Donation rows
-// const donationRows = donors.flatMap((donor) => {
-//   const fullName = `${donor.first_name} ${donor.last_name}`;
-//   const address = [donor.street_address, donor.city, donor.state, donor.zip_code]
-//     .filter(Boolean)
-//     .join(", ");
-//     return donor.donations.map((donation: { date: string; amount: number }) => [
-//       fullName,
-//     new Date(donation.date).toLocaleDateString(),
-//     donation.amount.toFixed(2),
-//     address,
-//   ]);
-// });
+  // // Donation rows
+  // const donationRows = donors.flatMap((donor) => {
+  //   const fullName = `${donor.first_name} ${donor.last_name}`;
+  //   const address = [donor.street_address, donor.city, donor.state, donor.zip_code]
+  //     .filter(Boolean)
+  //     .join(", ");
+  //     return donor.donations.map((donation: { date: string; amount: number }) => [
+  //       fullName,
+  //     new Date(donation.date).toLocaleDateString(),
+  //     donation.amount.toFixed(2),
+  //     address,
+  //   ]);
+  // });
 
   return (
     <div className="custom-scrollbar flex h-full w-full flex-col bg-gray-100">
@@ -1238,10 +1238,10 @@ const squarespaceRows = categories.map((cat) => {
                                       grossData,
                                       cat.toUpperCase(),
                                     ) -
-                                      getCatRangeTotal(
-                                        feeData,
-                                        cat.toUpperCase(),
-                                      ),
+                                    getCatRangeTotal(
+                                      feeData,
+                                      cat.toUpperCase(),
+                                    ),
                                   )}
                                 </td>
                               </tr>

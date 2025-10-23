@@ -313,11 +313,15 @@ export default function MembershipReports() {
       return;
     }
 
+    console.log('fetchMembershipMembers - selectedYears:', selectedYears);
+
     const { data: products, error: productError } = await supabase
       .from("products")
       .select("sku, status")
       .eq("type", "MEMBERSHIP")
       .in("year", selectedYears);
+
+    console.log('Found products:', products?.length);
 
     if (productError) {
       console.error("Failed to fetch membership SKUs", productError);

@@ -199,6 +199,8 @@ export default function DonationReports() {
       return;
     }
 
+    console.log('fetchDonationTransactions - selectedYears:', selectedYears);
+
     const { data: products, error: productError } = await supabase
       .from("products")
       .select("sku")
@@ -209,9 +211,14 @@ export default function DonationReports() {
       return;
     }
 
+    console.log('Donation products:', products);
+
     const donationSkus = products
       .map((p) => p.sku)
       .filter((sku) => sku !== "SQ-TEST");
+
+    console.log('Donation SKUs (excluding SQ-TEST):', donationSkus);
+
     if (donationSkus.length === 0) {
       setDonationTransactions([]);
       return;
@@ -221,6 +228,8 @@ export default function DonationReports() {
       .from("members_to_transactions")
       .select("transaction_id, member_id")
       .in("sku", donationSkus);
+
+    console.log('members_to_transactions with donation SKUs:', mtt?.length || 0);
 
     if (mttError) {
       console.error("Error fetching members_to_transactions", mttError);
