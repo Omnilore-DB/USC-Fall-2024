@@ -122,39 +122,42 @@ export default function MembershipReports() {
   }, [filteredMembers, selectedSort, selectedSortWay]);
 
   const exportToCSV = () => {
-    // Export filtered members instead of all members
-    if (filteredMembers.length === 0) {
-      alert("No data to export");
-      return;
-    }
+  if (filteredMembers.length === 0) {
+    alert("No data to export");
+    return;
+  }
 
-    const headers = [
-      "Name",
-      "Address",
-      "Phone",
-      "Email",
-      "Emergency Contact",
-      "Emergency Phone",
-      "Status",
-      "Expiration",
-      "Gender",
-      "Member Type",
-      "Delivery Method"
-    ];
+  const headers = [
+    "Name",
+    "Address",
+    "Phone",
+    "Email",
+    "Emergency Contact",
+    "Emergency Phone",
+    "Status",
+    "Expiration",
+    "Date of Death",
+    "Gender",
+    "Member Type",
+    "Delivery Method",
+    "Partner Name"
+  ];
 
-    const rows = filteredMembers.map((m) => [
-      m.name ?? "",
-      m.address ?? "",
-      m.phone ?? "",
-      m.email ?? "",
-      m.emergency_contact ?? "",
-      m.emergency_contact_phone ?? "",
-      m.member_status ?? "",
-      m.expiration_date ?? "",
-      m.gender ?? "",
-      m.type ?? "",
-      m.delivery_method ?? "Email"
-    ]);
+  const rows = filteredMembers.map((m) => [
+    m.name ?? "",
+    m.address ?? "",
+    m.phone ?? "",
+    m.email ?? "",
+    m.emergency_contact ?? "",
+    m.emergency_contact_phone ?? "",
+    m.member_status ?? "",
+    m.expiration_date ?? "",
+    m.date_of_death ?? "",
+    m.gender ?? "",
+    m.type ?? "",
+    m.delivery_method ?? "Email",
+    m.partner_name ?? ""
+  ]);
 
     const csvContent = [
       headers.join(","),
@@ -186,27 +189,29 @@ export default function MembershipReports() {
   };
 
   const exportToXLSX = async () => {
-    if (filteredMembers.length === 0) {
-      alert("No data to export");
-      return;
-    }
+  if (filteredMembers.length === 0) {
+    alert("No data to export");
+    return;
+  }
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Membership Report");
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Membership Report");
 
-    worksheet.columns = [
-      { header: "Name", key: "name", width: 25 },
-      { header: "Address", key: "address", width: 40 },
-      { header: "Phone", key: "phone", width: 18 },
-      { header: "Email", key: "email", width: 30 },
-      { header: "Emergency Contact", key: "emergency_contact", width: 25 },
-      { header: "Emergency Phone", key: "emergency_phone", width: 18 },
-      { header: "Status", key: "status", width: 15 },
-      { header: "Expiration", key: "expiration", width: 12 },
-      { header: "Gender", key: "gender", width: 10 },
-      { header: "Member Type", key: "type", width: 15 },
-      { header: "Delivery Method", key: "delivery_method", width: 15 },
-    ];
+  worksheet.columns = [
+    { header: "Name", key: "name", width: 25 },
+    { header: "Address", key: "address", width: 40 },
+    { header: "Phone", key: "phone", width: 18 },
+    { header: "Email", key: "email", width: 30 },
+    { header: "Emergency Contact", key: "emergency_contact", width: 25 },
+    { header: "Emergency Phone", key: "emergency_phone", width: 18 },
+    { header: "Status", key: "status", width: 15 },
+    { header: "Expiration", key: "expiration", width: 12 },
+    { header: "Date of Death", key: "date_of_death", width: 12 },
+    { header: "Gender", key: "gender", width: 10 },
+    { header: "Member Type", key: "type", width: 15 },
+    { header: "Delivery Method", key: "delivery_method", width: 15 },
+    { header: "Partner Name", key: "partner_name", width: 25 },
+  ];
 
     worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
     worksheet.getRow(1).fill = {
@@ -223,23 +228,29 @@ export default function MembershipReports() {
     };
 
     filteredMembers.forEach((m, idx) => {
-      const row = worksheet.addRow({
-        name: m.name ?? "",
-        address: m.address ?? "",
-        phone: m.phone ?? "",
-        email: m.email ?? "",
-        emergency_contact: m.emergency_contact ?? "",
-        emergency_phone: m.emergency_contact_phone ?? "",
-        status: m.member_status ?? "",
-        expiration: m.expiration_date ? new Date(m.expiration_date) : "",
-        gender: m.gender ?? "",
-        type: m.type ?? "",
-        delivery_method: m.delivery_method ?? "Email",
-      });
+  const row = worksheet.addRow({
+    name: m.name ?? "",
+    address: m.address ?? "",
+    phone: m.phone ?? "",
+    email: m.email ?? "",
+    emergency_contact: m.emergency_contact ?? "",
+    emergency_phone: m.emergency_contact_phone ?? "",
+    status: m.member_status ?? "",
+    expiration: m.expiration_date ? new Date(m.expiration_date) : "",
+    date_of_death: m.date_of_death ? new Date(m.date_of_death) : "",
+    gender: m.gender ?? "",
+    type: m.type ?? "",
+    delivery_method: m.delivery_method ?? "Email",
+    partner_name: m.partner_name ?? "",
+  });
 
-      if (m.expiration_date) {
-        row.getCell(8).numFmt = "yyyy-mm-dd";
-      }
+  if (m.expiration_date) {
+    row.getCell(8).numFmt = "yyyy-mm-dd";
+  }
+  
+  if (m.date_of_death) {
+    row.getCell(9).numFmt = "yyyy-mm-dd";
+  }
 
       row.eachCell((cell) => {
         cell.border = {
@@ -374,7 +385,7 @@ export default function MembershipReports() {
       .select(`
         id, first_name, last_name, street_address, city, state, zip_code, 
         phone, email, emergency_contact, emergency_contact_phone, 
-        member_status, expiration_date, gender, type
+        member_status, expiration_date, date_of_death, gender, type, partner_id
       `)
       .in("id", filteredMemberIds.map(Number));
 
@@ -383,33 +394,51 @@ export default function MembershipReports() {
       return;
     }
 
-    const formatted = mtt
-      .map((row) => {
-        const m = membersData.find((mem) => mem.id === row.member_id);
-        const addressParts = [
-          m?.street_address,
-          m?.city,
-          [m?.state, m?.zip_code].filter(Boolean).join(" "),
-        ].filter(Boolean);
-        return {
-          id: m?.id,
-          first_name: m?.first_name ?? "",
-          last_name: m?.last_name ?? "",
-          name: `${m?.first_name} ${m?.last_name}`,
-          address: addressParts.join(", "),
-          phone: formatPhoneNumber(m?.phone ?? ""),
-          email: m?.email ?? "",
-          emergency_contact: m?.emergency_contact,
-          emergency_contact_phone: formatPhoneNumber(
-            m?.emergency_contact_phone ?? "",
-          ),
-          member_status: skuStatusMap[row.sku] ?? "",
-          expiration_date: m?.expiration_date,
-          gender: m?.gender ?? "",
-          type: m?.type ?? "",
-          delivery_method: "Email"
-        };
-      })
+    const memberMap = new Map(
+  membersData.map(m => [m.id, `${m.first_name} ${m.last_name}`])
+);
+
+const formatted = mtt
+  .map((row) => {
+    const m = membersData.find((mem) => mem.id === row.member_id);
+    const addressParts = [
+      m?.street_address,
+      m?.city,
+      [m?.state, m?.zip_code].filter(Boolean).join(" "),
+    ].filter(Boolean);
+    
+    const partnerName = m?.partner_id ? memberMap.get(m.partner_id) || "" : "";
+    
+    let gender = m?.gender || "";
+    if (gender) {
+      const g = gender.toUpperCase();
+      if (g === 'FEMALE' || g === 'F') gender = 'F';
+      else if (g === 'MALE' || g === 'M') gender = 'M';
+    }
+    
+    return {
+      id: m?.id,
+      first_name: m?.first_name ?? "",
+      last_name: m?.last_name ?? "",
+      name: `${m?.first_name} ${m?.last_name}`,
+      address: addressParts.join(", "),
+      phone: formatPhoneNumber(m?.phone ?? ""),
+      email: m?.email ?? "",
+      emergency_contact: m?.emergency_contact,
+      emergency_contact_phone: formatPhoneNumber(
+        m?.emergency_contact_phone ?? "",
+      ),
+      member_status: skuStatusMap[row.sku] ?? "",
+      expiration_date: m?.expiration_date,
+      date_of_death: m?.date_of_death,
+      gender: gender,
+      type: m?.type ?? "",
+      delivery_method: "Email",
+      partner_name: partnerName
+    };
+  })
+
+
       .sort((a, b) => {
         const lastNameCompare = a.last_name.localeCompare(b.last_name);
         if (lastNameCompare !== 0) return lastNameCompare;
@@ -588,13 +617,19 @@ export default function MembershipReports() {
                         Expiration
                       </th>
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
+                        Date of Death
+                      </th>
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Gender
                       </th>
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Member Type
                       </th>
-                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Delivery Method
+                      </th>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Partner Name
                       </th>
                     </tr>
                     {/* Filter Row - only for specific columns */}
@@ -619,6 +654,8 @@ export default function MembershipReports() {
                         </select>
                       </th>
                       {/* Expiration Filter */}
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
+                      {/* Date of Death Filter */}
                       <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
                       {/* Gender Filter */}
                       <th className="sticky top-[52px] z-10 bg-gray-50 p-2">
@@ -659,6 +696,8 @@ export default function MembershipReports() {
                           ))}
                         </select>
                       </th>
+                      {/* Partner Name Filter */}
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -682,12 +721,13 @@ export default function MembershipReports() {
                           <td className="p-3">{m.emergency_contact_phone}</td>
                           <td className="p-3">{m.member_status}</td>
                           <td className="p-3">{m.expiration_date}</td>
+                          <td className="p-3">{m.date_of_death}</td>
                           <td className="p-3">{m.gender}</td>
                           <td className="p-3">{m.type}</td>
                           <td className="p-3">{m.delivery_method}</td>
+                          <td className="p-3">{m.partner_name}</td>
                         </tr>
-                      ))
-                    )}
+                      )))}
                   </tbody>
                 </table>
               </div>
