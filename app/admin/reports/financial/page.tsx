@@ -134,26 +134,6 @@ const TreasurerReqs = () => {
         ],
         rows: stripeRows,
       },
-      {
-        title: "Donation",
-        headers: [
-          "Category",
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-          "YTD",
-        ],
-        rows: donationRows,
-      },
     ];
 
     let allData: any[][] = [];
@@ -250,9 +230,9 @@ const TreasurerReqs = () => {
         "Payout",
         ...buildFullYearRows((month) => {
           const monthData = monthsInRange.find(m => m.month === month);
-          return monthData ? ((paypalPayout[`${monthData.year}-${month}`] ?? 0) / 100).toFixed(2) : "";
+          return monthData ? (paypalPayout[`${monthData.year}-${month}`] ?? 0).toFixed(2) : "";
         }),
-        (getRangeTotal(paypalPayout) / 100).toFixed(2),
+        getRangeTotal(paypalPayout).toFixed(2),
       ],
     ];
 
@@ -343,11 +323,6 @@ const TreasurerReqs = () => {
           "YTD",
         ],
         rows: stripeRowsFull,
-      },
-      {
-        title: "Donation",
-        headers: ["Name", "Date", "Amount", "Address"],
-        rows: donationRows,
       },
     ];
 
@@ -522,7 +497,13 @@ const TreasurerReqs = () => {
     }
 
     const headers = ["Name", "Date", "Amount", "Address"];
-    const rows = donors.flatMap((donor) => {
+    const sortedDonors = [...donors].sort((a, b) => {
+      const lastNameCompare = a.last_name.localeCompare(b.last_name);
+      if (lastNameCompare !== 0) return lastNameCompare;
+      return a.first_name.localeCompare(b.first_name);
+    });
+
+    const rows = sortedDonors.flatMap((donor) => {
       const fullName = `${donor.first_name} ${donor.last_name}`;
       const fullAddressParts = [
         donor.street_address,
@@ -811,7 +792,8 @@ const TreasurerReqs = () => {
           paypal_gross[key] = g.data ?? 0;
           paypal_fee[key] = f.data ?? 0;
           paypal_net[key] = n.data ?? 0;
-          paypal_payout[key] = ppo.data ?? 0;
+          const payout = ppo.data ?? 0;
+          paypal_payout[key] = payout;
         });
       }),
     );
@@ -896,7 +878,13 @@ const TreasurerReqs = () => {
     }
   }, [triggerPresetReport, fromDate, toDate]);
   const donationRows = React.useMemo(() => {
-    return donors.flatMap((donor) => {
+    const sortedDonors = [...donors].sort((a, b) => {
+      const lastNameCompare = a.last_name.localeCompare(b.last_name);
+      if (lastNameCompare !== 0) return lastNameCompare;
+      return a.first_name.localeCompare(b.first_name);
+    });
+
+    return sortedDonors.flatMap((donor) => {
       const fullName = `${donor.first_name} ${donor.last_name}`;
       const address = [donor.street_address, donor.city, donor.state, donor.zip_code]
         .filter(Boolean)
@@ -955,9 +943,9 @@ const TreasurerReqs = () => {
     [
       "Payout",
       ...monthsInRange.map(({ year, month }) =>
-        ((paypalPayout[`${year}-${month}`] ?? 0) / 100).toFixed(2),
+        (paypalPayout[`${year}-${month}`] ?? 0).toFixed(2),
       ),
-      (getRangeTotal(paypalPayout) / 100).toFixed(2),
+      getRangeTotal(paypalPayout).toFixed(2),
     ],
   ];
 
@@ -1405,13 +1393,13 @@ const TreasurerReqs = () => {
                                   key={`net-${year}-${month}`}
                                   className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}
                                 >
-                                  {format((paypalPayout[key] ?? 0) / 100)}
+                                  {format(paypalPayout[key] ?? 0)}
                                 </td>
                               );
                             })}
 
                             <td className="sticky right-0 border bg-gray-100 p-2 font-bold">
-                              {format(getRangeTotal(paypalPayout) / 100)}
+                              {format(getRangeTotal(paypalPayout))}
                             </td>
                           </tr>
 

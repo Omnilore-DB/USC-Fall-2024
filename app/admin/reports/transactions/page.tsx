@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import * as XLSX from "xlsx";
+import { usePartnerNavigation } from "@/hooks/use-partner-navigation";
+import { cn } from "@/lib/utils";
 
 export default function TransactionsReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -18,10 +20,14 @@ export default function TransactionsReports() {
       name: string;
       type: string;
       squarespace_id: string;
+      member_id?: number | null;
+      partner_id?: number | null;
+      partner_name?: string;
     }[]
   >([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const { registerRow, focusPartner, highlightedId } = usePartnerNavigation();
 
   const exportToXLSX = () => {
     if (allTransactions.length === 0) {
@@ -141,24 +147,36 @@ export default function TransactionsReports() {
       }
 
       // Get all member info
-      const { data: memberInfo, error: memberError } = await supabase
-        .from("members")
-        .select("id, first_name, last_name, type")
-        .in("id", memberIds);
+    const { data: memberInfo, error: memberError } = await supabase
+      .from("members")
+      .select("id, first_name, last_name, type, partner_id")
+      .in("id", memberIds);
 
       if (memberError) {
         console.error("Error fetching member info", memberError);
         return;
       }
 
+      const membersById = new Map(memberInfo.map((m) => [m.id, m]));
+
       const memberMap = Object.fromEntries(
-        memberInfo.map((m) => [
-          m.id,
-          {
-            name: `${m.first_name} ${m.last_name}`,
-            type: m.type,
-          },
-        ])
+        memberInfo.map((m) => {
+          const partner = m.partner_id
+            ? membersById.get(m.partner_id)
+            : undefined;
+
+          return [
+            m.id,
+            {
+              name: `${m.first_name} ${m.last_name}`,
+              type: m.type,
+              partner_id: m.partner_id,
+              partner_name: partner
+                ? `${partner.first_name ?? ""} ${partner.last_name ?? ""}`.trim()
+                : "",
+            },
+          ];
+        }),
       );
 
       const cutoff = new Date("2023-07-01");
@@ -216,6 +234,9 @@ export default function TransactionsReports() {
                 amount: individualAmount,
                 name: participantName,
                 type: transactionType,
+                member_id: memberEntry?.member_id ?? null,
+                partner_id: member?.partner_id ?? null,
+                partner_name: member?.partner_name ?? "",
               };
             });
           }
@@ -228,6 +249,9 @@ export default function TransactionsReports() {
             amount: t.amount,
             name: member?.name ?? "Unknown",
             type: transactionType,
+            member_id: memberEntry?.member_id ?? null,
+            partner_id: member?.partner_id ?? null,
+            partner_name: member?.partner_name ?? "",
           }];
         })
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -341,8 +365,11 @@ export default function TransactionsReports() {
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Amount
                       </th>
-                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Type
+                      </th>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Partner
                       </th>
                     </tr>
                   </thead>
@@ -350,7 +377,7 @@ export default function TransactionsReports() {
                     {allTransactions.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={6}
+                          colSpan={7}
                           className="p-3 text-center text-gray-500"
                         >
                           No transactions found
@@ -358,7 +385,14 @@ export default function TransactionsReports() {
                       </tr>
                     ) : (
                       allTransactions.map((t, i) => (
-                        <tr key={i} className="border-t">
+                        <tr
+                          key={i}
+                          ref={registerRow(t.member_id ?? null)}
+                          className={cn(
+                            "border-t transition-colors",
+                            highlightedId === t.member_id ? "bg-yellow-200" : "",
+                          )}
+                        >
                           <td className="p-3">{t.name}</td>
                           <td className="p-3">{t.transaction_email}</td>
                           <td className="p-3">{t.squarespace_id}</td>
@@ -384,6 +418,23 @@ export default function TransactionsReports() {
                             >
                               {t.type}
                             </span>
+                          </td>
+                          <td className="p-3">
+                            {t.partner_id ? (
+                              <button
+                                onClick={() =>
+                                  focusPartner({
+                                    partnerId: t.partner_id ?? null,
+                                    partnerName: t.partner_name,
+                                  })
+                                }
+                                className="text-blue-600 underline-offset-2 hover:underline"
+                              >
+                                {t.partner_name || "View Partner"}
+                              </button>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
                           </td>
                         </tr>
                       ))

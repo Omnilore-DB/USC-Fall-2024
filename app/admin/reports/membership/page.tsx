@@ -6,6 +6,8 @@ import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import SelectDropdown from "@/components/ui/SelectDropdown";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { usePartnerNavigation } from "@/hooks/use-partner-navigation";
+import { cn } from "@/lib/utils";
 
 export default function MembershipReports() {
   const [members, setMembers] = useState<any[]>([]);
@@ -120,6 +122,7 @@ export default function MembershipReports() {
         : (b[selectedSort] || "").toString().localeCompare((a[selectedSort] || "").toString());
     });
   }, [filteredMembers, selectedSort, selectedSortWay]);
+  const { registerRow, focusPartner, highlightedId } = usePartnerNavigation();
 
   const exportToCSV = () => {
   if (filteredMembers.length === 0) {
@@ -399,8 +402,15 @@ export default function MembershipReports() {
     }
 
     const memberMap = new Map(
-  membersData.map(m => [m.id, `${m.first_name} ${m.last_name}`])
-);
+      membersData.map((m) => [
+        m.id,
+        {
+          name: `${m.first_name} ${m.last_name}`,
+          first_name: m.first_name,
+          last_name: m.last_name,
+        },
+      ]),
+    );
 
 const formatted = mtt
   .map((row) => {
@@ -411,7 +421,9 @@ const formatted = mtt
       [m?.state, m?.zip_code].filter(Boolean).join(" "),
     ].filter(Boolean);
     
-    const partnerName = m?.partner_id ? memberMap.get(m.partner_id) || "" : "";
+    const partnerName = m?.partner_id
+      ? memberMap.get(m.partner_id)?.name || ""
+      : "";
     
     let gender = m?.gender || "";
     if (gender) {
@@ -438,7 +450,8 @@ const formatted = mtt
       gender: gender,
       type: m?.type ?? "",
       delivery_method: "Email",
-      partner_name: partnerName
+      partner_name: partnerName,
+      partner_id: m?.partner_id ?? null,
     };
   })
 
@@ -716,7 +729,18 @@ const formatted = mtt
                       </tr>
                     ) : (
                       sortedMembers.map((m, i) => (
-                        <tr key={i} className={`border-t ${i % 2 === 1 ? "bg-orange-50" : ""}`}>
+                        <tr
+                          key={i}
+                          ref={registerRow(m.id ?? null)}
+                          className={cn(
+                            "border-t transition-colors",
+                            highlightedId === m.id
+                              ? "bg-yellow-200"
+                              : i % 2 === 1
+                                ? "bg-orange-50"
+                                : "",
+                          )}
+                        >
                           <td className="p-3">{m.name}</td>
                           <td className="p-3">{m.address}</td>
                           <td className="p-3">{m.phone}</td>
@@ -729,7 +753,23 @@ const formatted = mtt
                           <td className="p-3">{m.gender}</td>
                           <td className="p-3">{m.type}</td>
                           <td className="p-3">{m.delivery_method}</td>
-                          <td className="p-3">{m.partner_name}</td>
+                          <td className="p-3">
+                            {m.partner_id ? (
+                              <button
+                                onClick={() =>
+                                  focusPartner({
+                                    partnerId: m.partner_id,
+                                    partnerName: m.partner_name,
+                                  })
+                                }
+                                className="text-blue-600 underline-offset-2 hover:underline"
+                              >
+                                {m.partner_name || "View Partner"}
+                              </button>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
                         </tr>
                       )))}
                   </tbody>

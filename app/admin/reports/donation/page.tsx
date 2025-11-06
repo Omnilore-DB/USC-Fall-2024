@@ -8,6 +8,8 @@ import SelectDropdown from "@/components/ui/SelectDropdown";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { usePartnerNavigation } from "@/hooks/use-partner-navigation";
+import { cn } from "@/lib/utils";
 
 export default function DonationReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -24,6 +26,9 @@ export default function DonationReports() {
       address: string;
       first_name?: string;
       last_name?: string;
+      member_id?: number | null;
+      partner_id?: number | null;
+      partner_name?: string;
     }[]
   >([]);
   const [startDate, setStartDate] = useState<string>("");
@@ -257,7 +262,7 @@ export default function DonationReports() {
     const { data: memberInfo, error: memberError } = await supabase
       .from("members")
       .select(
-        "id, first_name, last_name, type, street_address, city, state, zip_code",
+        "id, first_name, last_name, type, street_address, city, state, zip_code, partner_id",
       )
       .in("id", memberIds);
 
@@ -266,20 +271,32 @@ export default function DonationReports() {
       return;
     }
 
+    const membersById = new Map(memberInfo.map((m) => [m.id, m]));
+
     const memberMap = Object.fromEntries(
-      memberInfo.map((m) => [
-        m.id,
-        {
-          first_name: m.first_name,
-          last_name: m.last_name,
-          name: `${m.first_name} ${m.last_name}`,
-          type: m.type,
-          street_address: m.street_address,
-          city: m.city,
-          state: m.state,
-          zip_code: m.zip_code,
-        },
-      ]),
+      memberInfo.map((m) => {
+        const partner = m.partner_id
+          ? membersById.get(m.partner_id)
+          : undefined;
+
+        return [
+          m.id,
+          {
+            first_name: m.first_name,
+            last_name: m.last_name,
+            name: `${m.first_name} ${m.last_name}`,
+            type: m.type,
+            street_address: m.street_address,
+            city: m.city,
+            state: m.state,
+            zip_code: m.zip_code,
+            partner_id: m.partner_id,
+            partner_name: partner
+              ? `${partner.first_name ?? ""} ${partner.last_name ?? ""}`.trim()
+              : "",
+          },
+        ];
+      }),
     );
 
     const cutoff = new Date("2023-07-01");
@@ -315,6 +332,9 @@ export default function DonationReports() {
           first_name: member?.first_name ?? "",
           last_name: member?.last_name ?? "",
           type: member?.type ?? "UNKNOWN",
+          member_id: memberEntry?.member_id ?? null,
+          partner_id: member?.partner_id ?? null,
+          partner_name: member?.partner_name ?? "",
         };
       });
 
@@ -372,6 +392,7 @@ export default function DonationReports() {
       return 0;
     });
   }, [donationTransactions, selectedSort, selectedSortWay]);
+  const { registerRow, focusPartner, highlightedId } = usePartnerNavigation();
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
@@ -495,8 +516,11 @@ export default function DonationReports() {
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Amount
                       </th>
-                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Type
+                      </th>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Partner
                       </th>
                     </tr>
                   </thead>
@@ -504,7 +528,7 @@ export default function DonationReports() {
                     {sortedDonations.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={6}
+                          colSpan={7}
                           className="p-3 text-center text-gray-500"
                         >
                           No donations found
@@ -512,7 +536,18 @@ export default function DonationReports() {
                       </tr>
                     ) : (
                       sortedDonations.map((t, i) => (
-                        <tr key={i} className={`border-t ${i % 2 === 1 ? "bg-orange-50" : ""}`}>
+                        <tr
+                          key={i}
+                          ref={registerRow(t.member_id ?? null)}
+                          className={cn(
+                            "border-t transition-colors",
+                            highlightedId === t.member_id
+                              ? "bg-yellow-200"
+                              : i % 2 === 1
+                                ? "bg-orange-50"
+                                : "",
+                          )}
+                        >
                           <td className="p-3">{t.name}</td>
                           <td className="p-3">{t.transaction_email}</td>
                           <td className="p-3">{t.address}</td>
@@ -525,6 +560,23 @@ export default function DonationReports() {
                           </td>
                           <td className="p-3">${t.amount.toFixed(2)}</td>
                           <td className="p-3">{t.type}</td>
+                          <td className="p-3">
+                            {t.partner_id ? (
+                              <button
+                                onClick={() =>
+                                  focusPartner({
+                                    partnerId: t.partner_id ?? null,
+                                    partnerName: t.partner_name,
+                                  })
+                                }
+                                className="text-blue-600 underline-offset-2 hover:underline"
+                              >
+                                {t.partner_name || "View Partner"}
+                              </button>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
                         </tr>
                       ))
                     )}
