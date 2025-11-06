@@ -4,6 +4,9 @@ import { supabase } from "@/app/supabase";
 import { useState, useEffect } from "react";
 import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
+import * as XLSX from "xlsx";
+import { usePartnerNavigation } from "@/hooks/use-partner-navigation";
+import { cn } from "@/lib/utils";
 
 export default function TransactionsReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -17,12 +20,16 @@ export default function TransactionsReports() {
       name: string;
       type: string;
       squarespace_id: string;
+      member_id?: number | null;
+      partner_id?: number | null;
+      partner_name?: string;
     }[]
   >([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const { registerRow, focusPartner, highlightedId } = usePartnerNavigation();
 
-  const exportToCSV = () => {
+  const exportToXLSX = () => {
     if (allTransactions.length === 0) {
       alert("No data to export");
       return;
@@ -38,36 +45,40 @@ export default function TransactionsReports() {
         month: "short",
         day: "numeric",
       }),
-      t.amount.toFixed(2),
+      parseFloat(t.amount.toFixed(2)),
       t.type ?? "",
     ]);
     
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((r) =>
-        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(","),
-      ),
-    ].join("\r\n");
+    // Create worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    
+    // Auto-size columns
+    const columnWidths = [
+      { wch: 20 }, // Name
+      { wch: 30 }, // Email
+      { wch: 15 }, // Squarespace ID
+      { wch: 12 }, // Date
+      { wch: 10 }, // Amount
+      { wch: 12 }, // Type
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
 
     const yearsString =
       selectedYears.length > 0 ? selectedYears.join("_") : "all";
     let filename = "";
 
     if (customRange && startDate && endDate) {
-      filename = `transactions_report_${startDate}_to_${endDate}.csv`;
+      filename = `transactions_report_${startDate}_to_${endDate}.xlsx`;
     } else {
-      filename = `transactions_report_${yearsString}.csv`;
+      filename = `transactions_report_${yearsString}.xlsx`;
     }
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Export file
+    XLSX.writeFile(workbook, filename);
   };
 
   const fetchAllTransactions = async () => {
@@ -127,7 +138,7 @@ export default function TransactionsReports() {
       // Get all transactions
       const { data: transactions, error: txError } = await supabase
         .from("transactions")
-        .select("id, transaction_email, date, amount, sqsp_id")
+        .select("id, transaction_email, date, amount, sqsp_id, payment_platform, parsed_form_data")
         .in("id", transactionIds);
 
       if (txError) {
@@ -136,24 +147,36 @@ export default function TransactionsReports() {
       }
 
       // Get all member info
-      const { data: memberInfo, error: memberError } = await supabase
-        .from("members")
-        .select("id, first_name, last_name, type")
-        .in("id", memberIds);
+    const { data: memberInfo, error: memberError } = await supabase
+      .from("members")
+      .select("id, first_name, last_name, type, partner_id")
+      .in("id", memberIds);
 
       if (memberError) {
         console.error("Error fetching member info", memberError);
         return;
       }
 
+      const membersById = new Map(memberInfo.map((m) => [m.id, m]));
+
       const memberMap = Object.fromEntries(
-        memberInfo.map((m) => [
-          m.id,
-          {
-            name: `${m.first_name} ${m.last_name}`,
-            type: m.type,
-          },
-        ])
+        memberInfo.map((m) => {
+          const partner = m.partner_id
+            ? membersById.get(m.partner_id)
+            : undefined;
+
+          return [
+            m.id,
+            {
+              name: `${m.first_name} ${m.last_name}`,
+              type: m.type,
+              partner_id: m.partner_id,
+              partner_name: partner
+                ? `${partner.first_name ?? ""} ${partner.last_name ?? ""}`.trim()
+                : "",
+            },
+          ];
+        }),
       );
 
       const cutoff = new Date("2023-07-01");
@@ -171,9 +194,10 @@ export default function TransactionsReports() {
             return selectedYears.includes(txYear);
           }
         })
-        .map((t) => {
+        .flatMap((t) => {
           const memberEntry = mtt.find((m) => m.transaction_id === t.id);
           const member = memberMap[memberEntry?.member_id ?? ""];
+          
           // Determine transaction type based on SKU
           let transactionType = "UNKNOWN";
           if (memberEntry?.sku) {
@@ -187,14 +211,48 @@ export default function TransactionsReports() {
             }
           }
 
-          return {
+          // Determine squarespace_id or payment method display
+          const squarespaceIdDisplay = t.payment_platform === "MAIL" 
+            ? "Mail" 
+            : t.sqsp_id?.toString() ?? "";
+
+          // For FORUM transactions, check if we should split by parsed_form_data
+          if (transactionType === "FORUM" && t.parsed_form_data && Array.isArray(t.parsed_form_data)) {
+            // Split forum transactions into individual entries
+            return t.parsed_form_data.map((participant: any) => {
+              const participantName = participant.first_name && participant.last_name 
+                ? `${participant.first_name} ${participant.last_name}`
+                : member?.name ?? "Unknown";
+              
+              // Use individual amount if available, otherwise split total amount
+              const individualAmount = participant.amount || (t.amount / t.parsed_form_data.length);
+
+              return {
+                transaction_email: t.transaction_email,
+                date: t.date,
+                squarespace_id: squarespaceIdDisplay,
+                amount: individualAmount,
+                name: participantName,
+                type: transactionType,
+                member_id: memberEntry?.member_id ?? null,
+                partner_id: member?.partner_id ?? null,
+                partner_name: member?.partner_name ?? "",
+              };
+            });
+          }
+
+          // For non-forum transactions or forum transactions without parsed_form_data, return single entry
+          return [{
             transaction_email: t.transaction_email,
             date: t.date,
-            squarespace_id: t.sqsp_id?.toString() ?? "",
+            squarespace_id: squarespaceIdDisplay,
             amount: t.amount,
             name: member?.name ?? "Unknown",
             type: transactionType,
-          };
+            member_id: memberEntry?.member_id ?? null,
+            partner_id: member?.partner_id ?? null,
+            partner_name: member?.partner_name ?? "",
+          }];
         })
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -280,9 +338,9 @@ export default function TransactionsReports() {
                   <div className="flex w-1/2 items-end">
                     <button
                       className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
-                      onClick={exportToCSV}
+                      onClick={exportToXLSX}
                     >
-                      Export as CSV
+                      Export as XLSX
                     </button>
                   </div>
                 </div>
@@ -307,8 +365,11 @@ export default function TransactionsReports() {
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Amount
                       </th>
-                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Type
+                      </th>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Partner
                       </th>
                     </tr>
                   </thead>
@@ -316,7 +377,7 @@ export default function TransactionsReports() {
                     {allTransactions.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={6}
+                          colSpan={7}
                           className="p-3 text-center text-gray-500"
                         >
                           No transactions found
@@ -324,7 +385,14 @@ export default function TransactionsReports() {
                       </tr>
                     ) : (
                       allTransactions.map((t, i) => (
-                        <tr key={i} className="border-t">
+                        <tr
+                          key={i}
+                          ref={registerRow(t.member_id ?? null)}
+                          className={cn(
+                            "border-t transition-colors",
+                            highlightedId === t.member_id ? "bg-yellow-200" : "",
+                          )}
+                        >
                           <td className="p-3">{t.name}</td>
                           <td className="p-3">{t.transaction_email}</td>
                           <td className="p-3">{t.squarespace_id}</td>
@@ -350,6 +418,23 @@ export default function TransactionsReports() {
                             >
                               {t.type}
                             </span>
+                          </td>
+                          <td className="p-3">
+                            {t.partner_id ? (
+                              <button
+                                onClick={() =>
+                                  focusPartner({
+                                    partnerId: t.partner_id ?? null,
+                                    partnerName: t.partner_name,
+                                  })
+                                }
+                                className="text-blue-600 underline-offset-2 hover:underline"
+                              >
+                                {t.partner_name || "View Partner"}
+                              </button>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
                           </td>
                         </tr>
                       ))

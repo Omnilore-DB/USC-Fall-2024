@@ -8,6 +8,8 @@ import SelectDropdown from "@/components/ui/SelectDropdown";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { usePartnerNavigation } from "@/hooks/use-partner-navigation";
+import { cn } from "@/lib/utils";
 
 export default function ForumReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -32,6 +34,9 @@ export default function ForumReports() {
       descriptor: string;
       first_name?: string;
       last_name?: string;
+      member_id?: number | null;
+      partner_id?: number | null;
+      partner_name?: string;
     }[]
   >([]);
 
@@ -206,7 +211,7 @@ export default function ForumReports() {
 
     const { data: members, error: memberError } = await supabase
       .from("members")
-      .select("id, first_name, last_name, email, phone, type")
+      .select("id, first_name, last_name, email, phone, type, partner_id")
       .in("id", filteredMemberIds.map(Number));
 
     if (memberError) {
@@ -214,7 +219,24 @@ export default function ForumReports() {
       return;
     }
 
-    const memberMap = Object.fromEntries(members.map((m) => [String(m.id), m]));
+    const membersById = new Map(members.map((m) => [m.id, m]));
+
+    const memberMap = Object.fromEntries(
+      members.map((m) => [
+        String(m.id),
+        {
+          ...m,
+          partner_name: m.partner_id
+            ? (() => {
+                const partner = membersById.get(m.partner_id);
+                return partner
+                  ? `${partner.first_name ?? ""} ${partner.last_name ?? ""}`.trim()
+                  : "";
+              })()
+            : "",
+        },
+      ]),
+    );
 
     const formatted = mtt
       .map((entry) => {
@@ -231,6 +253,9 @@ export default function ForumReports() {
           date: tx?.date ?? "",
           amount: tx?.amount ?? 0,
           descriptor: skuDescriptorMap[entry.sku] ?? "",
+          member_id: member?.id ?? null,
+          partner_id: member?.partner_id ?? null,
+          partner_name: member?.partner_name ?? "",
         };
       });
 
@@ -437,6 +462,7 @@ export default function ForumReports() {
       return 0;
     });
   }, [forumMembers, selectedSort, selectedSortWay]);
+  const { registerRow, focusPartner, highlightedId } = usePartnerNavigation();
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-100">
@@ -578,8 +604,11 @@ export default function ForumReports() {
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Type
                       </th>
-                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Descriptor
+                      </th>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Partner
                       </th>
                     </tr>
                   </thead>
@@ -587,7 +616,7 @@ export default function ForumReports() {
                     {sortedForumMembers.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={7}
+                          colSpan={8}
                           className="p-3 text-center text-gray-500"
                         >
                           No forum participants found
@@ -595,7 +624,18 @@ export default function ForumReports() {
                       </tr>
                     ) : (
                       sortedForumMembers.map((m, i) => (
-                        <tr key={i} className={`border-t ${i % 2 === 1 ? "bg-orange-50" : ""}`}>
+                        <tr
+                          key={i}
+                          ref={registerRow(m.member_id ?? null)}
+                          className={cn(
+                            "border-t transition-colors",
+                            highlightedId === m.member_id
+                              ? "bg-yellow-200"
+                              : i % 2 === 1
+                                ? "bg-orange-50"
+                                : "",
+                          )}
+                        >
                           <td className="p-3">{m.name}</td>
                           <td className="p-3">{m.email}</td>
                           <td className="p-3">{m.phone}</td>
@@ -605,6 +645,23 @@ export default function ForumReports() {
                           <td className="p-3">${m.amount.toFixed(2)}</td>
                           <td className="p-3">{m.type}</td>
                           <td className="p-3">{m.descriptor}</td>
+                          <td className="p-3">
+                            {m.partner_id ? (
+                              <button
+                                onClick={() =>
+                                  focusPartner({
+                                    partnerId: m.partner_id ?? null,
+                                    partnerName: m.partner_name,
+                                  })
+                                }
+                                className="text-blue-600 underline-offset-2 hover:underline"
+                              >
+                                {m.partner_name || "View Partner"}
+                              </button>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
                         </tr>
                       ))
                     )}
