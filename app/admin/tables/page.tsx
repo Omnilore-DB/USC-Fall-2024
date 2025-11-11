@@ -240,6 +240,47 @@ function Table() {
     }
   };
 
+  const handleRecharacterize = async (
+  transactionId: number,
+  newType: "MEMBERSHIP" | "FORUM" | "DONATION"
+) => {
+  try {
+    const sku = memberTransactions.find(
+      (t) => t.transaction_id === transactionId
+    )?.sku;
+
+    if (!sku) {
+      console.error("No SKU found for transaction:", transactionId);
+      return;
+    }
+
+    const { error } = await supabase
+      .from("products")
+      .update({
+        type: newType as "MEMBERSHIP" | "FORUM" | "DONATION" | "UNKNOWN" | "HIDDEN",
+      })
+      .eq("sku", sku);
+
+    if (error) {
+      console.error("Failed to update product type:", error);
+      alert("Error updating transaction type.");
+      return;
+    }
+
+    // Instantly update the displayed UI
+    setMemberTransactions((prev) =>
+      prev.map((t) =>
+        t.transaction_id === transactionId
+          ? { ...t, product_type: newType }
+          : t
+      )
+    );
+  } catch (err) {
+    console.error("Unexpected error updating transaction type:", err);
+  }
+};
+
+
   const handleViewTransactions = async () => {
     if (!selectedRow || selectedTable !== "members") {
       alert("Please select a member from the members table");
@@ -403,7 +444,21 @@ function Table() {
                         <strong>Date:</strong> {transaction.date}
                       </div>
                       <div>
-                        <strong>Type:</strong> {transaction.product_type}
+                        <strong>Type:</strong>{" "}
+                        <select
+                          value={transaction.product_type}
+                          onChange={(e) =>
+                            handleRecharacterize(
+                              transaction.transaction_id,
+                              e.target.value as "MEMBERSHIP" | "FORUM" | "DONATION"
+                            )
+                          }
+                          className="border rounded px-2 py-1 text-sm"
+                        >
+                          <option value="MEMBERSHIP">Membership</option>
+                          <option value="FORUM">Forum</option>
+                          <option value="DONATION">Donation</option>
+                        </select>
                       </div>
                       <div>
                         <strong>Amount:</strong> ${transaction.amount}
