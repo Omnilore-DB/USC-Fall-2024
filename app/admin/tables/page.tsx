@@ -13,6 +13,7 @@ import { MoonLoader } from "react-spinners";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { ClientOnly } from "@/components/is-client";
 import { supabase } from "@/app/supabase";
+import { formatDate } from "@/lib/utils";
 
 export default function () {
   return (
@@ -55,6 +56,12 @@ function Table() {
   // Transaction modal state
   const [showTransactions, setShowTransactions] = useState(false);
   const [memberTransactions, setMemberTransactions] = useState<any[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  // Set client flag after mount to avoid hydration issues
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const filteredEntries = useMemo(() => {
     const keywords = query.toLowerCase().split(" ").filter(Boolean);
@@ -441,7 +448,7 @@ function Table() {
                   <div key={index} className="border rounded-lg p-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <strong>Date:</strong> {transaction.date}
+                        <strong>Date:</strong> {isClient ? formatDate(transaction.date, true) : transaction.date}
                       </div>
                       <div>
                         <strong>Type:</strong>{" "}
