@@ -22,7 +22,6 @@ const AVAILABLE_FIELDS = [
   { key: "emergency_contact_phone", label: "Emergency Phone", category: "Emergency" },
   { key: "member_status", label: "Member Status", category: "Membership" },
   { key: "expiration_date", label: "Expiration Date", category: "Membership" },
-  { key: "date_of_death", label: "Date of Death", category: "Membership" },
   { key: "type", label: "Member Type", category: "Membership" },
   { key: "gender", label: "Gender", category: "Demographics" },
   { key: "partner_name", label: "Partner Name", category: "Relationships" },
@@ -81,7 +80,7 @@ export default function AdHocReport() {
           id, first_name, last_name, alias, email, phone, 
           street_address, city, state, zip_code,
           emergency_contact, emergency_contact_phone,
-          member_status, expiration_date, date_of_death, type, gender,
+          member_status, expiration_date, type, gender,
           photo_link, partner_id
         `);
 
@@ -199,7 +198,7 @@ export default function AdHocReport() {
       if (aVal == null) return sortDirection === "asc" ? 1 : -1;
       if (bVal == null) return sortDirection === "asc" ? -1 : 1;
 
-      if (sortField === "expiration_date" || sortField === "date_of_death") {
+      if (sortField === "expiration_date") {
         const dateA = new Date(aVal);
         const dateB = new Date(bVal);
         return sortDirection === "asc" 
@@ -222,7 +221,7 @@ export default function AdHocReport() {
   const formatValue = (key: string, value: any): string => {
     if (value == null) return "";
     if (key.toLowerCase().includes("phone")) return formatPhoneNumber(value);
-    if ((key === "expiration_date" || key === "date_of_death") && value) {
+    if ((key === "expiration_date") && value) {
       return new Date(value).toLocaleDateString();
     }
     if (key === "gender" && value) {

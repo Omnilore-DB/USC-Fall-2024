@@ -175,7 +175,7 @@ function Table() {
           created_at
         `)
         .in("id", transactionIds)
-        .order("date", { ascending: false });
+        .order("date", { ascending: false }); // Newest first
 
       if (txError) {
         console.error("Failed to fetch transactions", txError);
@@ -196,12 +196,18 @@ function Table() {
         products.map(p => [p.sku, p])
       ) : {};
 
-      const processedTransactions = memberTransactions.map(mt => {
-        const transaction = transactions.find(t => t.id === mt.transaction_id);
+      // Create lookup map for member_to_transactions
+      const mttMap = Object.fromEntries(
+        memberTransactions.map(mt => [mt.transaction_id, mt])
+      );
+
+      // FIXED: Map over sorted transactions instead of memberTransactions
+      const processedTransactions = transactions.map(transaction => {
+        const mt = mttMap[transaction.id];
+        if (!mt) return null;
+
         const product = productMap[mt.sku];
         
-        if (!transaction) return null;
-
         let display_status = "Completed";
 
         if (transaction.refunded_amount > 0) {
@@ -225,7 +231,7 @@ function Table() {
         }
         
         return {
-          transaction_id: mt.transaction_id,
+          transaction_id: transaction.id,
           amount: mt.amount,
           sku: mt.sku,
           date: transaction.date,

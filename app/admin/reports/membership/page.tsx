@@ -16,6 +16,13 @@ export default function MembershipReports() {
   const [endDate, setEndDate] = useState<string>("");
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [reportSummary, setReportSummary] = useState<{
+    totalMembers: number;
+    totalAmount: number;
+  }>({
+    totalMembers: 0,
+    totalAmount: 0,
+  });
 
   // Sorting state with localStorage persistence
   const [selectedSort, setSelectedSort] = useState<string>("default");
@@ -139,7 +146,6 @@ export default function MembershipReports() {
     "Emergency Phone",
     "Status",
     "Expiration",
-    "Date of Death",
     "Gender",
     "Member Type",
     "Delivery Method",
@@ -155,7 +161,6 @@ export default function MembershipReports() {
     m.emergency_contact_phone ?? "",
     m.member_status ?? "",
     m.expiration_date ?? "",
-    m.date_of_death ?? "",
     m.gender ?? "",
     m.type ?? "",
     m.delivery_method ?? "Email",
@@ -209,7 +214,6 @@ export default function MembershipReports() {
     { header: "Emergency Phone", key: "emergency_phone", width: 18 },
     { header: "Status", key: "status", width: 15 },
     { header: "Expiration", key: "expiration", width: 12 },
-    { header: "Date of Death", key: "date_of_death", width: 12 },
     { header: "Gender", key: "gender", width: 10 },
     { header: "Member Type", key: "type", width: 15 },
     { header: "Delivery Method", key: "delivery_method", width: 15 },
@@ -240,7 +244,6 @@ export default function MembershipReports() {
     emergency_phone: m.emergency_contact_phone ?? "",
     status: m.member_status ?? "",
     expiration: m.expiration_date ? new Date(m.expiration_date) : "",
-    date_of_death: m.date_of_death ? new Date(m.date_of_death) : "",
     gender: m.gender ?? "",
     type: m.type ?? "",
     delivery_method: m.delivery_method ?? "Email",
@@ -249,10 +252,6 @@ export default function MembershipReports() {
 
   if (m.expiration_date) {
     row.getCell(8).numFmt = "yyyy-mm-dd";
-  }
-  
-  if (m.date_of_death) {
-    row.getCell(9).numFmt = "yyyy-mm-dd";
   }
 
       row.eachCell((cell) => {
@@ -462,7 +461,40 @@ const formatted = mtt
         return a.first_name.localeCompare(b.first_name);
       });
 
-    setMembers(formatted);
+    const memberIds = formatted.map(m => m.id).filter((id): id is number => !!id);
+
+    if (memberIds.length > 0) {
+      const { data: transactionData, error: txError } = await supabase
+        .from('members_to_transactions')
+        .select('transaction_id, member_id, sku')
+        .in('member_id', memberIds)
+        .in('sku', validSkus);
+
+      if (!txError && transactionData) {
+        const txIds = transactionData.map(t => t.transaction_id);
+        
+        const { data: txAmounts, error: amountError } = await supabase
+          .from('transactions')
+          .select('id, amount')
+          .in('id', txIds);
+
+        if (!amountError && txAmounts) {
+          const totalAmount = txAmounts.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+          
+          setReportSummary({
+            totalMembers: formatted.length,
+            totalAmount,
+          });
+        }
+      }
+    } else {
+      setReportSummary({
+        totalMembers: 0,
+        totalAmount: 0,
+      });
+    }
+    
+      setMembers(formatted);
   };
 
   useEffect(() => {
@@ -603,7 +635,29 @@ const formatted = mtt
                   </div>
                 </div>
               </div>
-
+              {members.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="rounded-lg border border-slate-300 bg-slate-100 p-3">
+                    <h3 className="mb-1 text-xs font-semibold text-black">
+                      Total Members
+                    </h3>
+                    <p className="text-lg font-bold text-black">
+                      {reportSummary.totalMembers}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-blue-300 bg-blue-100 p-3">
+                    <h3 className="mb-1 text-xs font-semibold text-black">
+                      Total Amount
+                    </h3>
+                    <p className="text-lg font-bold text-black">
+                      ${reportSummary.totalAmount.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 2 
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
               {/* Table with dropdown filters */}
               <div className="w-full grow overflow-y-auto rounded-xl">
                 <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
@@ -632,9 +686,6 @@ const formatted = mtt
                       </th>
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Expiration
-                      </th>
-                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
-                        Date of Death
                       </th>
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Gender
@@ -671,8 +722,6 @@ const formatted = mtt
                         </select>
                       </th>
                       {/* Expiration Filter */}
-                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
-                      {/* Date of Death Filter */}
                       <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
                       {/* Gender Filter */}
                       <th className="sticky top-[52px] z-10 bg-gray-50 p-2">
@@ -749,7 +798,6 @@ const formatted = mtt
                           <td className="p-3">{m.emergency_contact_phone}</td>
                           <td className="p-3">{m.member_status}</td>
                           <td className="p-3">{m.expiration_date}</td>
-                          <td className="p-3">{m.date_of_death}</td>
                           <td className="p-3">{m.gender}</td>
                           <td className="p-3">{m.type}</td>
                           <td className="p-3">{m.delivery_method}</td>
