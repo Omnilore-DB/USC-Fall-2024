@@ -253,6 +253,7 @@ function Table() {
     }
   };
 
+  /*
   const handleRecharacterize = async (
   transactionId: number,
   newType: "MEMBERSHIP" | "FORUM" | "DONATION"
@@ -292,6 +293,7 @@ function Table() {
     console.error("Unexpected error updating transaction type:", err);
   }
 };
+*/
 
 
   const handleViewTransactions = async () => {
@@ -457,7 +459,8 @@ function Table() {
                         <strong>Date:</strong> {isClient ? formatDate(transaction.date, true) : transaction.date}
                       </div>
                       <div>
-                        <strong>Type:</strong>{" "}
+                        <strong>Type:</strong> {transaction.product_type}
+                        {/*}
                         <select
                           value={transaction.product_type}
                           onChange={(e) =>
@@ -472,6 +475,7 @@ function Table() {
                           <option value="FORUM">Forum</option>
                           <option value="DONATION">Donation</option>
                         </select>
+                        */}
                       </div>
                       <div>
                         <strong>Amount:</strong> ${transaction.amount}

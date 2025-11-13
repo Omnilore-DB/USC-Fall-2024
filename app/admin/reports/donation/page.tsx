@@ -33,6 +33,13 @@ export default function DonationReports() {
   >([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [reportSummary, setReportSummary] = useState<{
+      totalAmount: number;
+      totalDonors: number;
+    }>({
+      totalAmount: 0,
+      totalDonors: 0,
+    });
 
   // Sorting state with localStorage persistence
   const [selectedSort, setSelectedSort] = useState<string>("default");
@@ -338,6 +345,15 @@ export default function DonationReports() {
         };
       });
 
+    const uniqueDonors = new Set(filtered.map(d => d.member_id));
+    const totalAmount = filtered.reduce((sum, d) => sum + (d.amount || 0), 0);
+    const totalDonors = uniqueDonors.size;
+
+    setReportSummary({
+      totalAmount,
+      totalDonors,
+    });
+
     setDonationTransactions(filtered);
   };
 
@@ -496,6 +512,32 @@ export default function DonationReports() {
                   </div>
                 </div>
               </div>
+              {donationTransactions.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="rounded-lg border border-slate-300 bg-slate-100 p-3">
+                    <h3 className="mb-1 text-xs font-semibold text-black">
+                      Total Amount
+                    </h3>
+                    <p className="text-lg font-bold text-black">
+                      ${reportSummary.totalAmount.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 2 
+                      })}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-blue-300 bg-blue-100 p-3">
+                    <h3 className="mb-1 text-xs font-semibold text-black">
+                      Total Donors
+                    </h3>
+                    <p className="text-lg font-bold text-black">
+                      {reportSummary.totalDonors}
+                    </p>
+                    <p className="text-xs text-black">
+                      unique members
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="w-full grow overflow-y-auto">
                 <table className="w-full border-collapse rounded-xl bg-white text-left shadow-sm">
