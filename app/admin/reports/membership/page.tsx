@@ -391,7 +391,7 @@ export default function MembershipReports() {
       .select(`
         id, first_name, last_name, street_address, city, state, zip_code, 
         phone, email, emergency_contact, emergency_contact_phone, 
-        member_status, expiration_date, gender, type, partner_id
+        member_status, expiration_date, gender, type, partner
       `)
       .in("id", filteredMemberIds.map(Number));
 
@@ -420,10 +420,10 @@ const formatted = mtt
       [m?.state, m?.zip_code].filter(Boolean).join(" "),
     ].filter(Boolean);
     
-    const partnerName = m?.partner_id
-      ? memberMap.get(m.partner_id)?.name || ""
+    const partnerName = m?.partner
+      ? memberMap.get(Number(m.partner))?.name || ""
       : "";
-    
+
     let gender = m?.gender || "";
     if (gender) {
       const g = gender.toUpperCase();
@@ -449,7 +449,7 @@ const formatted = mtt
       type: m?.type ?? "",
       delivery_method: "Email",
       partner_name: partnerName,
-      partner_id: m?.partner_id ?? null,
+      partner: m?.partner ?? null,
     };
   })
 
@@ -801,11 +801,11 @@ const formatted = mtt
                           <td className="p-3">{m.type}</td>
                           <td className="p-3">{m.delivery_method}</td>
                           <td className="p-3">
-                            {m.partner_id ? (
+                            {m.partner ? (
                               <button
                                 onClick={() =>
                                   focusPartner({
-                                    partnerId: m.partner_id,
+                                    partnerId: m.partner,
                                     partnerName: m.partner_name,
                                   })
                                 }
