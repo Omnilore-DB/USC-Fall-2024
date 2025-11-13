@@ -391,7 +391,7 @@ export default function MembershipReports() {
       .select(`
         id, first_name, last_name, street_address, city, state, zip_code, 
         phone, email, emergency_contact, emergency_contact_phone, 
-        member_status, expiration_date, date_of_death, gender, type, partner_id
+        member_status, expiration_date, gender, type, partner_id
       `)
       .in("id", filteredMemberIds.map(Number));
 
@@ -445,7 +445,6 @@ const formatted = mtt
       ),
       member_status: skuStatusMap[row.sku] ?? "",
       expiration_date: m?.expiration_date,
-      date_of_death: m?.date_of_death,
       gender: gender,
       type: m?.type ?? "",
       delivery_method: "Email",
