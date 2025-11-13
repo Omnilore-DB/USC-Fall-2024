@@ -81,7 +81,7 @@ export default function AdHocReport() {
           street_address, city, state, zip_code,
           emergency_contact, emergency_contact_phone,
           member_status, expiration_date, type, gender,
-          photo_link, partner_id
+          photo_link, partner
         `);
 
       if (error) {
@@ -93,7 +93,7 @@ export default function AdHocReport() {
 
       const membersWithPartners = data?.map(member => ({
         ...member,
-        partner_name: member.partner_id ? memberMap.get(member.partner_id) || "" : ""
+        partner_name: member.partner ? memberMap.get(Number(member.partner)) || "" : ""
       })) || [];
 
       setMembers(membersWithPartners);
@@ -161,10 +161,10 @@ export default function AdHocReport() {
         }
       }
 
-      if (filters.hasPartner === "with_partner" && !member.partner_id) {
+      if (filters.hasPartner === "with_partner" && !member.partner) {
         return false;
       }
-      if (filters.hasPartner === "without_partner" && member.partner_id) {
+      if (filters.hasPartner === "without_partner" && member.partner) {
         return false;
       }
 
