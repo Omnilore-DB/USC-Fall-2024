@@ -1,10 +1,13 @@
 "use client";
 
 import { supabase } from "@/app/supabase";
-import { useState, useEffect } from "react";
-import { getRoles } from "@/app/supabase";
+import { useState, useEffect, useMemo } from "react";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
+import SelectDropdown from "@/components/ui/SelectDropdown";
 import * as XLSX from "xlsx";
+
+type SortKey = "default" | "name" | "type" | "date" | "squarespace_id";
+type SortDirection = "asc" | "desc";
 
 export default function TransactionsReports() {
   const [customRange, setCustomRange] = useState(false);
@@ -22,15 +25,77 @@ export default function TransactionsReports() {
   >([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [sortKey, setSortKey] = useState<SortKey>("default");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const sortOptions: SortKey[] = [
+    "default",
+    "name",
+    "type",
+    "date",
+    "squarespace_id",
+  ];
+  const sortDirectionOptions: SortDirection[] = ["asc", "desc"];
+
+  const sortedTransactions = useMemo(() => {
+    if (sortKey === "default") {
+      if (sortDirection === "desc") {
+        return [...allTransactions].reverse();
+      }
+      return [...allTransactions];
+    }
+
+    const sorted = [...allTransactions];
+
+    sorted.sort((a, b) => {
+      const multiplier = sortDirection === "asc" ? 1 : -1;
+
+      const getComparable = (value: string | number) => {
+        if (sortKey === "date") {
+          return new Date(value as string).getTime();
+        }
+
+        if (sortKey === "squarespace_id") {
+          const numeric = Number(value);
+          return Number.isNaN(numeric)
+            ? String(value ?? "").toLowerCase()
+            : numeric;
+        }
+
+        return String(value ?? "").toLowerCase();
+      };
+
+      const aValue = getComparable(a[sortKey]);
+      const bValue = getComparable(b[sortKey]);
+
+      if (aValue < bValue) return -1 * multiplier;
+      if (aValue > bValue) return 1 * multiplier;
+      return 0;
+    });
+
+    return sorted;
+  }, [allTransactions, sortDirection, sortKey]);
+
+  const handleSortKeyChange = (value: string) => {
+    const key = value as SortKey;
+    setSortKey(key);
+
+    if (key === "date") {
+      setSortDirection("desc");
+    } else if (key === "default") {
+      setSortDirection("asc");
+    } else {
+      setSortDirection("asc");
+    }
+  };
 
   const exportToXLSX = () => {
-    if (allTransactions.length === 0) {
+    if (sortedTransactions.length === 0) {
       alert("No data to export");
       return;
     }
 
     const headers = ["Name", "Email", "Squarespace ID", "Date", "Amount", "Type"];
-    const rows = allTransactions.map((t) => [
+    const rows = sortedTransactions.map((t) => [
       t.name ?? "",
       t.transaction_email ?? "",
       t.squarespace_id ?? "",
@@ -163,7 +228,7 @@ export default function TransactionsReports() {
 
       const cutoff = new Date("2023-07-01");
 
-      const filtered = transactions
+      const transactionEntries = transactions
         .filter((t) => {
           const txDate = new Date(t.date);
           if (txDate < cutoff) return false;
@@ -221,18 +286,19 @@ export default function TransactionsReports() {
           }
 
           // For non-forum transactions or forum transactions without parsed_form_data, return single entry
-          return [{
-            transaction_email: t.transaction_email,
-            date: t.date,
-            squarespace_id: squarespaceIdDisplay,
-            amount: t.amount,
-            name: member?.name ?? "Unknown",
-            type: transactionType,
-          }];
-        })
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          return [
+            {
+              transaction_email: t.transaction_email,
+              date: t.date,
+              squarespace_id: squarespaceIdDisplay,
+              amount: t.amount,
+              name: member?.name ?? "Unknown",
+              type: transactionType,
+            },
+          ];
+        });
 
-      setAllTransactions(filtered);
+      setAllTransactions(transactionEntries);
     } catch (error) {
       console.error("Error in fetchAllTransactions:", error);
     }
@@ -253,11 +319,29 @@ export default function TransactionsReports() {
         <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
           <div className="flex h-full w-full flex-col items-center">
             <div className="flex h-full w-full flex-col gap-3">
-              <div className="flex w-full flex-row items-end justify-between">
-                <div className="flex w-3/5 flex-row justify-between gap-2">
+              <div className="flex w-full flex-wrap items-end gap-2">
+                <div className="flex flex-1 flex-wrap items-end gap-2">
+                  <div className="flex min-w-[140px] flex-col">
+                    <label className="text-sm font-semibold">Sort By</label>
+                    <SelectDropdown
+                      options={sortOptions}
+                      selectedOption={sortKey}
+                      setSelectedOption={handleSortKeyChange}
+                    />
+                  </div>
+                  <div className="flex min-w-[120px] flex-col">
+                    <label className="text-sm font-semibold">Order</label>
+                    <SelectDropdown
+                      options={sortDirectionOptions}
+                      selectedOption={sortDirection}
+                      setSelectedOption={(value) =>
+                        setSortDirection(value as SortDirection)
+                      }
+                    />
+                  </div>
                   {customRange ? (
                     <>
-                      <div className="flex w-1/3 flex-col">
+                      <div className="flex min-w-[180px] flex-col">
                         <label className="text-sm font-semibold">
                           Start Date
                         </label>
@@ -268,7 +352,7 @@ export default function TransactionsReports() {
                           className="h-10 w-full cursor-pointer rounded-lg border-gray-200 bg-white p-2"
                         />
                       </div>
-                      <div className="flex w-1/3 flex-col">
+                      <div className="flex min-w-[180px] flex-col">
                         <label className="text-sm font-semibold">
                           End Date
                         </label>
@@ -281,7 +365,7 @@ export default function TransactionsReports() {
                       </div>
                     </>
                   ) : (
-                    <div className="flex w-2/3 flex-col">
+                    <div className="flex min-w-[220px] flex-1 flex-col">
                       <label className="text-sm font-semibold">
                         Calendar Year(s)
                       </label>
@@ -293,7 +377,7 @@ export default function TransactionsReports() {
                       />
                     </div>
                   )}
-                  <div className="flex w-1/3 items-end">
+                  <div className="flex min-w-[140px] items-end">
                     <button
                       className="h-10 w-full cursor-pointer rounded-lg bg-gray-200 font-semibold"
                       onClick={() => setCustomRange((prev) => !prev)}
@@ -302,23 +386,19 @@ export default function TransactionsReports() {
                     </button>
                   </div>
                 </div>
-                <div className="flex w-1/4 flex-row justify-between gap-2">
-                  <div className="flex w-1/2 items-end">
-                    <button
-                      onClick={fetchAllTransactions}
-                      className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
-                    >
-                      Generate Report
-                    </button>
-                  </div>
-                  <div className="flex w-1/2 items-end">
-                    <button
-                      className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
-                      onClick={exportToXLSX}
-                    >
-                      Export as XLSX
-                    </button>
-                  </div>
+                <div className="flex w-full flex-row gap-2 sm:w-auto">
+                  <button
+                    onClick={fetchAllTransactions}
+                    className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 px-4 font-semibold text-white sm:w-auto"
+                  >
+                    Generate Report
+                  </button>
+                  <button
+                    className="h-10 w-full cursor-pointer rounded-lg bg-green-500 px-4 font-semibold text-white sm:w-auto"
+                    onClick={exportToXLSX}
+                  >
+                    Export as XLSX
+                  </button>
                 </div>
               </div>
 
@@ -347,7 +427,7 @@ export default function TransactionsReports() {
                     </tr>
                   </thead>
                   <tbody>
-                    {allTransactions.length === 0 ? (
+                    {sortedTransactions.length === 0 ? (
                       <tr>
                         <td
                           colSpan={6}
@@ -357,7 +437,7 @@ export default function TransactionsReports() {
                         </td>
                       </tr>
                     ) : (
-                      allTransactions.map((t, i) => (
+                      sortedTransactions.map((t, i) => (
                         <tr key={i} className="border-t">
                           <td className="p-3">{t.name}</td>
                           <td className="p-3">{t.transaction_email}</td>
