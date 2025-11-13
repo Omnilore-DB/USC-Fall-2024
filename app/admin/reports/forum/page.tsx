@@ -23,6 +23,13 @@ export default function ForumReports() {
   const [selectedTrimesters, setSelectedTrimesters] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [reportSummary, setReportSummary] = useState<{
+      totalAmount: number;
+      totalAttendees: number;
+    }>({
+      totalAmount: 0,
+      totalAttendees: 0,
+    });
   const [forumMembers, setForumMembers] = useState<
     {
       name: string;
@@ -257,6 +264,15 @@ export default function ForumReports() {
           partner_id: member?.partner_id ?? null,
           partner_name: member?.partner_name ?? "",
         };
+      });
+
+      const uniqueMembers = new Set(formatted.map(m => m.member_id));
+      const totalAmount = formatted.reduce((sum, m) => sum + (m.amount || 0), 0);
+      const totalAttendees = uniqueMembers.size;
+
+      setReportSummary({
+        totalAmount,
+        totalAttendees,
       });
 
     setForumMembers(formatted);
@@ -582,6 +598,32 @@ export default function ForumReports() {
                   </div>
                 </div>
               </div>
+              {forumMembers.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="rounded-lg border border-slate-300 bg-slate-100 p-3">
+                    <h3 className="mb-1 text-xs font-semibold text-black">
+                      Total Amount
+                    </h3>
+                    <p className="text-lg font-bold text-black">
+                      ${reportSummary.totalAmount.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 2 
+                      })}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-blue-300 bg-blue-100 p-3">
+                    <h3 className="mb-1 text-xs font-semibold text-black">
+                      Total Attendees
+                    </h3>
+                    <p className="text-lg font-bold text-black">
+                      {reportSummary.totalAttendees}
+                    </p>
+                    <p className="text-xs text-black">
+                      unique members
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="w-full grow overflow-y-auto rounded-xl">
                 <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
                   <thead>

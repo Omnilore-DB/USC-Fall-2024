@@ -13,6 +13,7 @@ import { MoonLoader } from "react-spinners";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { ClientOnly } from "@/components/is-client";
 import { supabase } from "@/app/supabase";
+import { formatDate } from "@/lib/utils";
 
 export default function () {
   return (
@@ -55,6 +56,12 @@ function Table() {
   // Transaction modal state
   const [showTransactions, setShowTransactions] = useState(false);
   const [memberTransactions, setMemberTransactions] = useState<any[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  // Set client flag after mount to avoid hydration issues
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const filteredEntries = useMemo(() => {
     const keywords = query.toLowerCase().split(" ").filter(Boolean);
@@ -168,7 +175,7 @@ function Table() {
           created_at
         `)
         .in("id", transactionIds)
-        .order("date", { ascending: false });
+        .order("date", { ascending: false }); // Newest first
 
       if (txError) {
         console.error("Failed to fetch transactions", txError);
@@ -189,12 +196,18 @@ function Table() {
         products.map(p => [p.sku, p])
       ) : {};
 
-      const processedTransactions = memberTransactions.map(mt => {
-        const transaction = transactions.find(t => t.id === mt.transaction_id);
+      // Create lookup map for member_to_transactions
+      const mttMap = Object.fromEntries(
+        memberTransactions.map(mt => [mt.transaction_id, mt])
+      );
+
+      // FIXED: Map over sorted transactions instead of memberTransactions
+      const processedTransactions = transactions.map(transaction => {
+        const mt = mttMap[transaction.id];
+        if (!mt) return null;
+
         const product = productMap[mt.sku];
         
-        if (!transaction) return null;
-
         let display_status = "Completed";
 
         if (transaction.refunded_amount > 0) {
@@ -218,7 +231,7 @@ function Table() {
         }
         
         return {
-          transaction_id: mt.transaction_id,
+          transaction_id: transaction.id,
           amount: mt.amount,
           sku: mt.sku,
           date: transaction.date,
@@ -239,6 +252,49 @@ function Table() {
       return [];
     }
   };
+
+  /*
+  const handleRecharacterize = async (
+  transactionId: number,
+  newType: "MEMBERSHIP" | "FORUM" | "DONATION"
+) => {
+  try {
+    const sku = memberTransactions.find(
+      (t) => t.transaction_id === transactionId
+    )?.sku;
+
+    if (!sku) {
+      console.error("No SKU found for transaction:", transactionId);
+      return;
+    }
+
+    const { error } = await supabase
+      .from("products")
+      .update({
+        type: newType as "MEMBERSHIP" | "FORUM" | "DONATION" | "UNKNOWN" | "HIDDEN",
+      })
+      .eq("sku", sku);
+
+    if (error) {
+      console.error("Failed to update product type:", error);
+      alert("Error updating transaction type.");
+      return;
+    }
+
+    // Instantly update the displayed UI
+    setMemberTransactions((prev) =>
+      prev.map((t) =>
+        t.transaction_id === transactionId
+          ? { ...t, product_type: newType }
+          : t
+      )
+    );
+  } catch (err) {
+    console.error("Unexpected error updating transaction type:", err);
+  }
+};
+*/
+
 
   const handleViewTransactions = async () => {
     if (!selectedRow || selectedTable !== "members") {
@@ -400,10 +456,26 @@ function Table() {
                   <div key={index} className="border rounded-lg p-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <strong>Date:</strong> {transaction.date}
+                        <strong>Date:</strong> {isClient ? formatDate(transaction.date, true) : transaction.date}
                       </div>
                       <div>
                         <strong>Type:</strong> {transaction.product_type}
+                        {/*}
+                        <select
+                          value={transaction.product_type}
+                          onChange={(e) =>
+                            handleRecharacterize(
+                              transaction.transaction_id,
+                              e.target.value as "MEMBERSHIP" | "FORUM" | "DONATION"
+                            )
+                          }
+                          className="border rounded px-2 py-1 text-sm"
+                        >
+                          <option value="MEMBERSHIP">Membership</option>
+                          <option value="FORUM">Forum</option>
+                          <option value="DONATION">Donation</option>
+                        </select>
+                        */}
                       </div>
                       <div>
                         <strong>Amount:</strong> ${transaction.amount}
