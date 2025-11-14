@@ -27,7 +27,7 @@ export default function DonationReports() {
       first_name?: string;
       last_name?: string;
       member_id?: number | null;
-      partner_id?: number | null;
+      partner?: number | null;
       partner_name?: string;
     }[]
   >([]);
@@ -269,7 +269,7 @@ export default function DonationReports() {
     const { data: memberInfo, error: memberError } = await supabase
       .from("members")
       .select(
-        "id, first_name, last_name, type, street_address, city, state, zip_code, partner_id",
+        "id, first_name, last_name, type, street_address, city, state, zip_code, partner",
       )
       .in("id", memberIds);
 
@@ -282,8 +282,8 @@ export default function DonationReports() {
 
     const memberMap = Object.fromEntries(
       memberInfo.map((m) => {
-        const partner = m.partner_id
-          ? membersById.get(m.partner_id)
+        const partner = m.partner
+          ? membersById.get(Number(m.partner))
           : undefined;
 
         return [
@@ -297,7 +297,7 @@ export default function DonationReports() {
             city: m.city,
             state: m.state,
             zip_code: m.zip_code,
-            partner_id: m.partner_id,
+            partner: m.partner ? Number(m.partner) : null,
             partner_name: partner
               ? `${partner.first_name ?? ""} ${partner.last_name ?? ""}`.trim()
               : "",
@@ -340,7 +340,7 @@ export default function DonationReports() {
           last_name: member?.last_name ?? "",
           type: member?.type ?? "UNKNOWN",
           member_id: memberEntry?.member_id ?? null,
-          partner_id: member?.partner_id ?? null,
+          partner: member?.partner ?? null,
           partner_name: member?.partner_name ?? "",
         };
       });
@@ -603,11 +603,11 @@ export default function DonationReports() {
                           <td className="p-3">${t.amount.toFixed(2)}</td>
                           <td className="p-3">{t.type}</td>
                           <td className="p-3">
-                            {t.partner_id ? (
+                            {t.partner ? (
                               <button
                                 onClick={() =>
                                   focusPartner({
-                                    partnerId: t.partner_id ?? null,
+                                    partnerId: t.partner ?? null,
                                     partnerName: t.partner_name,
                                   })
                                 }
