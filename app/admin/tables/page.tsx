@@ -172,7 +172,8 @@ function Table() {
           fulfillment_status,
           refunded_amount,
           amount,
-          created_at
+          created_at,
+          sqsp_id
         `)
         .in("id", transactionIds)
         .order("date", { ascending: false }); // Newest first
@@ -240,6 +241,7 @@ function Table() {
           refunded_amount: transaction.refunded_amount,
           total_amount: transaction.amount,
           created_at: transaction.created_at,
+          sqsp_id: transaction.sqsp_id,
           product_descriptor: product?.descriptor || "Unknown",
           product_type: product?.type || "Unknown",
           display_status: display_status
@@ -488,6 +490,11 @@ function Table() {
                       </div>
                       <div>
                         <strong>Status:</strong> {transaction.display_status}
+                      </div>
+                      <div>
+                        <strong>Squarespace ID:</strong> {transaction.payment_platform === "MAIL" 
+                          ? "Mail" 
+                          : transaction.sqsp_id?.toString() ?? "N/A"}
                       </div>
                       {transaction.refunded_amount > 0 && (
                         <div className="col-span-2">
