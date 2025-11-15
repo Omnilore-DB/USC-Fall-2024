@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, Fragment } from "react";
 import UserIcon from "@/components/assets/user-icon.png";
 import { MoonLoader } from "react-spinners";
+import { Copy } from "lucide-react";
 
 interface TableComponentProps {
   entries: Record<string, any>[];
@@ -29,6 +30,14 @@ const formatPhoneNumber = (phoneNumberString: string) => {
 
   // Return the original value if it doesn't match the expected format
   return phoneNumberString;
+};
+
+// Function to copy text to clipboard
+const copyToClipboard = (text: string, e?: React.MouseEvent) => {
+  if (e) {
+    e.stopPropagation(); // Prevent row selection when clicking copy button
+  }
+  navigator.clipboard.writeText(text);
 };
 
 const TableComponent = ({
@@ -285,6 +294,11 @@ const TableComponent = ({
                               </td>
                             );
                           } else {
+                            // Check if this is an email or phone column that should have copy functionality
+                            const isEmailColumn = columnName.toLowerCase() === "email";
+                            const isPhoneColumn = columnName.toLowerCase().includes("phone");
+                            const hasCopyableValue = (isEmailColumn || isPhoneColumn) && item[columnName];
+                            
                             bodyCells.push(
                               <td
                                 key={columnName}
@@ -303,7 +317,7 @@ const TableComponent = ({
                                 }}
                               >
                                 <div
-                                  className={`${typeof item[columnName] === "object"
+                                  className={`flex items-center gap-2 ${typeof item[columnName] === "object"
                                       ? "max-h-20"
                                       : ""
                                     }`}
@@ -317,6 +331,16 @@ const TableComponent = ({
                                         item[columnName]
                                         ? formatPhoneNumber(item[columnName])
                                         : item[columnName]}
+                                  {hasCopyableValue && (
+                                    <button
+                                      onClick={(e) => copyToClipboard(item[columnName], e)}
+                                      className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                                      title={`Copy ${isEmailColumn ? 'email' : 'phone number'}`}
+                                      aria-label={`Copy ${isEmailColumn ? 'email' : 'phone number'}`}
+                                    >
+                                      <Copy className="h-4 w-4" />
+                                    </button>
+                                  )}
                                 </div>
                               </td>
                             );
