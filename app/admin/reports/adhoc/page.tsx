@@ -24,6 +24,7 @@ const AVAILABLE_FIELDS = [
   { key: "expiration_date", label: "Expiration Date", category: "Membership" },
   { key: "type", label: "Member Type", category: "Membership" },
   { key: "gender", label: "Gender", category: "Demographics" },
+  { key: "partner_id", label: "Partner ID", category: "Relationships" },
   { key: "partner_name", label: "Partner Name", category: "Relationships" },
   { key: "photo_link", label: "Photo URL", category: "Basic Info" },
 ];
@@ -47,6 +48,7 @@ export default function AdHocReport() {
     yearFilter: string;
     customYears: string[];
     hasPartner: string;
+    membershipComparison: string;
   }>({
     memberStatus: [],
     memberType: [],
@@ -54,6 +56,7 @@ export default function AdHocReport() {
     yearFilter: "all",
     customYears: [],
     hasPartner: "all",
+    membershipComparison: "none",
   });
 
   const [sortField, setSortField] = useState<string>("last_name");
@@ -180,6 +183,23 @@ export default function AdHocReport() {
         const expirationYear = member.expiration_date ? new Date(member.expiration_date).getFullYear().toString() : null;
         if (!expirationYear || !filters.customYears.includes(expirationYear)) return false;
       }
+      if (filters.membershipComparison === "last_year_not_this_year") {
+          const now = new Date();
+          const expirationDate = member.expiration_date 
+            ? new Date(member.expiration_date) 
+            : null;
+          
+          // Should have expired (expiration date is in the past)
+          if (!expirationDate || expirationDate >= now) {
+            return false;
+          }
+          
+          // Should be MEMBER type (not already marked as NONMEMBER)
+          if (member.type === "NONMEMBER") {
+            return false;
+          }
+        }
+
 
       return true;
     });
@@ -380,6 +400,7 @@ export default function AdHocReport() {
       yearFilter: "all",
       customYears: [],
       hasPartner: "all",
+      membershipComparison: "none",
     });
     setReportGenerated(false);
   };
@@ -540,6 +561,7 @@ export default function AdHocReport() {
                       }
                     />
                   </div>
+                  
 
                   <div>
                     <label className="mb-1 block text-sm font-semibold">Membership Year</label>
@@ -550,6 +572,24 @@ export default function AdHocReport() {
                         setFilters({...filters, yearFilter: selected})
                       }
                     />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold">Find Members Needing Status Update</label>
+                    <SelectDropdown
+                      options={[
+                        "none",
+                        "last_year_not_this_year",
+                      ]}
+                      selectedOption={filters.membershipComparison}
+                      setSelectedOption={(selected) => 
+                        setFilters({...filters, membershipComparison: selected})
+                      }
+                    />
+                    {filters.membershipComparison === "last_year_not_this_year" && (
+                      <p className="mt-1 text-xs text-gray-600">
+                          Shows members whose membership has already expired (expiration date in the past) and are still marked as MEMBER type. These members should be updated to type NONMEMBER with status Expired.
+                      </p>
+                    )}
                   </div>
 
                   {filters.yearFilter === "custom" && (
