@@ -104,7 +104,9 @@ export default function ActionPanel({
           .not("status", "is", null);
         
         if (!error && data) {
-          const uniqueStatuses = [...new Set(data.map(p => p.status).filter(Boolean))].sort();
+          const uniqueStatuses = [...new Set(data.map(p => p.status).filter(Boolean))]
+            .filter(status => status !== "TEST")
+            .sort();
           setStatusOptions(uniqueStatuses as string[]);
         }
       }
