@@ -24,6 +24,7 @@ const AVAILABLE_FIELDS = [
   { key: "expiration_date", label: "Expiration Date", category: "Membership" },
   { key: "type", label: "Member Type", category: "Membership" },
   { key: "gender", label: "Gender", category: "Demographics" },
+  { key: "partner_id", label: "Partner ID", category: "Relationships" },
   { key: "partner_name", label: "Partner Name", category: "Relationships" },
   { key: "photo_link", label: "Photo URL", category: "Basic Info" },
 ];
@@ -47,6 +48,7 @@ export default function AdHocReport() {
     yearFilter: string;
     customYears: string[];
     hasPartner: string;
+    membershipComparison: string;
   }>({
     memberStatus: [],
     memberType: [],
@@ -54,6 +56,7 @@ export default function AdHocReport() {
     yearFilter: "all",
     customYears: [],
     hasPartner: "all",
+    membershipComparison: "none",
   });
 
   const [sortField, setSortField] = useState<string>("last_name");
@@ -180,6 +183,49 @@ export default function AdHocReport() {
         const expirationYear = member.expiration_date ? new Date(member.expiration_date).getFullYear().toString() : null;
         if (!expirationYear || !filters.customYears.includes(expirationYear)) return false;
       }
+      // Replace the membership comparison section in the filteredMembers useMemo
+      // Find this section in your code (around line 188):
+
+      if (filters.membershipComparison === "last_year_not_this_year") {
+        const now = new Date();
+        const expirationDate = member.expiration_date 
+          ? new Date(member.expiration_date) 
+          : null;
+        
+        // No expiration date = exclude
+        if (!expirationDate) {
+          return false;
+        }
+        
+        // Academic year starts September 2nd
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); // 0-indexed (0 = January, 8 = September)
+        const currentDay = now.getDate();
+        
+        // Determine when the current academic year started
+        let currentAcademicYearStart: Date;
+        if (currentMonth < 8 || (currentMonth === 8 && currentDay < 2)) {
+          // Before September 2nd - current academic year started Sept 2 of LAST year
+          // Example: Today is Jan 15, 2025 → current year started Sept 2, 2024
+          currentAcademicYearStart = new Date(currentYear - 1, 8, 2);
+        } else {
+          // On or after September 2nd - current academic year started Sept 2 of THIS year
+          // Example: Today is Oct 1, 2025 → current year started Sept 2, 2025
+          currentAcademicYearStart = new Date(currentYear, 8, 2);
+        }
+        
+        // Check if member expired BEFORE the current academic year started
+        const expiredBeforeCurrentYear = expirationDate < currentAcademicYearStart;
+        
+        // Check if still marked as MEMBER (should be NONMEMBER)
+        const stillMarkedAsMember = member.type !== "NONMEMBER";
+        
+        // Only include members who meet BOTH conditions:
+        // 1. Expired before current academic year started (had membership last year but not this year)
+        // 2. Still marked as MEMBER type (need status update to NONMEMBER + Expired)
+        return expiredBeforeCurrentYear && stillMarkedAsMember;
+      }
+
 
       return true;
     });
@@ -380,6 +426,7 @@ export default function AdHocReport() {
       yearFilter: "all",
       customYears: [],
       hasPartner: "all",
+      membershipComparison: "none",
     });
     setReportGenerated(false);
   };
@@ -540,6 +587,7 @@ export default function AdHocReport() {
                       }
                     />
                   </div>
+                  
 
                   <div>
                     <label className="mb-1 block text-sm font-semibold">Membership Year</label>
@@ -550,6 +598,24 @@ export default function AdHocReport() {
                         setFilters({...filters, yearFilter: selected})
                       }
                     />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold">Find Members Needing Status Update</label>
+                    <SelectDropdown
+                      options={[
+                        "none",
+                        "last_year_not_this_year",
+                      ]}
+                      selectedOption={filters.membershipComparison}
+                      setSelectedOption={(selected) => 
+                        setFilters({...filters, membershipComparison: selected})
+                      }
+                    />
+                    {filters.membershipComparison === "last_year_not_this_year" && (
+                      <p className="mt-1 text-xs text-gray-600">
+                          Shows members whose membership has already expired (expiration date in the past) and are still marked as MEMBER type. These members should be updated to type NONMEMBER with status Expired.
+                      </p>
+                    )}
                   </div>
 
                   {filters.yearFilter === "custom" && (

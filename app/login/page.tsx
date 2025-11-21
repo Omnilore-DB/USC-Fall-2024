@@ -7,7 +7,7 @@ import { Suspense, useEffect, useState } from "react";
 import AlertBox from "@/components/alertbox";
 import { supabase, getRoles } from "@/app/supabase";
 import Image from "next/image";
-import LandingPageImage from "@/components/assets/landingpage.png";
+import OmniloreLogoImage from "@/components/assets/omnilore-logo.png";
 
 export default function WrappedLoginPage() {
   return (
@@ -151,14 +151,14 @@ function LoginPage() {
           </Button>
         </div>
 
-        <div className="flex h-full w-[57%] items-end justify-end bg-linear-to-t from-[#FAF0EA] to-[#EDF2FD]">
+        <div className="flex h-full w-[57%] items-center justify-center bg-gradient-to-b from-[#EDF2FD] to-[#FAF0EA]">
           <Image
-            src={LandingPageImage}
-            alt="landing page image"
-            layout="intrinsic"
-            width={800}
-            height={0}
-            className="h-auto w-5/6"
+            src={OmniloreLogoImage}
+            alt="Omnilore - A community of curious minds"
+            width={900}
+            height={300}
+            className="h-auto w-4/5 object-contain"
+            priority
           />
         </div>
       </div>
