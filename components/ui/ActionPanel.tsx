@@ -43,7 +43,7 @@ export default function ActionPanel({
   const [userFormData, setUserFormData] = useState<Record<string, any>>({});
   const [products, setProducts] = useState<SupabaseProduct[]>([]);
   const [instanceId, setInstanceId] = useState<number>(0);
-  const [statusOptions, setStatusOptions] = useState<string[]>([]);
+  const [memberStatusOptions, setMemberStatusOptions] = useState<string[]>([]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -91,31 +91,36 @@ export default function ActionPanel({
   useEffect(() => {
     if (isOpen) {
       getProducts().then((products) => setProducts(products));
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const fetchStatusOptions = async () => {
+      
+      // Fetch unique member status values from database if editing members table
       if (selectedTable === "members") {
-        const { data, error } = await supabase
-          .from("products")
-          .select("status")
-          .eq("type", "MEMBERSHIP")
-          .not("status", "is", null);
-        
-        if (!error && data) {
-          const uniqueStatuses = [...new Set(data.map(p => p.status).filter(Boolean))]
-            .filter(status => status !== "TEST")
-            .sort();
-          setStatusOptions(uniqueStatuses as string[]);
-        }
+        fetchMemberStatusOptions();
       }
-    };
-    
-    if (isOpen) {
-      fetchStatusOptions();
     }
   }, [isOpen, selectedTable]);
+
+  const fetchMemberStatusOptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("members")
+        .select("member_status");
+
+      if (error) {
+        console.error("Failed to fetch member status options", error);
+        return;
+      }
+
+      // Get unique status values, handling the 'Diceased' typo
+      const uniqueStatus = [...new Set(data?.map(m => {
+        if (m.member_status === 'Diceased') return 'Deceased';
+        return m.member_status;
+      }).filter(Boolean) as string[])].sort();
+
+      setMemberStatusOptions(uniqueStatus);
+    } catch (error) {
+      console.error("Error fetching member status options:", error);
+    }
+  };
 
   const fetchSchema = async () => {
     const schema = await getTableSchema(selectedTable);
@@ -284,7 +289,7 @@ export default function ActionPanel({
                     );
                   }
 
-                  // Member status dropdown field - DYNAMIC FROM DATABASE
+                  // Member status dropdown field - Uses dynamic values from database
                   if (name === "member_status") {
                     return (
                       <div key={name} className="flex flex-col gap-3">
@@ -300,11 +305,14 @@ export default function ActionPanel({
                           className="w-full rounded-lg border border-gray-200 p-2"
                         >
                           <option value="">Select Status</option>
-                          {statusOptions.length > 0 ? (
-                            statusOptions.map(status => (
-                              <option key={status} value={status}>{status}</option>
+                          {memberStatusOptions.length > 0 ? (
+                            memberStatusOptions.map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
                             ))
                           ) : (
+                            // Fallback to common values if not loaded yet
                             <>
                               <option value="Active">Active</option>
                               <option value="Inactive">Inactive</option>
