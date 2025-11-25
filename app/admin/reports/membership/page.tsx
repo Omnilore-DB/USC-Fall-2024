@@ -310,37 +310,56 @@ export default function MembershipReports() {
   };
 
   const fetchMembershipMembers = async () => {
-    if (customRange && (!startDate || !endDate)) {
-      alert("Please select both start and end dates");
-      return;
-    }
+      if (customRange && (!startDate || !endDate)) {
+        alert("Please select both start and end dates");
+        return;
+      }
 
-    console.log('fetchMembershipMembers - selectedYears:', selectedYears);
+      console.log('fetchMembershipMembers - selectedYears:', selectedYears);
 
-    const { data: products, error: productError } = await supabase
-      .from("products")
-      .select("sku, status")
-      .eq("type", "MEMBERSHIP")
-      .in("year", selectedYears);
+      // Get statuses from BOTH products AND members
+      const { data: products, error: productError } = await supabase
+        .from("products")
+        .select("sku, status")
+        .eq("type", "MEMBERSHIP")
+        .in("year", selectedYears);
 
-    console.log('Found products:', products?.length);
+      console.log('Found products:', products?.length);
 
-    if (productError) {
-      console.error("Failed to fetch membership SKUs", productError);
-      return;
-    }
+      if (productError) {
+        console.error("Failed to fetch membership SKUs", productError);
+        return;
+      }
 
-    const skuStatusMap = Object.fromEntries(
-      products.map((p) => [p.sku, p.status ?? ""]),
-    );
-    const validSkus = products
-      .map((p) => p.sku)
-      .filter((sku) => sku !== "SQ-TEST");
+      // Also get unique statuses directly from members table
+      const { data: memberStatuses, error: memberStatusError } = await supabase
+        .from("members")
+        .select("member_status")
+        .not("member_status", "is", null);
 
-    if (validSkus.length === 0) {
-      setMembers([]);
-      return;
-    }
+      if (memberStatusError) {
+        console.error("Failed to fetch member statuses", memberStatusError);
+      }
+
+      // Combine both sources - ADD NULL CHECK HERE
+      const productStatuses = products?.map(p => p.status).filter(Boolean) || [];
+      const directStatuses = memberStatuses?.map(m => m.member_status).filter(Boolean) || [];
+      const allUniqueStatuses = [...new Set([...productStatuses, ...directStatuses])].sort();
+
+      console.log('All unique statuses found:', allUniqueStatuses);
+
+      const skuStatusMap = Object.fromEntries(
+        products.map((p) => [p.sku, p.status ?? ""]),
+      );
+
+      const validSkus = products
+        .map((p) => p.sku)
+        .filter((sku) => sku !== "SQ-TEST");
+
+      if (validSkus.length === 0) {
+        setMembers([]);
+        return;
+      }
 
     const { data: mtt, error: mttError } = await supabase
       .from("members_to_transactions")
@@ -443,8 +462,7 @@ const formatted = mtt
       emergency_contact_phone: formatPhoneNumber(
         m?.emergency_contact_phone ?? "",
       ),
-      member_status: skuStatusMap[row.sku] ?? "",
-      expiration_date: m?.expiration_date,
+      member_status: m?.member_status ?? skuStatusMap[row.sku] ?? "",      expiration_date: m?.expiration_date,
       gender: gender,
       type: m?.type ?? "",
       delivery_method: "Email",
