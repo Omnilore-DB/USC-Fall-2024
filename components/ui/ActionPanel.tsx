@@ -110,13 +110,28 @@ export default function ActionPanel({
         return;
       }
 
-      // Get unique status values, handling the 'Diceased' typo
-      const uniqueStatus = [...new Set(data?.map(m => {
+      // Define all possible member status codes including new ones
+      const allStatuses = [
+        "LOAM", "LOAE", 
+        "YrE", "YrM",
+        "1TriE", "1TriM", 
+        "2TriE", "2TriM", 
+        "LSE", "LSM",
+        "2TriLSM", "2TriLSE",  // NEW
+        "1TriLSE", "1TriLSM",  // NEW
+        "Deceased", "Expired"
+      ];
+
+      // Get unique status values from database, normalize Diceased -> Deceased
+      const dbStatuses = [...new Set(data?.map(m => {
         if (m.member_status === 'Diceased') return 'Deceased';
         return m.member_status;
-      }).filter(Boolean) as string[])].sort();
+      }).filter(Boolean) as string[])];
 
-      setMemberStatusOptions(uniqueStatus);
+      // Combine database values with all defined statuses, remove duplicates
+      const combinedStatuses = [...new Set([...allStatuses, ...dbStatuses])].sort();
+
+      setMemberStatusOptions(combinedStatuses);
     } catch (error) {
       console.error("Error fetching member status options:", error);
     }
