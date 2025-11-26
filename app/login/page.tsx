@@ -26,7 +26,7 @@ function LoginPage() {
 
   // Default general member credentials
   const GENERAL_MEMBER_LOGIN = "owlsrus";
-  const GENERAL_MEMBER_PASSWORD = "SDGbook25";
+  const GENERAL_MEMBER_PASSWORD = "love2learn";
 
   const DEFAULT_GENERAL_EMAIL = "member@omnilore.org";
   const DEFAULT_GENERAL_PASSWORD = "CBIWbvMQNUStFCGhnXwV";
