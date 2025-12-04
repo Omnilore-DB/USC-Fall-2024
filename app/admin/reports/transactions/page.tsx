@@ -5,6 +5,15 @@ import { useState, useEffect } from "react";
 import { getRoles } from "@/app/supabase";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 
+type TransactionRow = {
+  id: number;
+  transaction_email: string | null;
+  date: string;
+  amount: number;
+  refunded_amount: number | null;
+  sqsp_id: string | null;
+};
+
 export default function TransactionsReports() {
   const [customRange, setCustomRange] = useState(false);
   const [availableYears, setAvailableYears] = useState<string[]>([]);
@@ -82,11 +91,12 @@ export default function TransactionsReports() {
     }
 
     try {
-      // Get all products (donations, forums, memberships)
+      // Get all products (donations, forums, memberships) // refund added
       const { data: products, error: productError } = await supabase
         .from("products")
         .select("sku, type")
-        .in("type", ["DONATION", "FORUM", "MEMBERSHIP"]);
+        .in("type", ["DONATION", "FORUM", "MEMBERSHIP", "REFUND"] as any);
+
 
       if (productError) {
         console.error("Error fetching products", productError);
@@ -127,7 +137,7 @@ export default function TransactionsReports() {
       // Get all transactions
       const { data: transactions, error: txError } = await supabase
         .from("transactions")
-        .select("id, transaction_email, date, amount, sqsp_id")
+        .select("id, transaction_email, date, amount, refunded_amount, sqsp_id")
         .in("id", transactionIds);
 
       if (txError) {
@@ -157,11 +167,11 @@ export default function TransactionsReports() {
       );
 
       const cutoff = new Date("2023-07-01");
-
       const filtered = transactions
         .filter((t) => {
           const txDate = new Date(t.date);
           if (txDate < cutoff) return false;
+
           if (customRange) {
             const start = new Date(startDate);
             const end = new Date(endDate);
@@ -174,29 +184,52 @@ export default function TransactionsReports() {
         .map((t) => {
           const memberEntry = mtt.find((m) => m.transaction_id === t.id);
           const member = memberMap[memberEntry?.member_id ?? ""];
-          // Determine transaction type based on SKU
-          let transactionType = "UNKNOWN";
+
+          // 1. Base type from product/sku
+          let transactionType: string = "UNKNOWN";
           if (memberEntry?.sku) {
             const productType = skuTypeMap[memberEntry.sku];
-            if (productType === "DONATION") {
-              transactionType = "DONATION";
-            } else if (productType === "FORUM") {
-              transactionType = "FORUM";
-            } else if (productType === "MEMBERSHIP") {
-              transactionType = "MEMBERSHIP";
-            }
+
+            if (
+              (productType as string) === "DONATION" ||
+              (productType as string) === "FORUM" ||
+              (productType as string) === "MEMBERSHIP" ||
+              (productType as string) === "REFUND"
+            ) {
+              transactionType = productType as string;
+            }            
+          }
+
+          // 2. Override type if refunded_amount > 0
+          if (t.refunded_amount && t.refunded_amount > 0) {
+            transactionType = "REFUND";
           }
 
           return {
             transaction_email: t.transaction_email,
             date: t.date,
             squarespace_id: t.sqsp_id?.toString() ?? "",
-            amount: t.amount,
+            // show refunds as negative amounts
+            amount:
+              t.refunded_amount && t.refunded_amount > 0
+                ? -Math.abs(t.refunded_amount)
+                : t.amount,
             name: member?.name ?? "Unknown",
             type: transactionType,
           };
         })
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        // 3. Sort so REFUND rows show at the top, then newest first
+        .sort((a, b) => {
+          const aIsRefund = a.type === "REFUND";
+          const bIsRefund = b.type === "REFUND";
+
+          if (aIsRefund !== bIsRefund) {
+            return aIsRefund ? -1 : 1; // refunds first
+          }
+
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+
 
       setAllTransactions(filtered);
     } catch (error) {
@@ -235,7 +268,7 @@ export default function TransactionsReports() {
                         />
                       </div>
                       <div className="flex w-1/3 flex-col">
-                        <label className="text-sm font-semibold">
+              ``          <label className="text-sm font-semibold">
                           End Date
                         </label>
                         <input
@@ -264,7 +297,7 @@ export default function TransactionsReports() {
                       className="h-10 w-full cursor-pointer rounded-lg bg-gray-200 font-semibold"
                       onClick={() => setCustomRange((prev) => !prev)}
                     >
-                      {customRange ? "Calendar Year" : "Custom Range"}
+                      {customRange ? "Calendar Year" : "Custom R`ange"}
                     </button>
                   </div>
                 </div>
@@ -337,7 +370,7 @@ export default function TransactionsReports() {
                           </td>
                           <td className="p-3">${t.amount.toFixed(2)}</td>
                           <td className="p-3">
-                            <span
+                          <span
                               className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${
                                 t.type === "DONATION"
                                   ? "bg-green-100 text-green-800"
@@ -345,6 +378,8 @@ export default function TransactionsReports() {
                                   ? "bg-purple-100 text-purple-800"
                                   : t.type === "MEMBERSHIP"
                                   ? "bg-blue-100 text-blue-800"
+                                  : t.type === "REFUND"
+                                  ? "bg-red-100 text-red-800"
                                   : "bg-gray-100 text-gray-800"
                               }`}
                             >
