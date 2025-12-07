@@ -6,6 +6,8 @@ import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
 import SelectDropdown from "@/components/ui/SelectDropdown";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { usePartnerNavigation } from "@/hooks/use-partner-navigation";
+import { cn } from "@/lib/utils";
 
 export default function MembershipReports() {
   const [members, setMembers] = useState<any[]>([]);
@@ -14,6 +16,13 @@ export default function MembershipReports() {
   const [endDate, setEndDate] = useState<string>("");
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [reportSummary, setReportSummary] = useState<{
+    totalMembers: number;
+    totalAmount: number;
+  }>({
+    totalMembers: 0,
+    totalAmount: 0,
+  });
 
   // Sorting state with localStorage persistence
   const [selectedSort, setSelectedSort] = useState<string>("default");
@@ -120,41 +129,43 @@ export default function MembershipReports() {
         : (b[selectedSort] || "").toString().localeCompare((a[selectedSort] || "").toString());
     });
   }, [filteredMembers, selectedSort, selectedSortWay]);
+  const { registerRow, focusPartner, highlightedId } = usePartnerNavigation();
 
   const exportToCSV = () => {
-    // Export filtered members instead of all members
-    if (filteredMembers.length === 0) {
-      alert("No data to export");
-      return;
-    }
+  if (filteredMembers.length === 0) {
+    alert("No data to export");
+    return;
+  }
 
-    const headers = [
-      "Name",
-      "Address",
-      "Phone",
-      "Email",
-      "Emergency Contact",
-      "Emergency Phone",
-      "Status",
-      "Expiration",
-      "Gender",
-      "Member Type",
-      "Delivery Method"
-    ];
+  const headers = [
+    "Name",
+    "Address",
+    "Phone",
+    "Email",
+    "Emergency Contact",
+    "Emergency Phone",
+    "Status",
+    "Expiration",
+    "Gender",
+    "Member Type",
+    "Delivery Method",
+    "Partner Name"
+  ];
 
-    const rows = filteredMembers.map((m) => [
-      m.name ?? "",
-      m.address ?? "",
-      m.phone ?? "",
-      m.email ?? "",
-      m.emergency_contact ?? "",
-      m.emergency_contact_phone ?? "",
-      m.member_status ?? "",
-      m.expiration_date ?? "",
-      m.gender ?? "",
-      m.type ?? "",
-      m.delivery_method ?? "Email"
-    ]);
+  const rows = filteredMembers.map((m) => [
+    m.name ?? "",
+    m.address ?? "",
+    m.phone ?? "",
+    m.email ?? "",
+    m.emergency_contact ?? "",
+    m.emergency_contact_phone ?? "",
+    m.member_status ?? "",
+    m.expiration_date ?? "",
+    m.gender ?? "",
+    m.type ?? "",
+    m.delivery_method ?? "Email",
+    m.partner_name ?? ""
+  ]);
 
     const csvContent = [
       headers.join(","),
@@ -186,27 +197,28 @@ export default function MembershipReports() {
   };
 
   const exportToXLSX = async () => {
-    if (filteredMembers.length === 0) {
-      alert("No data to export");
-      return;
-    }
+  if (filteredMembers.length === 0) {
+    alert("No data to export");
+    return;
+  }
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Membership Report");
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Membership Report");
 
-    worksheet.columns = [
-      { header: "Name", key: "name", width: 25 },
-      { header: "Address", key: "address", width: 40 },
-      { header: "Phone", key: "phone", width: 18 },
-      { header: "Email", key: "email", width: 30 },
-      { header: "Emergency Contact", key: "emergency_contact", width: 25 },
-      { header: "Emergency Phone", key: "emergency_phone", width: 18 },
-      { header: "Status", key: "status", width: 15 },
-      { header: "Expiration", key: "expiration", width: 12 },
-      { header: "Gender", key: "gender", width: 10 },
-      { header: "Member Type", key: "type", width: 15 },
-      { header: "Delivery Method", key: "delivery_method", width: 15 },
-    ];
+  worksheet.columns = [
+    { header: "Name", key: "name", width: 25 },
+    { header: "Address", key: "address", width: 40 },
+    { header: "Phone", key: "phone", width: 18 },
+    { header: "Email", key: "email", width: 30 },
+    { header: "Emergency Contact", key: "emergency_contact", width: 25 },
+    { header: "Emergency Phone", key: "emergency_phone", width: 18 },
+    { header: "Status", key: "status", width: 15 },
+    { header: "Expiration", key: "expiration", width: 12 },
+    { header: "Gender", key: "gender", width: 10 },
+    { header: "Member Type", key: "type", width: 15 },
+    { header: "Delivery Method", key: "delivery_method", width: 15 },
+    { header: "Partner Name", key: "partner_name", width: 25 },
+  ];
 
     worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
     worksheet.getRow(1).fill = {
@@ -223,23 +235,24 @@ export default function MembershipReports() {
     };
 
     filteredMembers.forEach((m, idx) => {
-      const row = worksheet.addRow({
-        name: m.name ?? "",
-        address: m.address ?? "",
-        phone: m.phone ?? "",
-        email: m.email ?? "",
-        emergency_contact: m.emergency_contact ?? "",
-        emergency_phone: m.emergency_contact_phone ?? "",
-        status: m.member_status ?? "",
-        expiration: m.expiration_date ? new Date(m.expiration_date) : "",
-        gender: m.gender ?? "",
-        type: m.type ?? "",
-        delivery_method: m.delivery_method ?? "Email",
-      });
+  const row = worksheet.addRow({
+    name: m.name ?? "",
+    address: m.address ?? "",
+    phone: m.phone ?? "",
+    email: m.email ?? "",
+    emergency_contact: m.emergency_contact ?? "",
+    emergency_phone: m.emergency_contact_phone ?? "",
+    status: m.member_status ?? "",
+    expiration: m.expiration_date ? new Date(m.expiration_date) : "",
+    gender: m.gender ?? "",
+    type: m.type ?? "",
+    delivery_method: m.delivery_method ?? "Email",
+    partner_name: m.partner_name ?? "",
+  });
 
-      if (m.expiration_date) {
-        row.getCell(8).numFmt = "yyyy-mm-dd";
-      }
+  if (m.expiration_date) {
+    row.getCell(8).numFmt = "yyyy-mm-dd";
+  }
 
       row.eachCell((cell) => {
         cell.border = {
@@ -297,33 +310,56 @@ export default function MembershipReports() {
   };
 
   const fetchMembershipMembers = async () => {
-    if (customRange && (!startDate || !endDate)) {
-      alert("Please select both start and end dates");
-      return;
-    }
+      if (customRange && (!startDate || !endDate)) {
+        alert("Please select both start and end dates");
+        return;
+      }
 
-    const { data: products, error: productError } = await supabase
-      .from("products")
-      .select("sku, status")
-      .eq("type", "MEMBERSHIP")
-      .in("year", selectedYears);
+      console.log('fetchMembershipMembers - selectedYears:', selectedYears);
 
-    if (productError) {
-      console.error("Failed to fetch membership SKUs", productError);
-      return;
-    }
+      // Get statuses from BOTH products AND members
+      const { data: products, error: productError } = await supabase
+        .from("products")
+        .select("sku, status")
+        .eq("type", "MEMBERSHIP")
+        .in("year", selectedYears);
 
-    const skuStatusMap = Object.fromEntries(
-      products.map((p) => [p.sku, p.status ?? ""]),
-    );
-    const validSkus = products
-      .map((p) => p.sku)
-      .filter((sku) => sku !== "SQ-TEST");
+      console.log('Found products:', products?.length);
 
-    if (validSkus.length === 0) {
-      setMembers([]);
-      return;
-    }
+      if (productError) {
+        console.error("Failed to fetch membership SKUs", productError);
+        return;
+      }
+
+      // Also get unique statuses directly from members table
+      const { data: memberStatuses, error: memberStatusError } = await supabase
+        .from("members")
+        .select("member_status")
+        .not("member_status", "is", null);
+
+      if (memberStatusError) {
+        console.error("Failed to fetch member statuses", memberStatusError);
+      }
+
+      // Combine both sources - ADD NULL CHECK HERE
+      const productStatuses = products?.map(p => p.status).filter(Boolean) || [];
+      const directStatuses = memberStatuses?.map(m => m.member_status).filter(Boolean) || [];
+      const allUniqueStatuses = [...new Set([...productStatuses, ...directStatuses])].sort();
+
+      console.log('All unique statuses found:', allUniqueStatuses);
+
+      const skuStatusMap = Object.fromEntries(
+        products.map((p) => [p.sku, p.status ?? ""]),
+      );
+
+      const validSkus = products
+        .map((p) => p.sku)
+        .filter((sku) => sku !== "SQ-TEST");
+
+      if (validSkus.length === 0) {
+        setMembers([]);
+        return;
+      }
 
     const { data: mtt, error: mttError } = await supabase
       .from("members_to_transactions")
@@ -374,7 +410,7 @@ export default function MembershipReports() {
       .select(`
         id, first_name, last_name, street_address, city, state, zip_code, 
         phone, email, emergency_contact, emergency_contact_phone, 
-        member_status, expiration_date, gender, type
+        member_status, expiration_date, gender, type, partner
       `)
       .in("id", filteredMemberIds.map(Number));
 
@@ -383,40 +419,99 @@ export default function MembershipReports() {
       return;
     }
 
-    const formatted = mtt
-      .map((row) => {
-        const m = membersData.find((mem) => mem.id === row.member_id);
-        const addressParts = [
-          m?.street_address,
-          m?.city,
-          [m?.state, m?.zip_code].filter(Boolean).join(" "),
-        ].filter(Boolean);
-        return {
-          id: m?.id,
-          first_name: m?.first_name ?? "",
-          last_name: m?.last_name ?? "",
-          name: `${m?.first_name} ${m?.last_name}`,
-          address: addressParts.join(", "),
-          phone: formatPhoneNumber(m?.phone ?? ""),
-          email: m?.email ?? "",
-          emergency_contact: m?.emergency_contact,
-          emergency_contact_phone: formatPhoneNumber(
-            m?.emergency_contact_phone ?? "",
-          ),
-          member_status: skuStatusMap[row.sku] ?? "",
-          expiration_date: m?.expiration_date,
-          gender: m?.gender ?? "",
-          type: m?.type ?? "",
-          delivery_method: "Email"
-        };
-      })
+    const memberMap = new Map(
+      membersData.map((m) => [
+        m.id,
+        {
+          name: `${m.first_name} ${m.last_name}`,
+          first_name: m.first_name,
+          last_name: m.last_name,
+        },
+      ]),
+    );
+
+const formatted = mtt
+  .map((row) => {
+    const m = membersData.find((mem) => mem.id === row.member_id);
+    const addressParts = [
+      m?.street_address,
+      m?.city,
+      [m?.state, m?.zip_code].filter(Boolean).join(" "),
+    ].filter(Boolean);
+    
+    const partnerName = m?.partner
+      ? memberMap.get(Number(m.partner))?.name || ""
+      : "";
+
+    let gender = m?.gender || "";
+    if (gender) {
+      const g = gender.toUpperCase();
+      if (g === 'FEMALE' || g === 'F') gender = 'F';
+      else if (g === 'MALE' || g === 'M') gender = 'M';
+    }
+    
+    return {
+      id: m?.id,
+      first_name: m?.first_name ?? "",
+      last_name: m?.last_name ?? "",
+      name: `${m?.first_name} ${m?.last_name}`,
+      address: addressParts.join(", "),
+      phone: formatPhoneNumber(m?.phone ?? ""),
+      email: m?.email ?? "",
+      emergency_contact: m?.emergency_contact,
+      emergency_contact_phone: formatPhoneNumber(
+        m?.emergency_contact_phone ?? "",
+      ),
+      member_status: m?.member_status ?? skuStatusMap[row.sku] ?? "",      expiration_date: m?.expiration_date,
+      gender: gender,
+      type: m?.type ?? "",
+      delivery_method: "Email",
+      partner_name: partnerName,
+      partner: m?.partner ?? null,
+    };
+  })
+
+
       .sort((a, b) => {
         const lastNameCompare = a.last_name.localeCompare(b.last_name);
         if (lastNameCompare !== 0) return lastNameCompare;
         return a.first_name.localeCompare(b.first_name);
       });
 
-    setMembers(formatted);
+    const memberIds = formatted.map(m => m.id).filter((id): id is number => !!id);
+
+    if (memberIds.length > 0) {
+      const { data: transactionData, error: txError } = await supabase
+        .from('members_to_transactions')
+        .select('transaction_id, member_id, sku')
+        .in('member_id', memberIds)
+        .in('sku', validSkus);
+
+      if (!txError && transactionData) {
+        const txIds = transactionData.map(t => t.transaction_id);
+        
+        const { data: txAmounts, error: amountError } = await supabase
+          .from('transactions')
+          .select('id, amount')
+          .in('id', txIds);
+
+        if (!amountError && txAmounts) {
+          const totalAmount = txAmounts.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+          
+          setReportSummary({
+            totalMembers: formatted.length,
+            totalAmount,
+          });
+        }
+      }
+    } else {
+      setReportSummary({
+        totalMembers: 0,
+        totalAmount: 0,
+      });
+    }
+    
+      setMembers(formatted);
   };
 
   useEffect(() => {
@@ -557,7 +652,29 @@ export default function MembershipReports() {
                   </div>
                 </div>
               </div>
-
+              {members.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="rounded-lg border border-slate-300 bg-slate-100 p-3">
+                    <h3 className="mb-1 text-xs font-semibold text-black">
+                      Total Members
+                    </h3>
+                    <p className="text-lg font-bold text-black">
+                      {reportSummary.totalMembers}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-blue-300 bg-blue-100 p-3">
+                    <h3 className="mb-1 text-xs font-semibold text-black">
+                      Total Amount
+                    </h3>
+                    <p className="text-lg font-bold text-black">
+                      ${reportSummary.totalAmount.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 2 
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
               {/* Table with dropdown filters */}
               <div className="w-full grow overflow-y-auto rounded-xl">
                 <table className="custom-scrollbar w-full border-collapse rounded-lg bg-white text-left shadow-sm">
@@ -593,8 +710,11 @@ export default function MembershipReports() {
                       <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Member Type
                       </th>
-                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                      <th className="sticky top-0 z-20 bg-white p-3 font-semibold">
                         Delivery Method
+                      </th>
+                      <th className="sticky top-0 z-20 rounded-xl bg-white p-3 font-semibold">
+                        Partner Name
                       </th>
                     </tr>
                     {/* Filter Row - only for specific columns */}
@@ -659,6 +779,8 @@ export default function MembershipReports() {
                           ))}
                         </select>
                       </th>
+                      {/* Partner Name Filter */}
+                      <th className="sticky top-[52px] z-10 bg-gray-50 p-2"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -673,7 +795,18 @@ export default function MembershipReports() {
                       </tr>
                     ) : (
                       sortedMembers.map((m, i) => (
-                        <tr key={i} className={`border-t ${i % 2 === 1 ? "bg-orange-50" : ""}`}>
+                        <tr
+                          key={i}
+                          ref={registerRow(m.id ?? null)}
+                          className={cn(
+                            "border-t transition-colors",
+                            highlightedId === m.id
+                              ? "bg-yellow-200"
+                              : i % 2 === 1
+                                ? "bg-orange-50"
+                                : "",
+                          )}
+                        >
                           <td className="p-3">{m.name}</td>
                           <td className="p-3">{m.address}</td>
                           <td className="p-3">{m.phone}</td>
@@ -685,9 +818,25 @@ export default function MembershipReports() {
                           <td className="p-3">{m.gender}</td>
                           <td className="p-3">{m.type}</td>
                           <td className="p-3">{m.delivery_method}</td>
+                          <td className="p-3">
+                            {m.partner ? (
+                              <button
+                                onClick={() =>
+                                  focusPartner({
+                                    partnerId: m.partner,
+                                    partnerName: m.partner_name,
+                                  })
+                                }
+                                className="text-blue-600 underline-offset-2 hover:underline"
+                              >
+                                {m.partner_name || "View Partner"}
+                              </button>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
                         </tr>
-                      ))
-                    )}
+                      )))}
                   </tbody>
                 </table>
               </div>

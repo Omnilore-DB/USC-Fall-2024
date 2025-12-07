@@ -1,9 +1,13 @@
 "use client";
 
 import { supabase } from "@/app/supabase";
-import { useState, useEffect } from "react";
-import { getRoles } from "@/app/supabase";
+import { useState, useEffect, useMemo } from "react";
 import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
+import SelectDropdown from "@/components/ui/SelectDropdown";
+import * as XLSX from "xlsx";
+
+type SortKey = "default" | "name" | "type" | "date" | "squarespace_id";
+type SortDirection = "asc" | "desc";
 
 type TransactionRow = {
   id: number;
@@ -30,15 +34,77 @@ export default function TransactionsReports() {
   >([]);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [sortKey, setSortKey] = useState<SortKey>("default");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const sortOptions: SortKey[] = [
+    "default",
+    "name",
+    "type",
+    "date",
+    "squarespace_id",
+  ];
+  const sortDirectionOptions: SortDirection[] = ["asc", "desc"];
 
-  const exportToCSV = () => {
-    if (allTransactions.length === 0) {
+  const sortedTransactions = useMemo(() => {
+    if (sortKey === "default") {
+      if (sortDirection === "desc") {
+        return [...allTransactions].reverse();
+      }
+      return [...allTransactions];
+    }
+
+    const sorted = [...allTransactions];
+
+    sorted.sort((a, b) => {
+      const multiplier = sortDirection === "asc" ? 1 : -1;
+
+      const getComparable = (value: string | number) => {
+        if (sortKey === "date") {
+          return new Date(value as string).getTime();
+        }
+
+        if (sortKey === "squarespace_id") {
+          const numeric = Number(value);
+          return Number.isNaN(numeric)
+            ? String(value ?? "").toLowerCase()
+            : numeric;
+        }
+
+        return String(value ?? "").toLowerCase();
+      };
+
+      const aValue = getComparable(a[sortKey]);
+      const bValue = getComparable(b[sortKey]);
+
+      if (aValue < bValue) return -1 * multiplier;
+      if (aValue > bValue) return 1 * multiplier;
+      return 0;
+    });
+
+    return sorted;
+  }, [allTransactions, sortDirection, sortKey]);
+
+  const handleSortKeyChange = (value: string) => {
+    const key = value as SortKey;
+    setSortKey(key);
+
+    if (key === "date") {
+      setSortDirection("desc");
+    } else if (key === "default") {
+      setSortDirection("asc");
+    } else {
+      setSortDirection("asc");
+    }
+  };
+
+  const exportToXLSX = () => {
+    if (sortedTransactions.length === 0) {
       alert("No data to export");
       return;
     }
 
     const headers = ["Name", "Email", "Squarespace ID", "Date", "Amount", "Type"];
-    const rows = allTransactions.map((t) => [
+    const rows = sortedTransactions.map((t) => [
       t.name ?? "",
       t.transaction_email ?? "",
       t.squarespace_id ?? "",
@@ -47,36 +113,40 @@ export default function TransactionsReports() {
         month: "short",
         day: "numeric",
       }),
-      t.amount.toFixed(2),
+      parseFloat(t.amount.toFixed(2)),
       t.type ?? "",
     ]);
     
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((r) =>
-        r.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(","),
-      ),
-    ].join("\r\n");
+    // Create worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    
+    // Auto-size columns
+    const columnWidths = [
+      { wch: 20 }, // Name
+      { wch: 30 }, // Email
+      { wch: 15 }, // Squarespace ID
+      { wch: 12 }, // Date
+      { wch: 10 }, // Amount
+      { wch: 12 }, // Type
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
 
     const yearsString =
       selectedYears.length > 0 ? selectedYears.join("_") : "all";
     let filename = "";
 
     if (customRange && startDate && endDate) {
-      filename = `transactions_report_${startDate}_to_${endDate}.csv`;
+      filename = `transactions_report_${startDate}_to_${endDate}.xlsx`;
     } else {
-      filename = `transactions_report_${yearsString}.csv`;
+      filename = `transactions_report_${yearsString}.xlsx`;
     }
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Export file
+    XLSX.writeFile(workbook, filename);
   };
 
   const fetchAllTransactions = async () => {
@@ -137,7 +207,10 @@ export default function TransactionsReports() {
       // Get all transactions
       const { data: transactions, error: txError } = await supabase
         .from("transactions")
-        .select("id, transaction_email, date, amount, refunded_amount, sqsp_id")
+  .select(
+    "id, transaction_email, date, amount, refunded_amount, sqsp_id, payment_platform, parsed_form_data"
+  ) 
+
         .in("id", transactionIds);
 
       if (txError) {
@@ -167,7 +240,8 @@ export default function TransactionsReports() {
       );
 
       const cutoff = new Date("2023-07-01");
-      const filtered = transactions
+
+      const transactionEntries = transactions
         .filter((t) => {
           const txDate = new Date(t.date);
           if (txDate < cutoff) return false;
@@ -181,7 +255,7 @@ export default function TransactionsReports() {
             return selectedYears.includes(txYear);
           }
         })
-        .map((t) => {
+        .flatMap((t) => {
           const memberEntry = mtt.find((m) => m.transaction_id === t.id);
           const member = memberMap[memberEntry?.member_id ?? ""];
 
@@ -205,33 +279,73 @@ export default function TransactionsReports() {
             transactionType = "REFUND";
           }
 
-          return {
-            transaction_email: t.transaction_email,
-            date: t.date,
-            squarespace_id: t.sqsp_id?.toString() ?? "",
-            // show refunds as negative amounts
-            amount:
-              t.refunded_amount && t.refunded_amount > 0
-                ? -Math.abs(t.refunded_amount)
-                : t.amount,
-            name: member?.name ?? "Unknown",
-            type: transactionType,
-          };
-        })
-        // 3. Sort so REFUND rows show at the top, then newest first
-        .sort((a, b) => {
-          const aIsRefund = a.type === "REFUND";
-          const bIsRefund = b.type === "REFUND";
+// Determine squarespace_id or payment method display
+const squarespaceIdDisplay =
+  t.payment_platform === "MAIL"
+    ? "Mail"
+    : t.sqsp_id?.toString() ?? "";
 
-          if (aIsRefund !== bIsRefund) {
-            return aIsRefund ? -1 : 1; // refunds first
+return {
+  transaction_email: t.transaction_email,
+  date: t.date,
+  squarespace_id: squarespaceIdDisplay,
+  // show refunds as negative amounts
+  amount:
+    t.refunded_amount && t.refunded_amount > 0
+      ? -Math.abs(t.refunded_amount)
+      : t.amount,
+  name: member?.name ?? "Unknown",
+  type: transactionType,
+};
+// 3. Sort so REFUND rows show at the top, then newest first
+.sort((a, b) => {
+  const aIsRefund = a.type === "REFUND";
+  const bIsRefund = b.type === "REFUND";
+
+  if (aIsRefund !== bIsRefund) {
+    return aIsRefund ? -1 : 1; // refunds first
+  }
+
+  return new Date(b.date).getTime() - new Date(a.date).getTime();
+});
+
+
+          // For FORUM transactions, check if we should split by parsed_form_data
+          if (transactionType === "FORUM" && t.parsed_form_data && Array.isArray(t.parsed_form_data)) {
+            // Split forum transactions into individual entries
+            return t.parsed_form_data.map((participant: any) => {
+              const participantName = participant.first_name && participant.last_name 
+                ? `${participant.first_name} ${participant.last_name}`
+                : member?.name ?? "Unknown";
+              
+              // Use individual amount if available, otherwise split total amount
+              const individualAmount = participant.amount || (t.amount / t.parsed_form_data.length);
+
+              return {
+                transaction_email: t.transaction_email,
+                date: t.date,
+                squarespace_id: squarespaceIdDisplay,
+                amount: individualAmount,
+                name: participantName,
+                type: transactionType,
+              };
+            });
           }
 
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
+          // For non-forum transactions or forum transactions without parsed_form_data, return single entry
+          return [
+            {
+              transaction_email: t.transaction_email,
+              date: t.date,
+              squarespace_id: squarespaceIdDisplay,
+              amount: t.amount,
+              name: member?.name ?? "Unknown",
+              type: transactionType,
+            },
+          ];
         });
 
-
-      setAllTransactions(filtered);
+      setAllTransactions(transactionEntries);
     } catch (error) {
       console.error("Error in fetchAllTransactions:", error);
     }
@@ -252,11 +366,29 @@ export default function TransactionsReports() {
         <div className="flex h-[95%] w-[98%] flex-row items-center gap-4">
           <div className="flex h-full w-full flex-col items-center">
             <div className="flex h-full w-full flex-col gap-3">
-              <div className="flex w-full flex-row items-end justify-between">
-                <div className="flex w-3/5 flex-row justify-between gap-2">
+              <div className="flex w-full flex-wrap items-end gap-2">
+                <div className="flex flex-1 flex-wrap items-end gap-2">
+                  <div className="flex min-w-[140px] flex-col">
+                    <label className="text-sm font-semibold">Sort By</label>
+                    <SelectDropdown
+                      options={sortOptions}
+                      selectedOption={sortKey}
+                      setSelectedOption={handleSortKeyChange}
+                    />
+                  </div>
+                  <div className="flex min-w-[120px] flex-col">
+                    <label className="text-sm font-semibold">Order</label>
+                    <SelectDropdown
+                      options={sortDirectionOptions}
+                      selectedOption={sortDirection}
+                      setSelectedOption={(value) =>
+                        setSortDirection(value as SortDirection)
+                      }
+                    />
+                  </div>
                   {customRange ? (
                     <>
-                      <div className="flex w-1/3 flex-col">
+                      <div className="flex min-w-[180px] flex-col">
                         <label className="text-sm font-semibold">
                           Start Date
                         </label>
@@ -267,8 +399,9 @@ export default function TransactionsReports() {
                           className="h-10 w-full cursor-pointer rounded-lg border-gray-200 bg-white p-2"
                         />
                       </div>
-                      <div className="flex w-1/3 flex-col">
-              ``          <label className="text-sm font-semibold">
+                    <div className="flex w-1/3 min-w-[180px] flex-col">
+                      <label className="text-sm font-semibold">
+
                           End Date
                         </label>
                         <input
@@ -280,7 +413,7 @@ export default function TransactionsReports() {
                       </div>
                     </>
                   ) : (
-                    <div className="flex w-2/3 flex-col">
+                    <div className="flex min-w-[220px] flex-1 flex-col">
                       <label className="text-sm font-semibold">
                         Calendar Year(s)
                       </label>
@@ -292,7 +425,7 @@ export default function TransactionsReports() {
                       />
                     </div>
                   )}
-                  <div className="flex w-1/3 items-end">
+                  <div className="flex min-w-[140px] items-end">
                     <button
                       className="h-10 w-full cursor-pointer rounded-lg bg-gray-200 font-semibold"
                       onClick={() => setCustomRange((prev) => !prev)}
@@ -301,23 +434,19 @@ export default function TransactionsReports() {
                     </button>
                   </div>
                 </div>
-                <div className="flex w-1/4 flex-row justify-between gap-2">
-                  <div className="flex w-1/2 items-end">
-                    <button
-                      onClick={fetchAllTransactions}
-                      className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 font-semibold text-white"
-                    >
-                      Generate Report
-                    </button>
-                  </div>
-                  <div className="flex w-1/2 items-end">
-                    <button
-                      className="h-10 w-full cursor-pointer rounded-lg bg-green-500 font-semibold text-white"
-                      onClick={exportToCSV}
-                    >
-                      Export as CSV
-                    </button>
-                  </div>
+                <div className="flex w-full flex-row gap-2 sm:w-auto">
+                  <button
+                    onClick={fetchAllTransactions}
+                    className="h-10 w-full cursor-pointer rounded-lg bg-blue-500 px-4 font-semibold text-white sm:w-auto"
+                  >
+                    Generate Report
+                  </button>
+                  <button
+                    className="h-10 w-full cursor-pointer rounded-lg bg-green-500 px-4 font-semibold text-white sm:w-auto"
+                    onClick={exportToXLSX}
+                  >
+                    Export as XLSX
+                  </button>
                 </div>
               </div>
 
@@ -346,7 +475,7 @@ export default function TransactionsReports() {
                     </tr>
                   </thead>
                   <tbody>
-                    {allTransactions.length === 0 ? (
+                    {sortedTransactions.length === 0 ? (
                       <tr>
                         <td
                           colSpan={6}
@@ -356,7 +485,7 @@ export default function TransactionsReports() {
                         </td>
                       </tr>
                     ) : (
-                      allTransactions.map((t, i) => (
+                      sortedTransactions.map((t, i) => (
                         <tr key={i} className="border-t">
                           <td className="p-3">{t.name}</td>
                           <td className="p-3">{t.transaction_email}</td>

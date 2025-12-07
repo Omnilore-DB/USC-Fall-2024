@@ -43,6 +43,7 @@ export default function ActionPanel({
   const [userFormData, setUserFormData] = useState<Record<string, any>>({});
   const [products, setProducts] = useState<SupabaseProduct[]>([]);
   const [instanceId, setInstanceId] = useState<number>(0);
+  const [memberStatusOptions, setMemberStatusOptions] = useState<string[]>([]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -90,8 +91,51 @@ export default function ActionPanel({
   useEffect(() => {
     if (isOpen) {
       getProducts().then((products) => setProducts(products));
+      
+      // Fetch unique member status values from database if editing members table
+      if (selectedTable === "members") {
+        fetchMemberStatusOptions();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, selectedTable]);
+
+  const fetchMemberStatusOptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("members")
+        .select("member_status");
+
+      if (error) {
+        console.error("Failed to fetch member status options", error);
+        return;
+      }
+
+      // Define all possible member status codes including new ones
+      const allStatuses = [
+        "LOAM", "LOAE", 
+        "YrE", "YrM",
+        "1TriE", "1TriM", 
+        "2TriE", "2TriM", 
+        "LSE", "LSM",
+        "2TriLSM", "2TriLSE",  // NEW
+        "1TriLSE", "1TriLSM",  // NEW
+        "Deceased", "Expired"
+      ];
+
+      // Get unique status values from database, normalize Diceased -> Deceased
+      const dbStatuses = [...new Set(data?.map(m => {
+        if (m.member_status === 'Diceased') return 'Deceased';
+        return m.member_status;
+      }).filter(Boolean) as string[])];
+
+      // Combine database values with all defined statuses, remove duplicates
+      const combinedStatuses = [...new Set([...allStatuses, ...dbStatuses])].sort();
+
+      setMemberStatusOptions(combinedStatuses);
+    } catch (error) {
+      console.error("Error fetching member status options:", error);
+    }
+  };
 
   const fetchSchema = async () => {
     const schema = await getTableSchema(selectedTable);
@@ -260,7 +304,7 @@ export default function ActionPanel({
                     );
                   }
 
-                  // Member status dropdown field - UPDATED: Changed "Suspended" to "Expired"
+                  // Member status dropdown field - Uses dynamic values from database
                   if (name === "member_status") {
                     return (
                       <div key={name} className="flex flex-col gap-3">
@@ -276,11 +320,22 @@ export default function ActionPanel({
                           className="w-full rounded-lg border border-gray-200 p-2"
                         >
                           <option value="">Select Status</option>
-                          <option value="Active">Active</option>
-                          <option value="Inactive">Inactive</option>
-                          <option value="Leave of Absence">Leave of Absence</option>
-                          <option value="Deceased">Deceased</option>
-                          <option value="Expired">Expired</option>
+                          {memberStatusOptions.length > 0 ? (
+                            memberStatusOptions.map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))
+                          ) : (
+                            // Fallback to common values if not loaded yet
+                            <>
+                              <option value="Active">Active</option>
+                              <option value="Inactive">Inactive</option>
+                              <option value="Leave of Absence">Leave of Absence</option>
+                              <option value="Deceased">Deceased</option>
+                              <option value="Expired">Expired</option>
+                            </>
+                          )}
                         </select>
                       </div>
                     );

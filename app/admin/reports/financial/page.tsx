@@ -134,26 +134,6 @@ const TreasurerReqs = () => {
         ],
         rows: stripeRows,
       },
-      {
-        title: "Donation",
-        headers: [
-          "Category",
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-          "YTD",
-        ],
-        rows: donationRows,
-      },
     ];
 
     let allData: any[][] = [];
@@ -250,9 +230,9 @@ const TreasurerReqs = () => {
         "Payout",
         ...buildFullYearRows((month) => {
           const monthData = monthsInRange.find(m => m.month === month);
-          return monthData ? ((paypalPayout[`${monthData.year}-${month}`] ?? 0) / 100).toFixed(2) : "";
+          return monthData ? (paypalPayout[`${monthData.year}-${month}`] ?? 0).toFixed(2) : "";
         }),
-        (getRangeTotal(paypalPayout) / 100).toFixed(2),
+        getRangeTotal(paypalPayout).toFixed(2),
       ],
     ];
 
@@ -343,11 +323,6 @@ const TreasurerReqs = () => {
           "YTD",
         ],
         rows: stripeRowsFull,
-      },
-      {
-        title: "Donation",
-        headers: ["Name", "Date", "Amount", "Address"],
-        rows: donationRows,
       },
     ];
 
@@ -522,7 +497,13 @@ const TreasurerReqs = () => {
     }
 
     const headers = ["Name", "Date", "Amount", "Address"];
-    const rows = donors.flatMap((donor) => {
+    const sortedDonors = [...donors].sort((a, b) => {
+      const lastNameCompare = a.last_name.localeCompare(b.last_name);
+      if (lastNameCompare !== 0) return lastNameCompare;
+      return a.first_name.localeCompare(b.first_name);
+    });
+
+    const rows = sortedDonors.flatMap((donor) => {
       const fullName = `${donor.first_name} ${donor.last_name}`;
       const fullAddressParts = [
         donor.street_address,
@@ -583,47 +564,47 @@ const TreasurerReqs = () => {
       console.log("Skipping donor fetch due to missing dates");
       return;
     }
-  
+
     const { data, error } = await supabase.rpc("get_donation_history", {
       start_date: start,
       end_date: end,
     });
-  
-  
-  if (error) {
-    console.error("Error fetching donors:", error.message);
-  } else {
-    console.log("Donors fetched:", data);
 
-    const grouped = data.reduce((acc, item) => {
-      const key = item.member_id;
-      if (!acc[key]) {
-        acc[key] = {
-          member_id: item.member_id,
-          first_name: item.first_name,
-          last_name: item.last_name,
-          street_address: item.street_address,
-          city: item.city,
-          state: item.state,
-          zip_code: item.zip_code,
-          donations: [],
-          total_donation_amount: 0,
-        };
-      }
 
-      acc[key].donations.push({
-        date: item.donation_date,
-        amount: item.donation_amount,
-      });
+    if (error) {
+      console.error("Error fetching donors:", error.message);
+    } else {
+      console.log("Donors fetched:", data);
 
-      acc[key].total_donation_amount += item.donation_amount;
+      const grouped = data.reduce((acc, item) => {
+        const key = item.member_id;
+        if (!acc[key]) {
+          acc[key] = {
+            member_id: item.member_id,
+            first_name: item.first_name,
+            last_name: item.last_name,
+            street_address: item.street_address,
+            city: item.city,
+            state: item.state,
+            zip_code: item.zip_code,
+            donations: [],
+            total_donation_amount: 0,
+          };
+        }
 
-      return acc;
-    }, {} as any);
+        acc[key].donations.push({
+          date: item.donation_date,
+          amount: item.donation_amount,
+        });
 
-    setDonors(Object.values(grouped));
-  }
-};
+        acc[key].total_donation_amount += item.donation_amount;
+
+        return acc;
+      }, {} as any);
+
+      setDonors(Object.values(grouped));
+    }
+  };
 
   const fetchPayouts = async (fromDate: string, toDate: string) => {
     const { data, error } = await supabase
@@ -811,7 +792,8 @@ const TreasurerReqs = () => {
           paypal_gross[key] = g.data ?? 0;
           paypal_fee[key] = f.data ?? 0;
           paypal_net[key] = n.data ?? 0;
-          paypal_payout[key] = ppo.data ?? 0;
+          const payout = ppo.data ?? 0;
+          paypal_payout[key] = payout;
         });
       }),
     );
@@ -885,18 +867,24 @@ const TreasurerReqs = () => {
 
     setFromDate(start);
     setToDate(end);
-    setTriggerPresetReport(true); 
+    setTriggerPresetReport(true);
   };
 
   //donationRows
   React.useEffect(() => {
     if (triggerPresetReport && fromDate && toDate) {
       handleGenerateReport();
-      setTriggerPresetReport(false); 
+      setTriggerPresetReport(false);
     }
   }, [triggerPresetReport, fromDate, toDate]);
   const donationRows = React.useMemo(() => {
-    return donors.flatMap((donor) => {
+    const sortedDonors = [...donors].sort((a, b) => {
+      const lastNameCompare = a.last_name.localeCompare(b.last_name);
+      if (lastNameCompare !== 0) return lastNameCompare;
+      return a.first_name.localeCompare(b.first_name);
+    });
+
+    return sortedDonors.flatMap((donor) => {
       const fullName = `${donor.first_name} ${donor.last_name}`;
       const address = [donor.street_address, donor.city, donor.state, donor.zip_code]
         .filter(Boolean)
@@ -909,19 +897,19 @@ const TreasurerReqs = () => {
       ]);
     });
   }, [donors]);
-  
+
   React.useEffect(() => {
-    if (donors.length > 0 && monthsInRange.length > 0) {
+    if (monthsInRange.length > 0) {
       setShowReport(true);
     }
-  }, [donors, monthsInRange]);
-  
+  }, [monthsInRange]);
 
-// Generate Squarespace rows
-const squarespaceRows = categories.map((cat) => {
-  const row: string[] = [cat];
-  let ytdGross = 0;
-  let ytdFee = 0;
+
+  // Generate Squarespace rows
+  const squarespaceRows = categories.map((cat) => {
+    const row: string[] = [cat];
+    let ytdGross = 0;
+    let ytdFee = 0;
 
     monthsInRange.forEach(({ year, month }) => {
       const key = `${cat}-${year}-${month}`;
@@ -955,9 +943,9 @@ const squarespaceRows = categories.map((cat) => {
     [
       "Payout",
       ...monthsInRange.map(({ year, month }) =>
-        ((paypalPayout[`${year}-${month}`] ?? 0) / 100).toFixed(2),
+        (paypalPayout[`${year}-${month}`] ?? 0).toFixed(2),
       ),
-      (getRangeTotal(paypalPayout) / 100).toFixed(2),
+      getRangeTotal(paypalPayout).toFixed(2),
     ],
   ];
 
@@ -986,19 +974,19 @@ const squarespaceRows = categories.map((cat) => {
     ],
   ];
 
-// // Donation rows
-// const donationRows = donors.flatMap((donor) => {
-//   const fullName = `${donor.first_name} ${donor.last_name}`;
-//   const address = [donor.street_address, donor.city, donor.state, donor.zip_code]
-//     .filter(Boolean)
-//     .join(", ");
-//     return donor.donations.map((donation: { date: string; amount: number }) => [
-//       fullName,
-//     new Date(donation.date).toLocaleDateString(),
-//     donation.amount.toFixed(2),
-//     address,
-//   ]);
-// });
+  // // Donation rows
+  // const donationRows = donors.flatMap((donor) => {
+  //   const fullName = `${donor.first_name} ${donor.last_name}`;
+  //   const address = [donor.street_address, donor.city, donor.state, donor.zip_code]
+  //     .filter(Boolean)
+  //     .join(", ");
+  //     return donor.donations.map((donation: { date: string; amount: number }) => [
+  //       fullName,
+  //     new Date(donation.date).toLocaleDateString(),
+  //     donation.amount.toFixed(2),
+  //     address,
+  //   ]);
+  // });
 
   return (
     <div className="custom-scrollbar flex h-full w-full flex-col bg-gray-100">
@@ -1238,10 +1226,10 @@ const squarespaceRows = categories.map((cat) => {
                                       grossData,
                                       cat.toUpperCase(),
                                     ) -
-                                      getCatRangeTotal(
-                                        feeData,
-                                        cat.toUpperCase(),
-                                      ),
+                                    getCatRangeTotal(
+                                      feeData,
+                                      cat.toUpperCase(),
+                                    ),
                                   )}
                                 </td>
                               </tr>
@@ -1405,13 +1393,13 @@ const squarespaceRows = categories.map((cat) => {
                                   key={`net-${year}-${month}`}
                                   className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}
                                 >
-                                  {format((paypalPayout[key] ?? 0) / 100)}
+                                  {format(paypalPayout[key] ?? 0)}
                                 </td>
                               );
                             })}
 
                             <td className="sticky right-0 border bg-gray-100 p-2 font-bold">
-                              {format(getRangeTotal(paypalPayout) / 100)}
+                              {format(getRangeTotal(paypalPayout))}
                             </td>
                           </tr>
 
