@@ -161,27 +161,27 @@ const fetchMemberTransactions = async (memberId: number) => {
       return [];
     }
 
-      const transactionIds = memberTransactions.map(mt => mt.transaction_id);
+    const transactionIds = memberTransactions.map(mt => mt.transaction_id);
 
-      const { data: transactions, error: txError } = await supabase
-        .from("transactions")
-        .select(`
-          id,
-          date,
-          payment_platform,
-          fulfillment_status,
-          refunded_amount,
-          amount,
-          created_at,
-          sqsp_id
-        `)
-        .in("id", transactionIds)
-        .order("date", { ascending: false }); // Newest first
+    const { data: transactions, error: txError } = await supabase
+      .from("transactions")
+      .select(`
+        id,
+        date,
+        payment_platform,
+        fulfillment_status,
+        refunded_amount,
+        amount,
+        created_at,
+        sqsp_id
+      `)
+      .in("id", transactionIds)
+      .order("date", { ascending: false });
 
-      if (txError) {
-        console.error("Failed to fetch transactions", txError);
-        return [];
-      }
+    if (txError) {
+      console.error("Failed to fetch transactions", txError);
+      return [];
+    }
 
     const skus = [...new Set(memberTransactions.map((mt) => mt.sku))];
 
@@ -196,101 +196,68 @@ const fetchMemberTransactions = async (memberId: number) => {
 
     const productMap = Object.fromEntries(
       (products ?? []).map((p) => [p.sku, p])
-    );    
+    );
 
-      // Create lookup map for member_to_transactions
-      const mttMap = Object.fromEntries(
-        memberTransactions.map(mt => [mt.transaction_id, mt])
-      );
+    const mttMap = Object.fromEntries(
+      memberTransactions.map(mt => [mt.transaction_id, mt])
+    );
 
-      // FIXED: Map over sorted transactions instead of memberTransactions
-      const processedTransactions = transactions.map(transaction => {
-        const mt = mttMap[transaction.id];
-        if (!mt) return null;
+    const processedTransactions = transactions.map(transaction => {
+      const mt = mttMap[transaction.id];
+      if (!mt) return null;
 
-        const product = productMap[mt.sku];
-        
-        let display_status = "Completed";
+      const product = productMap[mt.sku];
+      
+      let display_status = "Completed";
 
-        if (transaction.refunded_amount > 0) {
-          if (transaction.refunded_amount === transaction.amount) {
-            display_status = "Fully Refunded";
-          } else {
-            display_status = "Partially Refunded";
-          }
-        } else if (transaction.fulfillment_status === "CANCELED") {
-          display_status = "Canceled";
-        } else if (transaction.fulfillment_status === "PENDING") {
-          display_status = "Pending";
-        } else if (transaction.fulfillment_status === "FULFILLED") {
-          display_status = "Completed";
+      if (transaction.refunded_amount > 0) {
+        if (transaction.refunded_amount === transaction.amount) {
+          display_status = "Fully Refunded";
         } else {
-          display_status = transaction.fulfillment_status || "Unknown";
+          display_status = "Partially Refunded";
         }
+      } else if (transaction.fulfillment_status === "CANCELED") {
+        display_status = "Canceled";
+      } else if (transaction.fulfillment_status === "PENDING") {
+        display_status = "Pending";
+      } else if (transaction.fulfillment_status === "FULFILLED") {
+        display_status = "Completed";
+      } else {
+        display_status = transaction.fulfillment_status || "Unknown";
+      }
 
-        return {
-          transaction_id: transaction.id,
-          amount: mt.amount,
-          sku: mt.sku,
-          date: transaction.date,
-          payment_platform: transaction.payment_platform,
-          fulfillment_status: transaction.fulfillment_status,
-          refunded_amount: transaction.refunded_amount,
-          total_amount: transaction.amount,
-          created_at: transaction.created_at,
-          sqsp_id: transaction.sqsp_id,
-          product_descriptor: product?.descriptor || "Unknown",
-          product_type: product?.type || "Unknown",
-          display_status,
-        };
-      })
-      .filter((t): t is NonNullable<typeof t> => t !== null);
+      return {
+        transaction_id: transaction.id,
+        amount: mt.amount,
+        sku: mt.sku,
+        date: transaction.date,
+        payment_platform: transaction.payment_platform,
+        fulfillment_status: transaction.fulfillment_status,
+        refunded_amount: transaction.refunded_amount,
+        total_amount: transaction.amount,
+        created_at: transaction.created_at,
+        sqsp_id: transaction.sqsp_id,
+        product_descriptor: product?.descriptor || "Unknown",
+        product_type: product?.type || "Unknown",
+        display_status,
+      };
+    })
+    .filter((t): t is NonNullable<typeof t> => t !== null);
 
-// New: refunds / recharacterized at top, then newest first
-const sortedTransactions = processedTransactions.sort((a, b) => {
-  const aIsRefund =
-    (a.product_type as string) === "REFUND" ||
-    (a.refunded_amount ?? 0) > 0;
-  const bIsRefund =
-    (b.product_type as string) === "REFUND" ||
-    (b.refunded_amount ?? 0) > 0;
-
-  if (aIsRefund !== bIsRefund) {
-    return aIsRefund ? -1 : 1; // refunds first
-  }
-
-  return new Date(b.date).getTime() - new Date(a.date).getTime();
-});
-
-/*
-const handleRecharacterize = async (
-  transactionId: number,
-  newType: "MEMBERSHIP" | "FORUM" | "DONATION"
-) => {
-  try {
-    const sku = memberTransactions.find(
-      (t) => t.transaction_id === transactionId
-    )?.sku;
-
-    // ...rest of implementation...
-  } catch (error) {
-    console.error("Failed to recharacterize transaction", error);
-  }
-};
-*/
-
-
+    // Sort: refunds/recharacterized at top, then newest first
+    const sortedTransactions = processedTransactions.sort((a, b) => {
+      const aIsRefund =
+        (a.product_type as string) === "REFUND" ||
+        (a.refunded_amount ?? 0) > 0;
       const bIsRefund =
         (b.product_type as string) === "REFUND" ||
         (b.refunded_amount ?? 0) > 0;
 
       if (aIsRefund !== bIsRefund) {
-        return aIsRefund ? -1 : 1; // refunds first
+        return aIsRefund ? -1 : 1;
       }
 
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return dateB - dateA; // newest first
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
 
     return sortedTransactions;
@@ -299,7 +266,7 @@ const handleRecharacterize = async (
     return [];
   }
 };
-*/
+
 
   const handleRecharacterize = async (
     transactionId: number,
@@ -557,7 +524,7 @@ setMemberTransactions(prev =>
                       </div>
                       <div>
                         <strong>Type:</strong> {transaction.product_type}
-                        {/*}
+                        {
                         <select
                           value={transaction.product_type}
                           onChange={(e) =>
@@ -573,7 +540,7 @@ setMemberTransactions(prev =>
                           <option value="DONATION">Donation</option>
                           <option value="REFUND">Refund</option>
                         </select>
-                        */}
+                        }
                       </div>
                       <div>
                         <strong>Amount:</strong> ${transaction.amount}

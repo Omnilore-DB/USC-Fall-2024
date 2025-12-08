@@ -207,10 +207,9 @@ export default function TransactionsReports() {
       // Get all transactions
       const { data: transactions, error: txError } = await supabase
         .from("transactions")
-  .select(
-    "id, transaction_email, date, amount, refunded_amount, sqsp_id, payment_platform, parsed_form_data"
-  ) 
-
+        .select(
+          "id, transaction_email, date, amount, refunded_amount, sqsp_id, payment_platform, parsed_form_data"
+        ) 
         .in("id", transactionIds);
 
       if (txError) {
@@ -279,36 +278,11 @@ export default function TransactionsReports() {
             transactionType = "REFUND";
           }
 
-// Determine squarespace_id or payment method display
-const squarespaceIdDisplay =
-  t.payment_platform === "MAIL"
-    ? "Mail"
-    : t.sqsp_id?.toString() ?? "";
-
-return {
-  transaction_email: t.transaction_email,
-  date: t.date,
-  squarespace_id: squarespaceIdDisplay,
-  // show refunds as negative amounts
-  amount:
-    t.refunded_amount && t.refunded_amount > 0
-      ? -Math.abs(t.refunded_amount)
-      : t.amount,
-  name: member?.name ?? "Unknown",
-  type: transactionType,
-};
-// 3. Sort so REFUND rows show at the top, then newest first
-.sort((a, b) => {
-  const aIsRefund = a.type === "REFUND";
-  const bIsRefund = b.type === "REFUND";
-
-  if (aIsRefund !== bIsRefund) {
-    return aIsRefund ? -1 : 1; // refunds first
-  }
-
-  return new Date(b.date).getTime() - new Date(a.date).getTime();
-});
-
+          // Determine squarespace_id or payment method display
+          const squarespaceIdDisplay =
+            t.payment_platform === "MAIL"
+              ? "Mail"
+              : t.sqsp_id?.toString() ?? "";
 
           // For FORUM transactions, check if we should split by parsed_form_data
           if (transactionType === "FORUM" && t.parsed_form_data && Array.isArray(t.parsed_form_data)) {
@@ -338,11 +312,26 @@ return {
               transaction_email: t.transaction_email,
               date: t.date,
               squarespace_id: squarespaceIdDisplay,
-              amount: t.amount,
+              // show refunds as negative amounts
+              amount:
+                t.refunded_amount && t.refunded_amount > 0
+                  ? -Math.abs(t.refunded_amount)
+                  : t.amount,
               name: member?.name ?? "Unknown",
               type: transactionType,
             },
           ];
+        })
+        // 3. Sort so REFUND rows show at the top, then newest first
+        .sort((a, b) => {
+          const aIsRefund = a.type === "REFUND";
+          const bIsRefund = b.type === "REFUND";
+
+          if (aIsRefund !== bIsRefund) {
+            return aIsRefund ? -1 : 1; // refunds first
+          }
+
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
         });
 
       setAllTransactions(transactionEntries);
@@ -399,9 +388,8 @@ return {
                           className="h-10 w-full cursor-pointer rounded-lg border-gray-200 bg-white p-2"
                         />
                       </div>
-                    <div className="flex w-1/3 min-w-[180px] flex-col">
-                      <label className="text-sm font-semibold">
-
+                      <div className="flex w-1/3 min-w-[180px] flex-col">
+                        <label className="text-sm font-semibold">
                           End Date
                         </label>
                         <input
@@ -430,7 +418,7 @@ return {
                       className="h-10 w-full cursor-pointer rounded-lg bg-gray-200 font-semibold"
                       onClick={() => setCustomRange((prev) => !prev)}
                     >
-                      {customRange ? "Calendar Year" : "Custom R`ange"}
+                      {customRange ? "Calendar Year" : "Custom Range"}
                     </button>
                   </div>
                 </div>
@@ -499,7 +487,7 @@ return {
                           </td>
                           <td className="p-3">${t.amount.toFixed(2)}</td>
                           <td className="p-3">
-                          <span
+                            <span
                               className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${
                                 t.type === "DONATION"
                                   ? "bg-green-100 text-green-800"
