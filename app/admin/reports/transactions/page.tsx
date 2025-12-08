@@ -9,6 +9,15 @@ import * as XLSX from "xlsx";
 type SortKey = "default" | "name" | "type" | "date" | "squarespace_id";
 type SortDirection = "asc" | "desc";
 
+type TransactionRow = {
+  id: number;
+  transaction_email: string | null;
+  date: string;
+  amount: number;
+  refunded_amount: number | null;
+  sqsp_id: string | null;
+};
+
 export default function TransactionsReports() {
   const [customRange, setCustomRange] = useState(false);
   const [availableYears, setAvailableYears] = useState<string[]>([]);
@@ -152,11 +161,12 @@ export default function TransactionsReports() {
     }
 
     try {
-      // Get all products (donations, forums, memberships)
+      // Get all products (donations, forums, memberships) // refund added
       const { data: products, error: productError } = await supabase
         .from("products")
         .select("sku, type")
-        .in("type", ["DONATION", "FORUM", "MEMBERSHIP"]);
+        .in("type", ["DONATION", "FORUM", "MEMBERSHIP", "REFUND"] as any);
+
 
       if (productError) {
         console.error("Error fetching products", productError);
@@ -197,7 +207,9 @@ export default function TransactionsReports() {
       // Get all transactions
       const { data: transactions, error: txError } = await supabase
         .from("transactions")
-        .select("id, transaction_email, date, amount, sqsp_id, payment_platform, parsed_form_data")
+        .select(
+          "id, transaction_email, date, amount, refunded_amount, sqsp_id, payment_platform, parsed_form_data"
+        ) 
         .in("id", transactionIds);
 
       if (txError) {
@@ -232,6 +244,7 @@ export default function TransactionsReports() {
         .filter((t) => {
           const txDate = new Date(t.date);
           if (txDate < cutoff) return false;
+
           if (customRange) {
             const start = new Date(startDate);
             const end = new Date(endDate);
@@ -244,24 +257,32 @@ export default function TransactionsReports() {
         .flatMap((t) => {
           const memberEntry = mtt.find((m) => m.transaction_id === t.id);
           const member = memberMap[memberEntry?.member_id ?? ""];
-          
-          // Determine transaction type based on SKU
-          let transactionType = "UNKNOWN";
+
+          // 1. Base type from product/sku
+          let transactionType: string = "UNKNOWN";
           if (memberEntry?.sku) {
             const productType = skuTypeMap[memberEntry.sku];
-            if (productType === "DONATION") {
-              transactionType = "DONATION";
-            } else if (productType === "FORUM") {
-              transactionType = "FORUM";
-            } else if (productType === "MEMBERSHIP") {
-              transactionType = "MEMBERSHIP";
-            }
+
+            if (
+              (productType as string) === "DONATION" ||
+              (productType as string) === "FORUM" ||
+              (productType as string) === "MEMBERSHIP" ||
+              (productType as string) === "REFUND"
+            ) {
+              transactionType = productType as string;
+            }            
+          }
+
+          // 2. Override type if refunded_amount > 0
+          if (t.refunded_amount && t.refunded_amount > 0) {
+            transactionType = "REFUND";
           }
 
           // Determine squarespace_id or payment method display
-          const squarespaceIdDisplay = t.payment_platform === "MAIL" 
-            ? "Mail" 
-            : t.sqsp_id?.toString() ?? "";
+          const squarespaceIdDisplay =
+            t.payment_platform === "MAIL"
+              ? "Mail"
+              : t.sqsp_id?.toString() ?? "";
 
           // For FORUM transactions, check if we should split by parsed_form_data
           if (transactionType === "FORUM" && t.parsed_form_data && Array.isArray(t.parsed_form_data)) {
@@ -291,11 +312,26 @@ export default function TransactionsReports() {
               transaction_email: t.transaction_email,
               date: t.date,
               squarespace_id: squarespaceIdDisplay,
-              amount: t.amount,
+              // show refunds as negative amounts
+              amount:
+                t.refunded_amount && t.refunded_amount > 0
+                  ? -Math.abs(t.refunded_amount)
+                  : t.amount,
               name: member?.name ?? "Unknown",
               type: transactionType,
             },
           ];
+        })
+        // 3. Sort so REFUND rows show at the top, then newest first
+        .sort((a, b) => {
+          const aIsRefund = a.type === "REFUND";
+          const bIsRefund = b.type === "REFUND";
+
+          if (aIsRefund !== bIsRefund) {
+            return aIsRefund ? -1 : 1; // refunds first
+          }
+
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
         });
 
       setAllTransactions(transactionEntries);
@@ -352,7 +388,7 @@ export default function TransactionsReports() {
                           className="h-10 w-full cursor-pointer rounded-lg border-gray-200 bg-white p-2"
                         />
                       </div>
-                      <div className="flex min-w-[180px] flex-col">
+                      <div className="flex w-1/3 min-w-[180px] flex-col">
                         <label className="text-sm font-semibold">
                           End Date
                         </label>
@@ -459,6 +495,8 @@ export default function TransactionsReports() {
                                   ? "bg-purple-100 text-purple-800"
                                   : t.type === "MEMBERSHIP"
                                   ? "bg-blue-100 text-blue-800"
+                                  : t.type === "REFUND"
+                                  ? "bg-red-100 text-red-800"
                                   : "bg-gray-100 text-gray-800"
                               }`}
                             >
