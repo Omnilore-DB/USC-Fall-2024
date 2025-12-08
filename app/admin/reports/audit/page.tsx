@@ -94,6 +94,7 @@ export default function AuditReportPage() {
   const [operationFilter, setOperationFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [actorFilter, setActorFilter] = useState<string>("all");
+  const [hideCron, setHideCron] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -180,8 +181,14 @@ export default function AuditReportPage() {
     return ["all", ...Array.from(actors).sort()];
   }, [logs]);
 
+  const filteredLogs = useMemo(() => {
+    const isCron = (src: string | null | undefined) =>
+      (src ?? "").toLowerCase().includes("cron");
+    return hideCron ? logs.filter((log) => !isCron(log.source)) : logs;
+  }, [hideCron, logs]);
+
   const exportToCSV = () => {
-    if (logs.length === 0) {
+    if (filteredLogs.length === 0) {
       alert("No audit entries to export");
       return;
     }
@@ -196,7 +203,7 @@ export default function AuditReportPage() {
       "Context",
     ];
 
-    const rows = logs.map((log) => [
+    const rows = filteredLogs.map((log) => [
       formatPacificIso(log.recorded_at),
       log.actor_email ?? "",
       log.source ?? "",
@@ -251,7 +258,7 @@ export default function AuditReportPage() {
     worksheet.getRow(1).font = { bold: true };
     worksheet.getRow(1).alignment = { horizontal: "center" };
 
-    logs.forEach((log) => {
+    filteredLogs.forEach((log) => {
       worksheet.addRow({
         timestamp: formatPacificIso(log.recorded_at),
         actor_email: log.actor_email ?? "",
@@ -353,7 +360,16 @@ export default function AuditReportPage() {
                     setSelectedOption={setActorFilter}
                   />
                 </div>
-                <div className="flex grow items-end justify-end gap-2">
+                <div className="flex grow items-center justify-end gap-4">
+                  <label className="flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={hideCron}
+                      onChange={(e) => setHideCron(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    Hide cron entries
+                  </label>
                   <button
                     className="h-10 rounded-lg bg-red-500 px-4 font-semibold text-white"
                     onClick={exportToCSV}
@@ -378,7 +394,7 @@ export default function AuditReportPage() {
                   <div className="flex h-full items-center justify-center p-8 text-red-500">
                     {error}
                   </div>
-                ) : logs.length === 0 ? (
+                ) : filteredLogs.length === 0 ? (
                   <div className="flex h-full items-center justify-center p-8 text-gray-500">
                     No audit records match the selected filters.
                   </div>
@@ -410,7 +426,7 @@ export default function AuditReportPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {logs.map((log, index) => (
+                      {filteredLogs.map((log, index) => (
                         <tr
                           key={log.id}
                           className={`border-t transition-colors ${

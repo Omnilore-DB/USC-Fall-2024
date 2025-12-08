@@ -21,6 +21,10 @@ import Stripe from "stripe";
 import { get } from "./supabase/api";
 
 export const convert = {
+  payoutDateAdjusted: (isoDate: string) => {
+    return new Date(isoDate).toISOString().slice(0, 7);
+  },
+
   product: (p: SquarespaceInventoryItem): SupabaseProductInsert => {
     let type: SupabaseProductType = "UNKNOWN";
     let year: string | null = null;
@@ -298,6 +302,9 @@ export const convert = {
       return {
         amount: data.amount,
         date: new Date(data.created * 1000).toISOString(),
+        date_adjusted: convert.payoutDateAdjusted(
+          new Date(data.created * 1000).toISOString(),
+        ),
         payment_platform: "STRIPE",
         payout_id: data.id,
         status: data.status,
@@ -306,8 +313,11 @@ export const convert = {
 
     paypal: (data: PaypalTransactionInfo): SupabasePayoutInsert => {
       return {
-        amount: Math.abs(Number(data.transaction_amount.value)) * 100,
+        amount: Math.round(Math.abs(Number(data.transaction_amount.value)) * 100),
         date: new Date(data.transaction_initiation_date).toISOString(),
+        date_adjusted: convert.payoutDateAdjusted(
+          new Date(data.transaction_initiation_date).toISOString(),
+        ),
         payment_platform: "PAYPAL",
         payout_id: data.transaction_id,
         status:

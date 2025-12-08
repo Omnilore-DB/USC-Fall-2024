@@ -80,11 +80,11 @@ export default function AdHocReport() {
       const { data, error } = await supabase
         .from("members")
         .select(`
-          id, first_name, last_name, alias, email, phone, 
+          id, first_name, last_name, alias, email, phone,
           street_address, city, state, zip_code,
           emergency_contact, emergency_contact_phone,
           member_status, expiration_date, type, gender,
-          photo_link, partner
+          photo_link, partner_id
         `);
 
       if (error) {
@@ -96,7 +96,7 @@ export default function AdHocReport() {
 
       const membersWithPartners = data?.map(member => ({
         ...member,
-        partner_name: member.partner ? memberMap.get(Number(member.partner)) || "" : ""
+        partner_name: member.partner_id ? memberMap.get(member.partner_id) || "" : ""
       })) || [];
 
       setMembers(membersWithPartners);
@@ -164,10 +164,10 @@ export default function AdHocReport() {
         }
       }
 
-      if (filters.hasPartner === "with_partner" && !member.partner) {
+      if (filters.hasPartner === "with_partner" && !member.partner_id) {
         return false;
       }
-      if (filters.hasPartner === "without_partner" && member.partner) {
+      if (filters.hasPartner === "without_partner" && member.partner_id) {
         return false;
       }
 

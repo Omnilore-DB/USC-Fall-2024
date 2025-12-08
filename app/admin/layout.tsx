@@ -50,7 +50,9 @@ export default function AdminLayout({
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("activeReportTab", activeReportTab);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("activeReportTab", activeReportTab);
+    }
   }, [activeReportTab]);
 
   const handleReportTabClick = (tab: string) => {
