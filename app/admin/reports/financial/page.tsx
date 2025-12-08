@@ -230,9 +230,9 @@ const TreasurerReqs = () => {
         "Payout",
         ...buildFullYearRows((month) => {
           const monthData = monthsInRange.find(m => m.month === month);
-          return monthData ? (paypalPayout[`${monthData.year}-${month}`] ?? 0).toFixed(2) : "";
+          return monthData ? ((paypalPayout[`${monthData.year}-${month}`] ?? 0) / 100).toFixed(2) : "";
         }),
-        getRangeTotal(paypalPayout).toFixed(2),
+        (getRangeTotal(paypalPayout) / 100).toFixed(2),
       ],
     ];
 
@@ -943,9 +943,9 @@ const TreasurerReqs = () => {
     [
       "Payout",
       ...monthsInRange.map(({ year, month }) =>
-        (paypalPayout[`${year}-${month}`] ?? 0).toFixed(2),
+        ((paypalPayout[`${year}-${month}`] ?? 0) / 100).toFixed(2),
       ),
-      getRangeTotal(paypalPayout).toFixed(2),
+      (getRangeTotal(paypalPayout) / 100).toFixed(2),
     ],
   ];
 
@@ -1393,13 +1393,13 @@ const TreasurerReqs = () => {
                                   key={`net-${year}-${month}`}
                                   className={`border border-l-2 border-r-2 border-l-gray-400 border-r-gray-400 p-2 text-center ${bgColor}`}
                                 >
-                                  {format(paypalPayout[key] ?? 0)}
+                                  {format((paypalPayout[key] ?? 0) / 100)}
                                 </td>
                               );
                             })}
 
                             <td className="sticky right-0 border bg-gray-100 p-2 font-bold">
-                              {format(getRangeTotal(paypalPayout))}
+                              {format(getRangeTotal(paypalPayout) / 100)}
                             </td>
                           </tr>
 

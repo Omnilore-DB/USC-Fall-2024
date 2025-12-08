@@ -42,7 +42,7 @@ export default function ForumReports() {
       first_name?: string;
       last_name?: string;
       member_id?: number | null;
-      partner?: number | null;
+      partner_id?: number | null;
       partner_name?: string;
     }[]
   >([]);
@@ -218,7 +218,7 @@ export default function ForumReports() {
 
     const { data: members, error: memberError } = await supabase
       .from("members")
-      .select("id, first_name, last_name, email, phone, type, partner")
+      .select("id, first_name, last_name, email, phone, type, partner_id")
       .in("id", filteredMemberIds.map(Number));
 
     if (memberError) {
@@ -233,10 +233,10 @@ export default function ForumReports() {
         String(m.id),
         {
           ...m,
-          partner: m.partner ? Number(m.partner) : null,
-          partner_name: m.partner
+          partner_id: m.partner_id ?? null,
+          partner_name: m.partner_id
             ? (() => {
-                const partner = membersById.get(Number(m.partner));
+                const partner = membersById.get(m.partner_id);
                 return partner
                   ? `${partner.first_name ?? ""} ${partner.last_name ?? ""}`.trim()
                   : "";
@@ -262,7 +262,7 @@ export default function ForumReports() {
           amount: tx?.amount ?? 0,
           descriptor: skuDescriptorMap[entry.sku] ?? "",
           member_id: member?.id ?? null,
-          partner: member?.partner ?? null,
+          partner_id: member?.partner_id ?? null,
           partner_name: member?.partner_name ?? "",
         };
       });
@@ -689,11 +689,11 @@ export default function ForumReports() {
                           <td className="p-3">{m.type}</td>
                           <td className="p-3">{m.descriptor}</td>
                           <td className="p-3">
-                            {m.partner ? (
+                            {m.partner_id ? (
                               <button
                                 onClick={() =>
                                   focusPartner({
-                                    partnerId: m.partner ?? null,
+                                    partnerId: m.partner_id ?? null,
                                     partnerName: m.partner_name,
                                   })
                                 }

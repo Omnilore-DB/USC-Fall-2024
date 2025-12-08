@@ -408,9 +408,9 @@ export default function MembershipReports() {
     const { data: membersData, error: membersError } = await supabase
       .from("members")
       .select(`
-        id, first_name, last_name, street_address, city, state, zip_code, 
-        phone, email, emergency_contact, emergency_contact_phone, 
-        member_status, expiration_date, gender, type, partner
+        id, first_name, last_name, street_address, city, state, zip_code,
+        phone, email, emergency_contact, emergency_contact_phone,
+        member_status, expiration_date, gender, type, partner_id
       `)
       .in("id", filteredMemberIds.map(Number));
 
@@ -439,8 +439,8 @@ const formatted = mtt
       [m?.state, m?.zip_code].filter(Boolean).join(" "),
     ].filter(Boolean);
     
-    const partnerName = m?.partner
-      ? memberMap.get(Number(m.partner))?.name || ""
+    const partnerName = m?.partner_id
+      ? memberMap.get(m.partner_id)?.name || ""
       : "";
 
     let gender = m?.gender || "";
@@ -467,7 +467,7 @@ const formatted = mtt
       type: m?.type ?? "",
       delivery_method: "Email",
       partner_name: partnerName,
-      partner: m?.partner ?? null,
+      partner_id: m?.partner_id ?? null,
     };
   })
 
@@ -819,11 +819,11 @@ const formatted = mtt
                           <td className="p-3">{m.type}</td>
                           <td className="p-3">{m.delivery_method}</td>
                           <td className="p-3">
-                            {m.partner ? (
+                            {m.partner_id ? (
                               <button
                                 onClick={() =>
                                   focusPartner({
-                                    partnerId: m.partner,
+                                    partnerId: m.partner_id,
                                     partnerName: m.partner_name,
                                   })
                                 }
