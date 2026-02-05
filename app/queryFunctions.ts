@@ -101,7 +101,7 @@ export const getProducts = async () => {
   const { data, error } = await supabase
     .from("products")
     .select()
-    .order("year", { ascending: false });
+    .eq("is_current", true);
 
   if (error) {
     console.error(`Error fetching products:`, error);
