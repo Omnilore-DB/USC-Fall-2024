@@ -25,7 +25,7 @@ function LoginPage() {
   const [alertMessage, setAlertMessage] = useState("");
 
   // Default general member credentials
-  // Change line below to change the general user's usernam
+  // Change line below to change the general user's username
   const GENERAL_MEMBER_LOGIN = "owlsrus";
   const GENERAL_MEMBER_PASSWORD = "SDGbook25";
 
