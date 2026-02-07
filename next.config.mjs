@@ -1,9 +1,10 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/i,
@@ -13,17 +14,16 @@ const nextConfig = {
     return config;
   },
 
+  reactCompiler: true,
+
   turbopack: {
+    root: __dirname,
     rules: {
       "*.svg": {
         loaders: ["@svgr/webpack"],
         as: "*.[js,jsx,ts,tsx]",
       },
     },
-  },
-
-  experimental: {
-    reactCompiler: true,
   },
 };
 

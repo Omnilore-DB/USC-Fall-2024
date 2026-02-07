@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { getRoles, signOut } from "@/app/supabase";
+import { getRoles, signOut, getMembershipLink } from "@/app/supabase";
 import UserIcon from "@/components/assets/user-icon.png";
 import { queryTableWithFields } from "@/app/queryFunctions";
 import NavBar from "@/components/ui/NavBar";
@@ -39,6 +39,11 @@ export default function Search() {
     null,
   );
   const [isMemberPanelOpen, setIsMemberPanelOpen] = useState(false);
+  const [membershipUrl, setMembershipUrl] = useState<string>("");
+
+  useEffect(() => {
+    getMembershipLink().then(setMembershipUrl);
+  }, []);
 
   const filteredEntries = useMemo(() => {
     const keywords = query.toLowerCase().split(" ").filter(Boolean);
@@ -138,20 +143,30 @@ export default function Search() {
 
   return (
     <div className="flex h-screen w-full flex-col">
-      <div className="flex items-center">
-        {/* Nav Bar */}
+      <div className="flex w-full items-center">
         <NavBar />
-        {/* Logout button */}
-        <button
-          onClick={async () => {
-            await signOut();
-            router.push("/login");
-          }}
-          className="group flex w-full items-center justify-end gap-2 p-2 pr-12 text-[#85849E]"
-        >
-          <LogOut className="group-hover:stroke-red-500" size={20} />
-          <span className="text-left group-hover:text-red-500">Logout</span>
-        </button>
+        <div className="flex w-full items-center justify-end gap-2 pr-12">
+          {membershipUrl && (
+            <a
+              href={membershipUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+            >
+              Join or renew membership
+            </a>
+          )}
+          <button
+            onClick={async () => {
+              await signOut();
+              router.push("/login");
+            }}
+            className="group flex items-center gap-2 p-2 text-[#85849E]"
+          >
+            <LogOut className="group-hover:stroke-red-500" size={20} />
+            <span className="text-left group-hover:text-red-500">Logout</span>
+          </button>
+        </div>
       </div>
 
       <div className="flex w-full grow flex-col overflow-y-auto">
