@@ -8,9 +8,6 @@ export const queryTableWithPrimaryKey = async (
 ): Promise<{ data: any[]; primaryKeys: string[] }> => {
   console.log(`Querying table: ${table}`);
 
-  // Fetch the table content
-  //
-  const { data, error } = await supabase.from(table).select("*");
   let query = supabase.from(table).select("*");
 
   // Special handling for audit_logs
