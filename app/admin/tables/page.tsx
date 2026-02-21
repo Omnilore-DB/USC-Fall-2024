@@ -51,9 +51,22 @@ function Table() {
   const [isDeletePanelOpen, setIsDeletePanelOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const filteredEntries = useMemo(() => {
+  // Toggle for audit_logs to include/exclude cron/service logs
+  const [includeServiceLogs, setIncludeServiceLogs] = useLocalStorage<boolean>(
+    "audit_logs_include_service",
+    true,
+  );
+
+
+
+    const filteredEntries = useMemo(() => {
+      let base = entries;
+      if (selectedTable === "audit_logs" && !includeServiceLogs) {
+            base = base.filter((row) => row?.source !== "service");
+      }
+
     const keywords = query.toLowerCase().split(" ").filter(Boolean);
-    return entries.filter((item) =>
+    return base.filter((item) =>
       keywords.every((kw) =>
         Object.values(item).some(
           (value) =>
@@ -61,7 +74,7 @@ function Table() {
         ),
       ),
     );
-  }, [query, entries]);
+  }, [query, entries, selectedTable, includeServiceLogs]);
 
   const sortedEntries = useMemo(() => {
     if (selectedSort === "default") return filteredEntries;
@@ -298,7 +311,7 @@ function Table() {
                       />
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  {/* <div className="flex gap-1">
                     {hasPermission("can_create") && (
                       <ActionButton
                         actionType="add"
@@ -317,7 +330,43 @@ function Table() {
                         onClick={() => openDeletePanel()}
                       />
                     )}
+                  </div> */}
+                  <div className="flex items-center gap-4">
+                    {selectedTable === "audit_logs" && (
+                      <label className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={includeServiceLogs}
+                          onChange={(e) => setIncludeServiceLogs(e.target.checked)}
+                          className="h-4 w-4"
+                        />
+                        Include cron/service logs
+                      </label>
+                    )}
+
+                    <div className="flex gap-1">
+                      {hasPermission("can_create") && (
+                        <ActionButton
+                          actionType="add"
+                          onClick={() => openEntryPanel("add")}
+                        />
+                      )}
+                      {hasPermission("can_write") && (
+                        <ActionButton
+                          actionType="edit"
+                          onClick={() => openEntryPanel("edit")}
+                        />
+                      )}
+                      {hasPermission("can_delete") && (
+                        <ActionButton
+                          actionType="delete"
+                          onClick={() => openDeletePanel()}
+                        />
+                      )}
+                    </div>
+
                   </div>
+
                 </div>
 
                 {/* Search Input */}
