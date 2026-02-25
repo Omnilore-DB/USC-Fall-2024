@@ -72,11 +72,9 @@ function LoginPage() {
 
       // Map "owlsrus" login to default general member email and password
       if (
-        email.toLowerCase() === GENERAL_MEMBER_LOGIN &&
-        password === GENERAL_MEMBER_PASSWORD
+        email.toLowerCase() === GENERAL_MEMBER_LOGIN
       ) {
         userEmail = DEFAULT_GENERAL_EMAIL;
-        userPassword = DEFAULT_GENERAL_PASSWORD;
       }
 
       // Authenticate user with Supabase
