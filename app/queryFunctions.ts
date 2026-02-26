@@ -1,5 +1,5 @@
 import { supabase } from "@/app/supabase";
-import { Database } from "@/types/supabase";
+import { Database } from "./api/cron/src/supabase/types";
 
 export type TableName = keyof Database["public"]["Tables"] | "audit_logs";
 
