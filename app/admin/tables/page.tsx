@@ -40,7 +40,6 @@ function Table() {
     "members",
   );
 
-  // <-- FIX: explicitly convert selectedTable to string for the key (avoids implicit symbol->string)
   const [selectedSort, setSelectedSort] = useLocalStorage<string>(
     `selected_sort_${String(selectedTable)}`,
     "default",
@@ -416,7 +415,7 @@ setMemberTransactions(prev =>
         setPermissions(allPermissions);
         setTables(tablesArray);
 
-        if (tablesArray.length > 0 && !tablesArray.includes(selectedTable)) {
+        if (tablesArray.length > 0 && !tablesArray.includes(String(selectedTable))) {
           setSelectedTable(tablesArray[0] as TableName);
         }
       } catch (error) {
@@ -435,7 +434,7 @@ setMemberTransactions(prev =>
       const { data, primaryKeys } =
         await queryTableWithPrimaryKey(selectedTable);
       setEntries(data);
-      // <-- FIX: primaryKeys state is string[] so default to []
+      
       setPrimaryKeys(primaryKeys ?? []);
 
       // Guard against empty data
@@ -467,7 +466,10 @@ setMemberTransactions(prev =>
 
       setSortOptions(sortOptions);
     } catch (error) {
-      console.error(`Failed to fetch data for table ${selectedTable}`, error);
+      console.error(
+        `Failed to fetch data for table ${String(selectedTable)}`,
+        error
+      );
       console.error("Error details:", JSON.stringify(error, null, 2));
     }
   };
@@ -616,7 +618,7 @@ setMemberTransactions(prev =>
                   <div className="w-1/5">
                     <SelectDropdown
                       options={tables}
-                      selectedOption={selectedTable}
+                      selectedOption={String(selectedTable)}
                       setSelectedOption={(table) => {
                         setSelectedTable(table as TableName);
                       }}
