@@ -32,12 +32,14 @@ const memberSchema = {
   email: { type: "basic", name: "text", nullable: true },
   photo_link: { type: "basic", name: "text", nullable: true },
   public: { type: "basic", name: "boolean", nullable: true },
-  type: { type: "basic", name: "text", nullable: true }
+  type: { type: "basic", name: "text", nullable: true },
+  member_status: { type: "basic", name: "text", nullable: true } // Added member_status field
 };
 
 export default function Search() {
   useLoginRedirect();
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>('all'); // Added status filter state
   const router = useRouter();
   const [entries, setEntries] = useState<Record<string, any>[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
@@ -128,16 +130,19 @@ export default function Search() {
     const keywords = query.toLowerCase().split(" ").filter(Boolean);
     return entries
       .filter(item => item.public !== false && item.type !== "NONMEMBER")
-      .filter(item =>
-        keywords.every(kw =>
+      .filter(item => {
+        // Apply status filter
+        if (statusFilter !== 'all' && item.member_status !== statusFilter) {
+          return false;
+        }
+        return keywords.every(kw =>
           Object.values(item).some(
             value =>
               value !== null && value.toString().toLowerCase().includes(kw),
           ),
-        ),
-      );
-  }, [query, entries]);
-  
+        );
+      });
+  }, [query, statusFilter, entries]); // Added statusFilter to dependencies
 
   useEffect(() => {
     const setup = async () => {
@@ -272,6 +277,26 @@ export default function Search() {
                   className="w-full rounded-md border border-gray-300 py-4 pr-2 pl-12 text-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-300 focus:outline-hidden"
                 />
               </div>
+              
+              {/* Status Filter - Added this section */}
+              <div className="flex gap-4 items-center">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Member Status:</label>
+                  <select 
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="border rounded p-2 w-40 text-sm"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="pending">Pending</option>
+                    <option value="expired">Expired</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="mb-4 w-full grow overflow-y-auto">
                 <TableComponent
                   entries={formattedData}
