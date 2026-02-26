@@ -1,15 +1,23 @@
 import { supabase } from "@/app/supabase";
 import { Database } from "./api/cron/src/supabase/types";
 
-export type TableName = keyof Database["public"]["Tables"];
+export type TableName = keyof Database["public"]["Tables"] | "audit_logs";
 
 export const queryTableWithPrimaryKey = async (
   table: TableName,
 ): Promise<{ data: any[]; primaryKeys: string[] }> => {
   console.log(`Querying table: ${table}`);
 
-  // Fetch the table content
-  const { data, error } = await supabase.from(table).select("*");
+  let query = supabase.from(table).select("*");
+
+  // Special handling for audit_logs
+  if (table === "audit_logs") {
+    query = query
+      .order("recorded_at", { ascending: false })
+      .range(0, 999); // latest 1000 logs
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error(`Error fetching data from table ${table}:`, error);
@@ -101,7 +109,7 @@ export const getProducts = async () => {
   const { data, error } = await supabase
     .from("products")
     .select()
-    .order("year", { ascending: false });
+    .eq("is_current", true);
 
   if (error) {
     console.error(`Error fetching products:`, error);

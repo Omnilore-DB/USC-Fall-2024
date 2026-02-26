@@ -25,10 +25,11 @@ function LoginPage() {
   const [alertMessage, setAlertMessage] = useState("");
 
   // Default general member credentials
+  // Change line below to change the general user's username
   const GENERAL_MEMBER_LOGIN = "owlsrus";
   const GENERAL_MEMBER_PASSWORD = "love2learn";
 
-  const DEFAULT_GENERAL_EMAIL = "member@omnilore.org";
+  const DEFAULT_GENERAL_EMAIL = "member_db@omnilore.org";
   const DEFAULT_GENERAL_PASSWORD = "CBIWbvMQNUStFCGhnXwV";
 
   const searchParams = useSearchParams();
@@ -52,7 +53,7 @@ function LoginPage() {
     // Proceed with authentication using Supabase
     try {
       await supabase.auth.signInWithPassword({
-        email: "member@omnilore.org",
+        email: "member_db@omnilore.org",
         password: DEFAULT_GENERAL_PASSWORD, // Using token as a password for authentication
       });
 
@@ -71,11 +72,9 @@ function LoginPage() {
 
       // Map "owlsrus" login to default general member email and password
       if (
-        email.toLowerCase() === GENERAL_MEMBER_LOGIN &&
-        password === GENERAL_MEMBER_PASSWORD
+        email.toLowerCase() === GENERAL_MEMBER_LOGIN
       ) {
         userEmail = DEFAULT_GENERAL_EMAIL;
-        userPassword = DEFAULT_GENERAL_PASSWORD;
       }
 
       // Authenticate user with Supabase
