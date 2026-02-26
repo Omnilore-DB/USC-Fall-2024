@@ -39,14 +39,17 @@ function Table() {
     "selected_table",
     "members",
   );
+
+  // <-- FIX: explicitly convert selectedTable to string for the key (avoids implicit symbol->string)
   const [selectedSort, setSelectedSort] = useLocalStorage<string>(
-    `selected_sort_${selectedTable}`,
+    `selected_sort_${String(selectedTable)}`,
     "default",
   );
   const [selectedSortWay, setSelectedSortWay] = useLocalStorage<"asc" | "desc">(
-    `selected_sort_way_${selectedTable}`,
+    `selected_sort_way_${String(selectedTable)}`,
     "asc",
   );
+
   const [sortOptions, setSortOptions] = useState<string[]>(["default"]);
   const [primaryKeys, setPrimaryKeys] = useState<string[]>([]);
   const [isEntryPanelOpen, setIsEntryPanelOpen] = useState(false);
@@ -419,9 +422,11 @@ setMemberTransactions(prev =>
       const { data, primaryKeys } =
         await queryTableWithPrimaryKey(selectedTable);
       setEntries(data);
-      setPrimaryKeys(primaryKeys ?? "");
+      // <-- FIX: primaryKeys state is string[] so default to []
+      setPrimaryKeys(primaryKeys ?? []);
 
-      const keys = new Set(Object.keys(data[0]));
+      // Guard against empty data
+      const keys = data && data.length > 0 ? new Set(Object.keys(data[0])) : new Set<string>();
       const sortOptions = ["default"];
 
       for (const key of [
